@@ -53,6 +53,19 @@ public class ScanLibraryCommand : AsyncCommand<ScanLibraryCommandSettings>
     await JsonSerializer.SerializeAsync(stream, props);
   }
 
+  private static async Task<LibraryIndexProps> GetLibraryIndexAsync(
+    string path)
+  {
+    return await GetPropsAsync<LibraryIndexProps>(Path.Combine(path, INDEX_FILE_NAME));
+  }
+
+  private static async Task SaveLibraryIndexAsync(
+    string path,
+    LibraryIndexProps props)
+  {
+    await SavePropsAsync<LibraryIndexProps>(Path.Combine(path, INDEX_FILE_NAME), props);
+  }
+
   public override async Task<int> ExecuteAsync(
     CommandContext context, 
     ScanLibraryCommandSettings settings)
@@ -63,8 +76,8 @@ public class ScanLibraryCommand : AsyncCommand<ScanLibraryCommandSettings>
         "Scanning...", 
         async ctx => 
         {
-          var LibraryIndex = await GetPropsAsync<LibraryIndexProps>(settings.LibraryPath);
-          await SavePropsAsync<LibraryIndexProps>(settings.LibraryPath, LibraryIndex);
+          var LibraryIndex = await GetLibraryIndexAsync(settings.LibraryPath);
+          await SaveLibraryIndexAsync(settings.LibraryPath, LibraryIndex);
         });
 
     return 0;
