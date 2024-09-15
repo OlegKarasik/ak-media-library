@@ -2,11 +2,11 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public class OpenDirectoryCommand : AsyncCommand<OpenDirectoryCommandSettings>
+public class OpenLibraryCommand : AsyncCommand<OpenLibraryCommandSettings>
 {
   public override Task<int> ExecuteAsync(
     CommandContext context, 
-    OpenDirectoryCommandSettings settings)
+    OpenLibraryCommandSettings settings)
   {
     return Task.FromResult(0);
   }
