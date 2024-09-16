@@ -6,6 +6,6 @@ namespace MediaLibrary.Business.Properties;
 [JsonDerivedType(typeof(ShowProps), "show")]
 [JsonDerivedType(typeof(SeasonProps), "season")]
 [JsonDerivedType(typeof(EpisodeProps), "episode")]
-public class PropsJson
+public abstract class PropsJson
 {
 }
