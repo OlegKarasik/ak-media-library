@@ -11,6 +11,10 @@ public abstract class Item
 {
 }
 
+public class IgnoreItem : Item
+{
+}
+
 public class EmptyItem : Item
 {
 }
@@ -39,22 +43,43 @@ public class ShowLibraryItem : Item
 {
 }
 
+public enum FileType
+{
+  Video,
+  Subtitles,
+  Image
+}
+
 public class ScanLibraryCommand : AsyncCommand<ScanLibraryCommandSettings>
 {
+  private static HashSet<string> extensions = [".mp3", ".mp4", ".avi", ".mkv"];
+
   private static string[] episodeRegex = new []
   {
     @"^S(?<season>\d+)E(?<episode>\d+)\s+-?\s+(?<title>.+)$"
+  };
+  private static string[] ignoreRegex = new []
+  {
+    @"^\._"
   };
 
   private static Item Scan(
     FilePath path)
   {
-    if (PropsPath.IsPropsPath(path))
+    // We focus on recognisable video files
+    //
+    if (!extensions.Contains(path.FileExtension))
     {
-      // We ignore props paths by themselves
-      //
-      return new EmptyItem();
+      return new IgnoreItem();
     }
+    foreach (var regex in ignoreRegex)
+    {
+      if (Regex.IsMatch(path.FileName, regex))
+      {
+        return new IgnoreItem();
+      }
+    }
+
     // The path we are scanning is a file, therefore we need to understand
     // whether it is a movie or an episode
     //
@@ -76,15 +101,49 @@ public class ScanLibraryCommand : AsyncCommand<ScanLibraryCommandSettings>
   private static Item Scan(
     DirectoryPath path)
   {
-    foreach (var i in Directory.EnumerateDirectories(path.Value).Select(j => new DirectoryPath(j)))
+    var directories = Directory.EnumerateDirectories(path.Value)
+      .Select(j => Scan(new DirectoryPath(j)))
+      .Where(j => j is not EmptyItem && j is not IgnoreItem)
+      .ToArray();
+
+    var files = Directory.EnumerateFiles(path.Value)
+      .Select(j => Scan(new FilePath(j)))
+      .Where(j => j is not EmptyItem && j is not IgnoreItem)
+      .ToArray();
+
+    if (directories.Any() && files.Any())
     {
-      Scan(i);
+      throw new Exception();
     }
-    foreach (var i in Directory.EnumerateFiles(path.Value).Select(j => new FilePath(j)))
+    if (directories.Any())
     {
-      Scan(i);
+      if (directories.All(i => i is SeasonItem))
+      {
+        return new ShowItem();
+      }
+      if (directories.All(i => i is ShowItem))
+      {
+        return new ShowLibraryItem();
+      }
+      if (directories.All(i => i is MovieLibraryItem))
+      {
+        return new MovieLibraryItem();
+      }
+      throw new Exception();
     }
-    return null;
+    if (files.Any())
+    {
+      if (files.All(i => i is EpisodeItem))
+      {
+        return new SeasonItem();
+      }
+      if (files.All(i => i is MovieItem))
+      {
+        return new MovieLibraryItem();
+      }
+      throw new Exception();
+    }
+    return new EmptyItem();
   }
 
   public override async Task<int> ExecuteAsync(
