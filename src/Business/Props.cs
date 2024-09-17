@@ -9,14 +9,14 @@ public static class Props
   public static async Task<T> GetAsync<T>(
     PropsPath path)
 
-    where T : PropsJson, new()
+    where T : new()
   {
     if (path is null)
     {
       throw new ArgumentNullException(nameof(path));
     }
 
-    using var stream = new FileStream((string)path, FileMode.OpenOrCreate);
+    using var stream = new FileStream(path.Value, FileMode.OpenOrCreate);
 
     var props = await JsonSerializer.DeserializeAsync<T>(stream);
     return props is not null 
@@ -27,8 +27,6 @@ public static class Props
   public static async Task SaveAsync<T>(
     PropsPath path,
     T props)
-
-    where T : PropsJson
   {
     if (path is null)
     {
@@ -39,7 +37,7 @@ public static class Props
       throw new ArgumentNullException(nameof(props));
     }
 
-    using var stream = new FileStream((string)path, FileMode.OpenOrCreate);
+    using var stream = new FileStream(path.Value, FileMode.OpenOrCreate);
 
     await JsonSerializer.SerializeAsync(stream, props);
   }

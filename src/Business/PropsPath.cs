@@ -4,23 +4,38 @@ public class PropsPath
 {
   private const string PROPS_SUFFIX = ".props.json";
 
-  private readonly string value;
+  public string Value { get; }
 
   public PropsPath(
-    string value)
+    FilePath value)
   {
-    if (string.IsNullOrWhiteSpace(value))
+    if (value is null)
     {
-      throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
+      throw new ArgumentNullException(nameof(value));
     }
 
-    this.value = Path.EndsInDirectorySeparator(value) || !Path.HasExtension(value)
-      ? Path.Combine(value, $"this{PROPS_SUFFIX}") 
-      : $"{value}{PROPS_SUFFIX}";
+    this.Value = $"{value.Value}{PROPS_SUFFIX}";
   }
 
-  public static explicit operator string(PropsPath x)
+  public PropsPath(
+    DirectoryPath value)
   {
-    return x.value;
+    if (value is null)
+    {
+      throw new ArgumentNullException(nameof(value));
+    }
+
+    this.Value = Path.Combine(value.Value, $"this{PROPS_SUFFIX}");
+  }
+
+  public static bool IsPropsPath(
+    FilePath value)
+  {
+    if (value is null)
+    {
+      throw new ArgumentNullException(nameof(value));
+    }
+
+    return value.Value.EndsWith(PROPS_SUFFIX);
   }
 }
