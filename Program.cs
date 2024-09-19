@@ -6,7 +6,7 @@ var app = new CommandApp();
 app.Configure(
   o =>
   {
-    o.AddCommand<ScanLibraryCommand>("scan");
+    o.AddCommand<ScanCommand>("scan");
     o.AddCommand<OpenLibraryCommand>("open");
   });
 

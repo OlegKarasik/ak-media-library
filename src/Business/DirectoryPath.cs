@@ -17,4 +17,9 @@ public class DirectoryPath
     this.DirectoryName = Path.GetDirectoryName(value) ?? value;
     this.Value = value;
   }
+
+  public override string ToString()
+  {
+    return this.Value;
+  }
 }

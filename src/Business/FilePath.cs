@@ -20,4 +20,9 @@ public class FilePath
     this.FileExtension = Path.GetExtension(value);
     this.Value = value;
   }
+
+  public override string ToString()
+  {
+    return this.Value;
+  }
 }

@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public class ScanLibraryCommandSettings : CommandSettings
+public class ScanCommandSettings : CommandSettings
 {
   [CommandArgument(0, "<library-path>")]
   public string LibraryPath
@@ -11,7 +11,7 @@ public class ScanLibraryCommandSettings : CommandSettings
     get; set; 
   }
 
-  public ScanLibraryCommandSettings()
+  public ScanCommandSettings()
   {
     this.LibraryPath = string.Empty;
   }
