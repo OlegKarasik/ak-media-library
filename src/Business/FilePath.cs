@@ -2,11 +2,20 @@ namespace MediaLibrary.Business;
 
 public class FilePath
 {
-  public string FileName { get; }
+  public string FileName 
+  { 
+    get; 
+  }
 
-  public string FileExtension { get; }
+  public string FileExtension 
+  { 
+    get; 
+  }
 
-  public string Value { get; }
+  public string Value 
+  { 
+    get; 
+  }
 
   public FilePath(
     string value)

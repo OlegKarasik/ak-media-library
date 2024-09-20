@@ -9,12 +9,18 @@ namespace MediaLibrary.Commands;
 
 public abstract class FileItem
 {
-  public required FilePath Path { get; init; }
+  public required FilePath Path 
+  { 
+    get; init; 
+  }
 }
 
 public abstract class DirectoryItem
 {
-  public required DirectoryPath Path { get; init; }
+  public required DirectoryPath Path 
+  { 
+    get; init;
+  }
 }
 
 public class IgnoreItem : FileItem
@@ -39,14 +45,31 @@ public class EmptyItem : DirectoryItem
 
 public class SeasonItem : DirectoryItem
 {
+  public required EpisodeItem[] Episodes 
+  { 
+    get; init; 
+  }
 }
 
 public class ShowItem : DirectoryItem
 {
+  public required SeasonItem[] Seasons 
+  { 
+    get; init; 
+  }
 }
 
 public class LibraryItem : DirectoryItem
 {
+  public required MovieItem[] Movies 
+  { 
+    get; init; 
+  }
+
+  public required ShowItem[] Shows 
+  { 
+    get; init; 
+  }
 }
 
 public class ScanCommand : AsyncCommand<ScanCommandSettings>
@@ -120,15 +143,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       switch (directoryItem)
       {
         case SeasonItem season:
-          AnsiConsole.MarkupLine($"Season: {season.Path}");
           seasons.Add(season);
           break;
         case ShowItem show:
-          AnsiConsole.MarkupLine($"Show: {show.Path}");
           shows.Add(show);
           break;
         case LibraryItem library:
-          AnsiConsole.MarkupLine($"Library: {library.Path}");
           libraries.Add(library);
           break;
         default:
@@ -136,22 +156,6 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           //
           continue;
       }
-    }
-
-    // If directory contains libraries or shows, then we consider
-    // it to be a library
-    //
-    if (libraries.Count != 0 || shows.Count != 0)
-    {
-      return new LibraryItem() { Path = path };
-    }
-
-    // If directory contains seasons, then we consider 
-    // it to be a show
-    //
-    if (seasons.Count != 0)
-    {
-      return new ShowItem() { Path = path };
     }
 
     List<EpisodeItem> episodes = [];
@@ -176,9 +180,37 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       }
     }
 
-    // If we have a directory with both episodes and
-    // movies then we throw NotSupportedException because
-    // we don't know what to do
+    if (seasons.Count != 0)
+    {
+      // When we have seasons, we can have seasons
+      //
+      if (movies.Count != 0 || episodes.Count != 0 || libraries.Count != 0 || shows.Count != 0)
+      {
+        throw new NotSupportedException();
+      }
+      return new ShowItem
+        {
+          Path = path,
+          Seasons = [ .. seasons ]
+        };
+    }
+    if (libraries.Count != 0 || shows.Count != 0)
+    {
+      // When we have libraries or shows, we can have libraries, shows or movies
+      //
+      if (episodes.Count != 0)
+      {
+        throw new NotSupportedException();
+      }
+      return new LibraryItem
+        {
+          Path = path,
+          Shows = [ .. libraries.SelectMany(i => i.Shows), .. shows ],
+          Movies = [ .. libraries.SelectMany(i => i.Movies), .. movies ]
+        };
+    }
+
+    // If we have a directory with both episodes then we don't know what to do
     //
     if (episodes.Count != 0 && movies.Count != 0)
     {
@@ -189,14 +221,23 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (episodes.Count != 0)
     {
-      return new SeasonItem() { Path = path };
+      return new SeasonItem() 
+        { 
+          Path = path, 
+          Episodes = [ .. episodes ] 
+        };
     }
 
     // If we have movies, then it is a library
     //
     if (movies.Count != 0)
     {
-      return new LibraryItem() { Path = path };
+      return new LibraryItem() 
+        { 
+          Path = path,
+          Movies = [ .. movies ],
+          Shows = []
+        };
     }
     return new EmptyItem() { Path = path };
   }
@@ -211,10 +252,13 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         "Scanning...", 
         ctx => 
         {
-          this.Scan(new DirectoryPath(settings.LibraryPath));
+          var item = this.Scan(new DirectoryPath(settings.LibraryPath));
+
+          ctx.Status("Saving...");  
 
           return Task.CompletedTask;
         });
+        
 
     return 0;
   }

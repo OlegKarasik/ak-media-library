@@ -2,9 +2,15 @@ namespace MediaLibrary.Business;
 
 public class DirectoryPath
 {
-  public string DirectoryName { get; }
+  public string DirectoryName 
+  { 
+    get; 
+  }
 
-  public string Value { get; }
+  public string Value 
+  { 
+    get; 
+  }
 
   public DirectoryPath(
     string value)

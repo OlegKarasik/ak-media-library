@@ -2,13 +2,25 @@ namespace MediaLibrary.Commands;
 
 public class ScanCommandOptions
 {
-  public IReadOnlyCollection<string> FileExtensions { get; }
+  public IReadOnlyCollection<string> FileExtensions 
+  { 
+    get; 
+  }
 
-  public IReadOnlyCollection<string> FileIgnorePatterns { get; }
+  public IReadOnlyCollection<string> FileIgnorePatterns 
+  { 
+    get; 
+  }
 
-  public IReadOnlyCollection<string> MovieMatchPatterns { get; }
+  public IReadOnlyCollection<string> MovieMatchPatterns 
+  { 
+    get; 
+  }
 
-  public IReadOnlyCollection<string> EpisodeMatchPatterns { get; }
+  public IReadOnlyCollection<string> EpisodeMatchPatterns 
+  { 
+    get; 
+  }
 
   public ScanCommandOptions()
   {
