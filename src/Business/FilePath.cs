@@ -1,13 +1,16 @@
+using System.Diagnostics;
+
 namespace MediaLibrary.Business;
 
+[DebuggerDisplay($"{{{nameof(Name)},nq}}{{{nameof(Extension)},nq}}")]
 public class FilePath
 {
-  public string FileName 
+  public string Name 
   { 
     get; 
   }
 
-  public string FileExtension 
+  public string Extension 
   { 
     get; 
   }
@@ -25,8 +28,8 @@ public class FilePath
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
 
-    this.FileName = Path.GetFileNameWithoutExtension(value);
-    this.FileExtension = Path.GetExtension(value);
+    this.Name = Path.GetFileNameWithoutExtension(value);
+    this.Extension = Path.GetExtension(value);
     this.Value = value;
   }
 

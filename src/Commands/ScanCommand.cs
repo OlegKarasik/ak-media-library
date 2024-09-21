@@ -4,73 +4,9 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 using MediaLibrary.Business;
+using MediaLibrary.Business.Items;
 
 namespace MediaLibrary.Commands;
-
-public abstract class FileItem
-{
-  public required FilePath Path 
-  { 
-    get; init; 
-  }
-}
-
-public abstract class DirectoryItem
-{
-  public required DirectoryPath Path 
-  { 
-    get; init;
-  }
-}
-
-public class IgnoreItem : FileItem
-{
-}
-
-public class UnknownItem : FileItem
-{
-}
-
-public class EpisodeItem : FileItem
-{
-}
-
-public class MovieItem : FileItem
-{
-}
-
-public class EmptyItem : DirectoryItem
-{
-}
-
-public class SeasonItem : DirectoryItem
-{
-  public required EpisodeItem[] Episodes 
-  { 
-    get; init; 
-  }
-}
-
-public class ShowItem : DirectoryItem
-{
-  public required SeasonItem[] Seasons 
-  { 
-    get; init; 
-  }
-}
-
-public class LibraryItem : DirectoryItem
-{
-  public required MovieItem[] Movies 
-  { 
-    get; init; 
-  }
-
-  public required ShowItem[] Shows 
-  { 
-    get; init; 
-  }
-}
 
 public class ScanCommand : AsyncCommand<ScanCommandSettings>
 {
@@ -81,18 +17,18 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     this.options = new ScanCommandOptions();
   }
 
-  private FileItem Scan(
+  private FileItem ScanFile(
     FilePath path)
   {
     // Rule out all unsupported files
     //
-    if (!this.options.FileExtensions.Contains(path.FileExtension))
+    if (!this.options.FileExtensions.Contains(path.Extension))
     {
       return new IgnoreItem { Path = path };
     }
     foreach (var pattern in this.options.FileIgnorePatterns)
     {
-      if (Regex.IsMatch(path.FileName, pattern))
+      if (Regex.IsMatch(path.Name, pattern))
       {
         return new IgnoreItem { Path = path };
       }
@@ -102,11 +38,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     foreach (var pattern in this.options.EpisodeMatchPatterns)
     {
-      var match = Regex.Match(path.FileName, pattern);
+      var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
         return new EpisodeItem 
           { 
+            Title = match.Groups["title"].Value,
             Path = path 
           };
       }
@@ -116,22 +53,20 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     foreach (var pattern in this.options.MovieMatchPatterns)
     {
-      var match = Regex.Match(path.FileName, pattern);
+      var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
         return new MovieItem
           {
+            Title = match.Groups["title"].Value,
             Path = path
           };
       }
     }
-
-    // Return unknown items
-    //
-    return new UnknownItem { Path = path };
+    throw new NotImplementedException();
   }
 
-  private DirectoryItem Scan(
+  private DirectoryItem ScanDirectory(
     DirectoryPath path)
   {
     List<SeasonItem> seasons = [];
@@ -139,7 +74,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     List<LibraryItem> libraries = [];
     foreach (var directoryPath in Directory.EnumerateDirectories(path.Value))
     {
-      var directoryItem = this.Scan(new DirectoryPath(directoryPath));
+      var directoryItem = this.ScanDirectory(new DirectoryPath(directoryPath));
       switch (directoryItem)
       {
         case SeasonItem season:
@@ -151,10 +86,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         case LibraryItem library:
           libraries.Add(library);
           break;
+        case EmptyItem:
+          break;
         default:
-          // We don't really care about empty items
-          //
-          continue;
+          throw new NotImplementedException();
       }
     }
 
@@ -162,7 +97,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     List<MovieItem> movies = [];
     foreach (var filePath in Directory.EnumerateFiles(path.Value))
     {
-      var fileItem = this.Scan(new FilePath(filePath));
+      var fileItem = this.ScanFile(new FilePath(filePath));
       switch (fileItem)
       {
         case EpisodeItem episode:
@@ -171,12 +106,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         case MovieItem movie:
           movies.Add(movie);
           break;
-        case UnknownItem unknown:
-          throw new NotImplementedException();
+        case IgnoreItem:
+          break;
         default:
-          // We don't really care about ignore items
-          //
-          continue;
+          throw new NotImplementedException();
       }
     }
 
@@ -188,11 +121,20 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       {
         throw new NotSupportedException();
       }
-      return new ShowItem
+      foreach (var pattern in this.options.ShowMatchPatterns)
+      {
+        var match = Regex.Match(path.Name, pattern);
+        if (match.Success)
         {
-          Path = path,
-          Seasons = [ .. seasons ]
-        };
+          return new ShowItem
+            {
+              Title = match.Groups["title"].Value,
+              Path = path,
+              Seasons = [ .. seasons ]
+            };
+        }
+      }
+      throw new NotImplementedException();
     }
     if (libraries.Count != 0 || shows.Count != 0)
     {
@@ -221,11 +163,19 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (episodes.Count != 0)
     {
-      return new SeasonItem() 
-        { 
-          Path = path, 
-          Episodes = [ .. episodes ] 
-        };
+      foreach (var pattern in this.options.SeasonMatchPatterns)
+      {
+        var match = Regex.Match(path.Name, pattern);
+        if (match.Success)
+        {
+          return new SeasonItem() 
+            { 
+              Title = match.Groups["title"].Value,
+              Path = path, 
+              Episodes = [ .. episodes ] 
+            };
+        }
+      }
     }
 
     // If we have movies, then it is a library
@@ -242,24 +192,27 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     return new EmptyItem() { Path = path };
   }
 
-  public override async Task<int> ExecuteAsync(
+  private LibraryItem ScanLibrary(
+    DirectoryPath path)
+  {
+    var item = this.ScanDirectory(path);
+    if (item is LibraryItem library)
+    {
+      return library;
+    }
+    throw new NotSupportedException();
+  }
+
+  public override Task<int> ExecuteAsync(
     CommandContext context, 
     ScanCommandSettings settings)
   {
-    await AnsiConsole
+    var library = AnsiConsole
       .Status()
-      .StartAsync(
-        "Scanning...", 
-        ctx => 
-        {
-          var item = this.Scan(new DirectoryPath(settings.LibraryPath));
-
-          ctx.Status("Saving...");  
-
-          return Task.CompletedTask;
-        });
+      .Start("Scanning...", ctx => this.ScanLibrary(new DirectoryPath(settings.LibraryPath)));
         
+    
 
-    return 0;
+    return Task.FromResult(0);
   }
 }

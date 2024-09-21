@@ -1,8 +1,11 @@
+using System.Diagnostics;
+
 namespace MediaLibrary.Business;
 
+[DebuggerDisplay($"{{{nameof(Name)},nq}}")]
 public class DirectoryPath
 {
-  public string DirectoryName 
+  public string Name 
   { 
     get; 
   }
@@ -20,7 +23,7 @@ public class DirectoryPath
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
 
-    this.DirectoryName = Path.GetDirectoryName(value) ?? value;
+    this.Name = Path.GetFileName(value) ?? value;
     this.Value = value;
   }
 

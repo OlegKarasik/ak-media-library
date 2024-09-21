@@ -12,6 +12,16 @@ public class ScanCommandOptions
     get; 
   }
 
+  public IReadOnlyCollection<string> ShowMatchPatterns 
+  { 
+    get; 
+  }
+
+  public IReadOnlyCollection<string> SeasonMatchPatterns 
+  { 
+    get; 
+  }
+
   public IReadOnlyCollection<string> MovieMatchPatterns 
   { 
     get; 
@@ -30,14 +40,22 @@ public class ScanCommandOptions
         @"^\._"
       ];
 
+    this.ShowMatchPatterns = 
+      [
+        @"^(?<title>.+)$"
+      ];
+    this.SeasonMatchPatterns = 
+      [
+        @"^(?<title>.+)$"
+      ];
     this.MovieMatchPatterns = 
       [
-        @".+"
+        @"^(?<title>.+)$"
       ];
     this.EpisodeMatchPatterns =
       [
-        @"^S\d+E\d+\s+-?\s+.+$",
-        @"^S\d+E\d+-E\d+\s+-?\s+.+$"
+        @"^S\d+E\d+\s*-\s*E\d+\s*-?\s*(?<title>.+)$",
+        @"^S\d+E\d+\s*-?\s*(?<title>.+)$"
       ];
   }
 }
