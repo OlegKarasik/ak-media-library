@@ -5,6 +5,7 @@ using Spectre.Console.Cli;
 
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
+using MediaLibrary.Business.Matches;
 
 namespace MediaLibrary.Commands;
 
@@ -41,9 +42,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
+        var m = new EpisodeItemMatch(match);
         return new EpisodeItem 
           { 
-            Title = match.Groups["title"].Value,
+            Title = m.Title ?? throw new Exception("The episode Regex match must include (?<title>) group"),
             Path = path 
           };
       }
@@ -56,9 +58,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
+        var m = new MovieItemMatch(match);
         return new MovieItem
           {
-            Title = match.Groups["title"].Value,
+            Title = m.Title ?? throw new Exception("The movie Regex match must include (?<title>) group"),
             Path = path
           };
       }
