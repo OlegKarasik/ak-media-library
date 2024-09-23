@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace MediaLibrary.Business.Items;
 
@@ -9,6 +8,11 @@ public class EpisodeItem : FileItem
 {
   public required string Title
   { 
+    get; init;
+  }
+
+  public required long Position
+  {
     get; init;
   }
 }

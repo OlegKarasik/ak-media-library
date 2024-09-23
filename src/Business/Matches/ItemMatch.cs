@@ -25,6 +25,6 @@ public abstract class ItemMatch
     {
       return (T)(object)long.Parse(value);
     }
-    return default;
+    throw new NotImplementedException();
   }
 }

@@ -46,6 +46,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title ?? throw new Exception("The episode Regex match must include (?<title>) group"),
+            Position = m.Position ?? throw new Exception("The episode Regex match must include (?<episode>) group"),
             Path = path 
           };
       }

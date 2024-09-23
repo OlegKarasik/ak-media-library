@@ -9,12 +9,7 @@ public class EpisodeItemMatch : ItemMatch
     get;
   }
 
-  public long? SeasonPosition
-  {
-    get;
-  }
-
-  public long? EpisodePosition
+  public long? Position
   {
     get;
   }
@@ -28,7 +23,6 @@ public class EpisodeItemMatch : ItemMatch
     }
 
     this.Title = this.Get<string>(match, "title");
-    this.SeasonPosition = this.Get<long>(match, "season");
-    this.EpisodePosition = this.Get<long>(match, "episode");
+    this.Position = this.Get<long>(match, "episode");
   }
 }
