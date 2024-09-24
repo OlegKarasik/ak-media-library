@@ -163,8 +163,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
 
       foreach (var lib in libraries)
       {
-        library.Shows.UtilzMergeRange(lib.Shows);
-        library.Movies.UtilzMergeRange(lib.Movies);
+        library.Shows.UtilzInsertRange(lib.Shows);
+        library.Movies.UtilzInsertRange(lib.Movies);
       }
       return library;
     }

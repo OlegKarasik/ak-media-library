@@ -33,7 +33,7 @@ public static class UtilityExtensions
     }
   }
 
-  public static void UtilzMergeRange<K, T>(
+  public static void UtilzInsertRange<K, T>(
     this Dictionary<K, List<T>> @this,
     Dictionary<K, List<T>> source)
 
