@@ -2,12 +2,12 @@ namespace MediaLibrary.Business.Items;
 
 public class LibraryItem : DirectoryItem
 {
-  public required MovieItem[] Movies 
+  public required Dictionary<string, List<MovieItem>> Movies 
   { 
     get; init; 
   }
 
-  public required ShowItem[] Shows 
+  public required Dictionary<string, List<ShowItem>> Shows 
   { 
     get; init; 
   }

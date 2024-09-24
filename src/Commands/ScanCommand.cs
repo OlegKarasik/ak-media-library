@@ -6,6 +6,7 @@ using Spectre.Console.Cli;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Matches;
+using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Commands;
 
@@ -130,9 +131,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         var match = Regex.Match(path.Name, pattern);
         if (match.Success)
         {
+          var m = new ShowItemMatch(match);
           return new ShowItem
             {
-              Title = match.Groups["title"].Value,
+              Title = m.Title ?? throw new Exception("The show Regex match must include (?<title>) group"),
               Path = path,
               Seasons = [ .. seasons ]
             };
@@ -148,12 +150,23 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       {
         throw new NotSupportedException();
       }
-      return new LibraryItem
+
+      var library = new LibraryItem
         {
           Path = path,
-          Shows = [ .. libraries.SelectMany(i => i.Shows), .. shows ],
-          Movies = [ .. libraries.SelectMany(i => i.Movies), .. movies ]
+          Shows = [],
+          Movies = []
         };
+
+      library.Shows.UtilzInsertRange(shows, i => i.Title);
+      library.Movies.UtilzInsertRange(movies, i => i.Title);
+
+      foreach (var lib in libraries)
+      {
+        library.Shows.UtilzMergeRange(lib.Shows);
+        library.Movies.UtilzMergeRange(lib.Movies);
+      }
+      return library;
     }
 
     // If we have a directory with both episodes then we don't know what to do
@@ -172,9 +185,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         var match = Regex.Match(path.Name, pattern);
         if (match.Success)
         {
+          var m = new SeasonItemMatch(match);
           return new SeasonItem() 
             { 
-              Title = match.Groups["title"].Value,
+              Title = m.Title ?? throw new Exception("The season Regex match must include (?<title>) group"),
               Path = path, 
               Episodes = [ .. episodes ] 
             };
@@ -186,12 +200,15 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (movies.Count != 0)
     {
-      return new LibraryItem() 
+      var library = new LibraryItem() 
         { 
           Path = path,
-          Movies = [ .. movies ],
+          Movies = [],
           Shows = []
         };
+      library.Movies.UtilzInsertRange(movies, i => i.Title);
+
+      return library; 
     }
     return new EmptyItem() { Path = path };
   }
