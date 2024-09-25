@@ -6,7 +6,6 @@ using Spectre.Console.Cli;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Matches;
-using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Commands;
 
@@ -26,13 +25,19 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (!this.options.FileExtensions.Contains(path.Extension))
     {
-      return new IgnoreItem { Path = path };
+      return new IgnoreItem 
+        { 
+          Path = path 
+        };
     }
     foreach (var pattern in this.options.FileIgnorePatterns)
     {
       if (Regex.IsMatch(path.Name, pattern))
       {
-        return new IgnoreItem { Path = path };
+        return new IgnoreItem 
+          { 
+            Path = path 
+          };
       }
     }
 
@@ -46,8 +51,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         var m = new EpisodeItemMatch(match);
         return new EpisodeItem 
           { 
-            Title = m.Title ?? throw new Exception("The episode Regex match must include (?<title>) group"),
-            Position = m.Position ?? throw new Exception("The episode Regex match must include (?<episode>) group"),
+            Title = m.Title,
+            Position = m.Position,
             Path = path 
           };
       }
@@ -63,7 +68,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         var m = new MovieItemMatch(match);
         return new MovieItem
           {
-            Title = m.Title ?? throw new Exception("The movie Regex match must include (?<title>) group"),
+            Title = m.Title,
             Path = path
           };
       }
@@ -132,11 +137,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         if (match.Success)
         {
           var m = new ShowItemMatch(match);
-          return new ShowItem
+          return new ShowItem(seasons)
             {
-              Title = m.Title ?? throw new Exception("The show Regex match must include (?<title>) group"),
-              Path = path,
-              Seasons = [ .. seasons ]
+              Title = m.Title,
+              Path = path
             };
         }
       }
@@ -151,22 +155,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         throw new NotSupportedException();
       }
 
-      var library = new LibraryItem
+      return new LibraryItem(libraries, movies, shows)
         {
-          Path = path,
-          Shows = [],
-          Movies = []
+          Path = path
         };
-
-      library.Shows.UtilzInsertRange(shows, i => i.Title);
-      library.Movies.UtilzInsertRange(movies, i => i.Title);
-
-      foreach (var lib in libraries)
-      {
-        library.Shows.UtilzInsertRange(lib.Shows);
-        library.Movies.UtilzInsertRange(lib.Movies);
-      }
-      return library;
     }
 
     // If we have a directory with both episodes then we don't know what to do
@@ -186,11 +178,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         if (match.Success)
         {
           var m = new SeasonItemMatch(match);
-          return new SeasonItem() 
+          return new SeasonItem(episodes) 
             { 
-              Title = m.Title ?? throw new Exception("The season Regex match must include (?<title>) group"),
-              Path = path, 
-              Episodes = [ .. episodes ] 
+              Title = m.Title,
+              Path = path
             };
         }
       }
@@ -200,15 +191,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (movies.Count != 0)
     {
-      var library = new LibraryItem() 
+      return new LibraryItem(movies) 
         { 
-          Path = path,
-          Movies = [],
-          Shows = []
+          Path = path
         };
-      library.Movies.UtilzInsertRange(movies, i => i.Title);
-
-      return library; 
     }
     return new EmptyItem() { Path = path };
   }

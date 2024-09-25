@@ -4,19 +4,9 @@ namespace MediaLibrary.Business.Matches;
 
 public abstract class ItemMatch
 {
-  protected T? Get<T>(
-    Match match,
-    string key)
+  private static T Convert<T>(
+    string value)
   {
-    var value = match.Groups.ContainsKey(key) 
-      ? match.Groups[key].Value
-      : null;
-
-    if (value is null)
-    {
-      return default;
-    }
-
     if (typeof(T) == typeof(string))
     {
       return (T)(object)value;
@@ -26,5 +16,23 @@ public abstract class ItemMatch
       return (T)(object)long.Parse(value);
     }
     throw new NotImplementedException();
+  }
+
+  protected static T Required<T>(
+    Match match,
+    string key)
+  {
+    return match.Groups.TryGetValue(key, out var group) 
+      ? Convert<T>(group.Value) 
+      : throw new Exception();
+  }
+
+  protected static T? Optional<T>(
+    Match match,
+    string key)
+  {
+    return match.Groups.TryGetValue(key, out var group) 
+      ? Convert<T>(group.Value) 
+      : default;
   }
 }

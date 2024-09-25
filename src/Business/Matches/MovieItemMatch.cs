@@ -4,17 +4,7 @@ namespace MediaLibrary.Business.Matches;
 
 public class MovieItemMatch : ItemMatch
 {
-  public string? Title
-  {
-    get;
-  }
-
-  public long? SeasonPosition
-  {
-    get;
-  }
-
-  public long? EpisodePosition
+  public string Title
   {
     get;
   }
@@ -27,6 +17,6 @@ public class MovieItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = this.Get<string>(match, "title");
+    this.Title = Required<string>(match, "title");
   }
 }

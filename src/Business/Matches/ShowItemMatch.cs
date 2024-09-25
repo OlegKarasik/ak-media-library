@@ -4,7 +4,7 @@ namespace MediaLibrary.Business.Matches;
 
 public class ShowItemMatch : ItemMatch
 {
-  public string? Title
+  public string Title
   {
     get;
   }
@@ -17,6 +17,6 @@ public class ShowItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = this.Get<string>(match, "title");
+    this.Title = Required<string>(match, "title");
   }
 }

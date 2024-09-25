@@ -4,12 +4,12 @@ namespace MediaLibrary.Business.Matches;
 
 public class EpisodeItemMatch : ItemMatch
 {
-  public string? Title
+  public string Title
   {
     get;
   }
 
-  public long? Position
+  public long Position
   {
     get;
   }
@@ -22,7 +22,7 @@ public class EpisodeItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = this.Get<string>(match, "title");
-    this.Position = this.Get<long>(match, "episode");
+    this.Title = Required<string>(match, "title");
+    this.Position = Required<long>(match, "episode");
   }
 }

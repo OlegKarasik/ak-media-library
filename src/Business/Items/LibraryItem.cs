@@ -2,13 +2,44 @@ namespace MediaLibrary.Business.Items;
 
 public class LibraryItem : DirectoryItem
 {
-  public required Dictionary<string, List<MovieItem>> Movies 
+  public MovieItem[] Movies 
   { 
-    get; init; 
+    get;
   }
 
-  public required Dictionary<string, List<ShowItem>> Shows 
+  public ShowItem[] Shows 
   { 
-    get; init; 
+    get;  
+  }
+
+  public LibraryItem(
+    IEnumerable<LibraryItem> libraries,
+    IEnumerable<MovieItem> movies,
+    IEnumerable<ShowItem> shows)
+  {
+    this.Movies = [.. (movies ?? []), .. (libraries ?? []).SelectMany(i => i.Movies)];
+    this.Shows = [.. (shows ?? []), .. (libraries ?? []).SelectMany(i => i.Shows)];
+  }
+
+  public LibraryItem(
+    IEnumerable<MovieItem> movies,
+    IEnumerable<ShowItem> shows)
+
+    : this([], movies, shows)
+  {
+  }
+
+  public LibraryItem(
+    IEnumerable<MovieItem> movies)
+
+    : this(movies, [])
+  {
+  }
+
+  public LibraryItem(
+    IEnumerable<ShowItem> shows)
+
+    : this([], shows)
+  {
   }
 }

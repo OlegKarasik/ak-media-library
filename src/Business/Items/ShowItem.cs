@@ -10,8 +10,14 @@ public class ShowItem : DirectoryItem
     get; init;
   }
 
-  public required SeasonItem[] Seasons 
+  public SeasonItem[] Seasons 
   { 
-    get; init; 
+    get;
+  }
+
+  public ShowItem(
+    IEnumerable<SeasonItem> seasons)
+  {
+    this.Seasons = [.. (seasons ?? [])];
   }
 }
