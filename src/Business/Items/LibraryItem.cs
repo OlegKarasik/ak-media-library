@@ -2,6 +2,16 @@ namespace MediaLibrary.Business.Items;
 
 public class LibraryItem : DirectoryItem
 {
+  public LibraryItemMask Mask
+  {
+    get;
+  }
+
+  public LibraryItem[] Libraries
+  {
+    get;
+  }
+
   public MovieItem[] Movies 
   { 
     get;
@@ -12,34 +22,36 @@ public class LibraryItem : DirectoryItem
     get;  
   }
 
-  public LibraryItem(
+  private LibraryItem(
+    LibraryItemMask mask,
     IEnumerable<LibraryItem> libraries,
     IEnumerable<MovieItem> movies,
     IEnumerable<ShowItem> shows)
   {
-    this.Movies = [.. (movies ?? []), .. (libraries ?? []).SelectMany(i => i.Movies)];
-    this.Shows = [.. (shows ?? []), .. (libraries ?? []).SelectMany(i => i.Shows)];
+    this.Mask = mask;
+    this.Libraries = [.. libraries ?? []];
+    this.Movies = [.. movies ?? []];
+    this.Shows = [.. shows ?? []];
   }
 
   public LibraryItem(
-    IEnumerable<MovieItem> movies,
-    IEnumerable<ShowItem> shows)
+    IEnumerable<LibraryItem> libraries)
 
-    : this([], movies, shows)
+    : this(LibraryItemMask.Libraries, libraries, [], [])
   {
   }
 
   public LibraryItem(
     IEnumerable<MovieItem> movies)
 
-    : this(movies, [])
+    : this(LibraryItemMask.Movies, [], movies, [])
   {
   }
 
   public LibraryItem(
     IEnumerable<ShowItem> shows)
 
-    : this([], shows)
+    : this(LibraryItemMask.Shows, [], [], shows)
   {
   }
 }

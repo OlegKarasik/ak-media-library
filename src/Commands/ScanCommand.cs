@@ -52,7 +52,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title,
-            Position = m.Position,
+            Code = m.Code,
             Path = path 
           };
       }
@@ -79,6 +79,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   private DirectoryItem ScanDirectory(
     DirectoryPath path)
   {
+    var mask = LibraryItemMask.None;
+
     List<SeasonItem> seasons = [];
     List<ShowItem> shows = [];
     List<LibraryItem> libraries = [];
@@ -88,12 +90,24 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       switch (directoryItem)
       {
         case SeasonItem season:
+          if (seasons.Count == 0)
+          {
+            mask |= LibraryItemMask.Seasons;
+          }
           seasons.Add(season);
           break;
         case ShowItem show:
+          if (shows.Count == 0)
+          {
+            mask |= LibraryItemMask.Shows;
+          }
           shows.Add(show);
           break;
         case LibraryItem library:
+          if (libraries.Count == 0)
+          {
+            mask |= LibraryItemMask.Libraries;
+          }
           libraries.Add(library);
           break;
         case EmptyItem:
@@ -111,9 +125,17 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       switch (fileItem)
       {
         case EpisodeItem episode:
+          if (episodes.Count == 0)
+          {
+            mask |= LibraryItemMask.Episodes;
+          }
           episodes.Add(episode);
           break;
         case MovieItem movie:
+          if (movies.Count == 0)
+          {
+            mask |= LibraryItemMask.Movies;
+          }
           movies.Add(movie);
           break;
         case IgnoreItem:
@@ -123,80 +145,71 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       }
     }
 
-    if (seasons.Count != 0)
+    switch (mask)
     {
-      // When we have seasons, we can have seasons
-      //
-      if (movies.Count != 0 || episodes.Count != 0 || libraries.Count != 0 || shows.Count != 0)
-      {
-        throw new NotSupportedException();
-      }
-      foreach (var pattern in this.options.ShowMatchPatterns)
-      {
-        var match = Regex.Match(path.Name, pattern);
-        if (match.Success)
+      case LibraryItemMask.None:
+        return new EmptyItem() 
+          { 
+            Path = path 
+          };
+      case LibraryItemMask.Episodes:
+        // We need to construct the 'season' item from 'episodes'.
+        //
+        foreach (var pattern in this.options.SeasonMatchPatterns)
         {
-          var m = new ShowItemMatch(match);
-          return new ShowItem(seasons)
-            {
-              Title = m.Title,
-              Path = path
-            };
+          var match = Regex.Match(path.Name, pattern);
+          if (match.Success)
+          {
+            var m = new SeasonItemMatch(match);
+            return new SeasonItem(episodes) 
+              { 
+                Title = m.Title,
+                Path = path
+              };
+          }
+        }        
+        throw new NotImplementedException();
+      case LibraryItemMask.Seasons:
+        // We need to construct the 'shows' item from 'seasons'
+        //
+        foreach (var pattern in this.options.ShowMatchPatterns)
+        {
+          var match = Regex.Match(path.Name, pattern);
+          if (match.Success)
+          {
+            var m = new ShowItemMatch(match);
+            return new ShowItem(seasons)
+              {
+                Title = m.Title,
+                Path = path
+              };
+          }
         }
-      }
-      throw new NotImplementedException();
+        throw new NotImplementedException();
+      case LibraryItemMask.Shows:
+        // We need to construct the 'library' item from 'shows'
+        //
+        return new LibraryItem(shows) 
+          { 
+            Path = path
+          };
+      case LibraryItemMask.Movies:
+        // We need to construct the 'library' item from 'movies'
+        //
+        return new LibraryItem(movies) 
+          { 
+            Path = path
+          };
+      case LibraryItemMask.Libraries:
+        // We need to construct the 'library' item from 'library'
+        //
+        return new LibraryItem(libraries) 
+          { 
+            Path = path
+          };
+      default:
+        throw new NotImplementedException($"The scanning of \"{mask}\" isn't supported yet");
     }
-    if (libraries.Count != 0 || shows.Count != 0)
-    {
-      // When we have libraries or shows, we can have libraries, shows or movies
-      //
-      if (episodes.Count != 0)
-      {
-        throw new NotSupportedException();
-      }
-
-      return new LibraryItem(libraries, movies, shows)
-        {
-          Path = path
-        };
-    }
-
-    // If we have a directory with both episodes then we don't know what to do
-    //
-    if (episodes.Count != 0 && movies.Count != 0)
-    {
-      throw new NotSupportedException();
-    }
-
-    // If we have episodes, then it is a season
-    //
-    if (episodes.Count != 0)
-    {
-      foreach (var pattern in this.options.SeasonMatchPatterns)
-      {
-        var match = Regex.Match(path.Name, pattern);
-        if (match.Success)
-        {
-          var m = new SeasonItemMatch(match);
-          return new SeasonItem(episodes) 
-            { 
-              Title = m.Title,
-              Path = path
-            };
-        }
-      }
-    }
-
-    // If we have movies, then it is a library
-    //
-    if (movies.Count != 0)
-    {
-      return new LibraryItem(movies) 
-        { 
-          Path = path
-        };
-    }
-    return new EmptyItem() { Path = path };
   }
 
   private LibraryItem ScanLibrary(

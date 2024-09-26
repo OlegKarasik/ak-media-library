@@ -24,7 +24,7 @@ public abstract class ItemMatch
   {
     return match.Groups.TryGetValue(key, out var group) 
       ? Convert<T>(group.Value) 
-      : throw new Exception();
+      : throw new Exception($"The match must include \"{key}\" capture group");
   }
 
   protected static T? Optional<T>(

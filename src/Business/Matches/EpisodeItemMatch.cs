@@ -9,7 +9,7 @@ public class EpisodeItemMatch : ItemMatch
     get;
   }
 
-  public long Position
+  public string Code
   {
     get;
   }
@@ -23,6 +23,6 @@ public class EpisodeItemMatch : ItemMatch
     }
 
     this.Title = Required<string>(match, "title");
-    this.Position = Required<long>(match, "episode");
+    this.Code = Required<string>(match, "episode");
   }
 }

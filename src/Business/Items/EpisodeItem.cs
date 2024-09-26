@@ -11,7 +11,7 @@ public class EpisodeItem : FileItem
     get; init;
   }
 
-  public required long Position
+  public required string Code
   {
     get; init;
   }
