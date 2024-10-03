@@ -2,6 +2,7 @@
 
 using MediaLibrary.Commands;
 
+
 var app = new CommandApp();
 app.Configure(
   o =>

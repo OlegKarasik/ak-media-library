@@ -1,0 +1,15 @@
+{
+  "Movies": {
+    "Batman": "Path.avi"
+  },
+  "Shows": {
+    "Boston Legal": {
+      "Season 1": {
+        "Key": {
+          "Path": "Path.avi",
+          "Title": ""
+        }
+      }
+    }
+  }
+}
