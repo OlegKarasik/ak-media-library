@@ -11,6 +11,17 @@ namespace MediaLibrary.Commands;
 
 public class ScanCommand : AsyncCommand<ScanCommandSettings>
 {
+  [Flags]
+  public enum ScanItemMask
+  {
+    None      = 0b00000000,
+    Episodes  = 0b00000001,
+    Movies    = 0b00000010,
+    Seasons   = 0b00000100,
+    Shows     = 0b00001000,
+    Libraries = 0b00010000
+  }
+
   private readonly ScanCommandOptions options;
 
   public ScanCommand()
@@ -79,7 +90,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   private DirectoryItem ScanDirectory(
     DirectoryPath path)
   {
-    var mask = LibraryItemMask.None;
+    var mask = ScanItemMask.None;
 
     List<SeasonItem> seasons = [];
     List<ShowItem> shows = [];
@@ -92,21 +103,21 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         case SeasonItem season:
           if (seasons.Count == 0)
           {
-            mask |= LibraryItemMask.Seasons;
+            mask |= ScanItemMask.Seasons;
           }
           seasons.Add(season);
           break;
         case ShowItem show:
           if (shows.Count == 0)
           {
-            mask |= LibraryItemMask.Shows;
+            mask |= ScanItemMask.Shows;
           }
           shows.Add(show);
           break;
         case LibraryItem library:
           if (libraries.Count == 0)
           {
-            mask |= LibraryItemMask.Libraries;
+            mask |= ScanItemMask.Libraries;
           }
           libraries.Add(library);
           break;
@@ -127,14 +138,14 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         case EpisodeItem episode:
           if (episodes.Count == 0)
           {
-            mask |= LibraryItemMask.Episodes;
+            mask |= ScanItemMask.Episodes;
           }
           episodes.Add(episode);
           break;
         case MovieItem movie:
           if (movies.Count == 0)
           {
-            mask |= LibraryItemMask.Movies;
+            mask |= ScanItemMask.Movies;
           }
           movies.Add(movie);
           break;
@@ -147,12 +158,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
 
     switch (mask)
     {
-      case LibraryItemMask.None:
+      case ScanItemMask.None:
         return new EmptyItem() 
           { 
             Path = path 
           };
-      case LibraryItemMask.Episodes:
+      case ScanItemMask.Episodes:
         // We need to construct the 'season' item from 'episodes'.
         //
         foreach (var pattern in this.options.SeasonMatchPatterns)
@@ -169,7 +180,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           }
         }        
         throw new NotImplementedException();
-      case LibraryItemMask.Seasons:
+      case ScanItemMask.Seasons:
         // We need to construct the 'shows' item from 'seasons'
         //
         foreach (var pattern in this.options.ShowMatchPatterns)
@@ -186,21 +197,21 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           }
         }
         throw new NotImplementedException();
-      case LibraryItemMask.Shows:
+      case ScanItemMask.Shows:
         // We need to construct the 'library' item from 'shows'
         //
         return new LibraryItem(shows) 
           { 
             Path = path
           };
-      case LibraryItemMask.Movies:
+      case ScanItemMask.Movies:
         // We need to construct the 'library' item from 'movies'
         //
         return new LibraryItem(movies) 
           { 
             Path = path
           };
-      case LibraryItemMask.Libraries:
+      case ScanItemMask.Libraries:
         // We need to construct the 'library' item from 'library'
         //
         return new LibraryItem(libraries) 
