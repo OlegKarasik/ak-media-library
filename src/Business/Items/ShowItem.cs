@@ -10,7 +10,7 @@ public class ShowItem : DirectoryItem
     get; init;
   }
 
-  public SeasonItem[] Seasons 
+  public Dictionary<string, SeasonItem> Seasons 
   { 
     get;
   }
@@ -18,6 +18,6 @@ public class ShowItem : DirectoryItem
   public ShowItem(
     IEnumerable<SeasonItem> seasons)
   {
-    this.Seasons = [.. (seasons ?? [])];
+    this.Seasons = Collide<SeasonItem, SeasonItemKey>(seasons);
   }
 }

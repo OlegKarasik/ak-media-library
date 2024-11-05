@@ -6,6 +6,10 @@ using Spectre.Console.Cli;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Matches;
+using System.Text.Json;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace MediaLibrary.Commands;
 
@@ -223,22 +227,31 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     }
   }
 
-  private LibraryItem ScanLibrary(
+  private void ScanLibrary(
     DirectoryPath path)
   {
-    var item = this.ScanDirectory(path);
-    if (item is LibraryItem library)
+    var library = this.ScanDirectory(path) switch
     {
-      return library;
-    }
-    throw new NotSupportedException();
+      LibraryItem libraryItem => libraryItem,
+      _ => throw new NotSupportedException()
+    };
+
+    var content = JsonSerializer.Serialize(
+      library, 
+      new JsonSerializerOptions
+      {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
+      });
+
+    File.WriteAllText(Path.Combine(path.Value, "this.index.json"), content);
   }
 
   public override Task<int> ExecuteAsync(
     CommandContext context, 
     ScanCommandSettings settings)
   {
-    var library = AnsiConsole
+    AnsiConsole
       .Status()
       .Start("Scanning...", ctx => this.ScanLibrary(new DirectoryPath(settings.LibraryPath)));
         

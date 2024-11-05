@@ -10,7 +10,7 @@ public class SeasonItem : DirectoryItem
     get; init;
   }
 
-  public EpisodeItem[] Episodes 
+  public Dictionary<string, EpisodeItem> Episodes 
   { 
     get; 
   }
@@ -18,6 +18,6 @@ public class SeasonItem : DirectoryItem
   public SeasonItem(
     IEnumerable<EpisodeItem> episodes)
   {
-    this.Episodes = [.. (episodes ?? [])];
+    this.Episodes = Collide<EpisodeItem, EpisodeItemKey>(episodes);
   }
 }

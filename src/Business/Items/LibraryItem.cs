@@ -1,4 +1,5 @@
 namespace MediaLibrary.Business.Items;
+
 public class LibraryItem : DirectoryItem
 {
   public LibraryItemMask Mask
@@ -6,12 +7,12 @@ public class LibraryItem : DirectoryItem
     get;
   }
 
-  public MovieItem[] Movies
+  public Dictionary<string, MovieItem> Movies
   {
     get;
   }
 
-  public ShowItem[] Shows
+  public Dictionary<string, ShowItem> Shows
   {
     get;
   }
@@ -27,14 +28,17 @@ public class LibraryItem : DirectoryItem
 
     : this()
   {
-    this.Movies = [.. SelectMovies(libraries)];
-    this.Shows = [.. SelectShows(libraries)];
+    this.Movies = Collide<MovieItem, MovieItemKey>(
+      libraries.SelectMany(i => i.Movies.Values));
 
-    if (this.Movies.Length != 0)
+    this.Shows = Collide<ShowItem, ShowItemKey>(
+      libraries.SelectMany(i => i.Shows.Values));
+
+    if (this.Movies.Count != 0)
     {
       this.Mask |= LibraryItemMask.Movies;
     }
-    if (this.Shows.Length != 0)
+    if (this.Shows.Count != 0)
     {
       this.Mask |= LibraryItemMask.Shows;
     }
@@ -46,7 +50,7 @@ public class LibraryItem : DirectoryItem
     : this()
   {
     this.Mask = LibraryItemMask.Movies;
-    this.Movies = [.. movies ?? []];
+    this.Movies = Collide<MovieItem, MovieItemKey>(movies);
   }
 
   public LibraryItem(
@@ -55,22 +59,6 @@ public class LibraryItem : DirectoryItem
     : this()
   {
     this.Mask = LibraryItemMask.Shows;
-    this.Shows = [.. shows ?? []];
-  }
-
-  private static IEnumerable<MovieItem> SelectMovies(
-    IEnumerable<LibraryItem> libraries)
-  {
-    return libraries
-      .Where(i => i.Mask.HasFlag(LibraryItemMask.Movies))
-      .SelectMany(i => i.Movies);
-  }
-
-  private static IEnumerable<ShowItem> SelectShows(
-    IEnumerable<LibraryItem> libraries)
-  {
-    return libraries
-      .Where(i => i.Mask.HasFlag(LibraryItemMask.Shows))
-      .SelectMany(i => i.Shows);
+    this.Shows = Collide<ShowItem, ShowItemKey>(shows);
   }
 }
