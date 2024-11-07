@@ -18,6 +18,6 @@ public class ShowItem : DirectoryItem
   public ShowItem(
     IEnumerable<SeasonItem> seasons)
   {
-    this.Seasons = Collide<SeasonItem, SeasonItemKey>(seasons);
+    this.Seasons = Collide<SeasonItem, SeasonItemDirectoryKey>(seasons);
   }
 }

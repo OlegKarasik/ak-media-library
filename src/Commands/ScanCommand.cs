@@ -5,7 +5,6 @@ using Spectre.Console.Cli;
 
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
-using MediaLibrary.Business.Matches;
 using System.Text.Json;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -67,7 +66,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title,
-            Code = m.Code,
+            Index = m.Index,
             Path = path 
           };
       }

@@ -1,20 +1,15 @@
 using System.Text.RegularExpressions;
 
-namespace MediaLibrary.Business.Matches;
+namespace MediaLibrary.Business.Items;
 
-public class EpisodeItemMatch : ItemMatch
+public class ShowItemMatch : ItemMatch
 {
   public string Title
   {
     get;
   }
 
-  public string Code
-  {
-    get;
-  }
-
-  public EpisodeItemMatch(
+  public ShowItemMatch(
     Match match)
   {
     if (match is null)
@@ -23,6 +18,5 @@ public class EpisodeItemMatch : ItemMatch
     }
 
     this.Title = Required<string>(match, "title");
-    this.Code = Required<string>(match, "episode");
   }
 }

@@ -1,9 +1,9 @@
 namespace MediaLibrary.Business.Items;
 
-public struct ShowItemKey : IDirectoryKey<ShowItem>
+public struct MovieItemDirectoryKey : IDirectoryKey<MovieItem>
 {
   public readonly string Get(
-    ShowItem item)
+    MovieItem item)
   {
     return item switch
     {

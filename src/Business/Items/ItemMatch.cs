@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MediaLibrary.Business.Matches;
+namespace MediaLibrary.Business.Items;
 
 public abstract class ItemMatch
 {
@@ -11,9 +11,13 @@ public abstract class ItemMatch
     {
       return (T)(object)value;
     }
-    if (typeof(T) == typeof(long))
+    if (typeof(T) == typeof(long) || typeof(T) == typeof(long?))
     {
       return (T)(object)long.Parse(value);
+    }
+    if (typeof(T) == typeof(int) || typeof(T) == typeof(int?))
+    {
+      return (T)(object)int.Parse(value);
     }
     throw new NotImplementedException();
   }

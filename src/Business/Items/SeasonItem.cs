@@ -18,6 +18,6 @@ public class SeasonItem : DirectoryItem
   public SeasonItem(
     IEnumerable<EpisodeItem> episodes)
   {
-    this.Episodes = Collide<EpisodeItem, EpisodeItemKey>(episodes);
+    this.Episodes = Collide<EpisodeItem, EpisodeItemDirectoryKey>(episodes);
   }
 }

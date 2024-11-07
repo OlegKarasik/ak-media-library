@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MediaLibrary.Business.Matches;
+namespace MediaLibrary.Business.Items;
 
 public class SeasonItemMatch : ItemMatch
 {

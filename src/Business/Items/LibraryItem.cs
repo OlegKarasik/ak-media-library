@@ -28,10 +28,10 @@ public class LibraryItem : DirectoryItem
 
     : this()
   {
-    this.Movies = Collide<MovieItem, MovieItemKey>(
+    this.Movies = Collide<MovieItem, MovieItemDirectoryKey>(
       libraries.SelectMany(i => i.Movies.Values));
 
-    this.Shows = Collide<ShowItem, ShowItemKey>(
+    this.Shows = Collide<ShowItem, ShowItemDirectoryKey>(
       libraries.SelectMany(i => i.Shows.Values));
 
     if (this.Movies.Count != 0)
@@ -50,7 +50,7 @@ public class LibraryItem : DirectoryItem
     : this()
   {
     this.Mask = LibraryItemMask.Movies;
-    this.Movies = Collide<MovieItem, MovieItemKey>(movies);
+    this.Movies = Collide<MovieItem, MovieItemDirectoryKey>(movies);
   }
 
   public LibraryItem(
@@ -59,6 +59,6 @@ public class LibraryItem : DirectoryItem
     : this()
   {
     this.Mask = LibraryItemMask.Shows;
-    this.Shows = Collide<ShowItem, ShowItemKey>(shows);
+    this.Shows = Collide<ShowItem, ShowItemDirectoryKey>(shows);
   }
 }
