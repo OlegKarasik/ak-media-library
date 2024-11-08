@@ -23,7 +23,7 @@ public class SeasonItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = match.Required<string>(ItemMatchConstants.SEASON_TITLE);
+    this.Title = match.Required<string>(ItemMatchConstants.SEASON_TITLE).Trim();
     
     this.SeasonIndex = 
       GetIndex(match, ItemMatchConstants.SEASON_INDEX) ?? 

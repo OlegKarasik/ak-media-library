@@ -42,7 +42,7 @@ public class ScanCommandOptions
 
     this.ShowMatchPatterns = 
       [
-        @"^(?<title>.+)$"
+        @"^(?<htitle>.+)$"
       ];
     this.SeasonMatchPatterns = 
       [
@@ -50,7 +50,7 @@ public class ScanCommandOptions
       ];
     this.MovieMatchPatterns = 
       [
-        @"^(?<title>.+)$"
+        @"^(?<mtitle>.+)$"
       ];
     this.EpisodeMatchPatterns =
       [

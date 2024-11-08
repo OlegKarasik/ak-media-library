@@ -18,6 +18,6 @@ public class ShowItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = match.Required<string>(ItemMatchConstants.SHOW_TITLE);
+    this.Title = match.Required<string>(ItemMatchConstants.SHOW_TITLE).Trim();
   }
 }

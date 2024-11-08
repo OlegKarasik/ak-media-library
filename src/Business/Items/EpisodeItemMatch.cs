@@ -28,7 +28,7 @@ public class EpisodeItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = match.Required<string>(ItemMatchConstants.EPISODE_TITLE);
+    this.Title = match.Required<string>(ItemMatchConstants.EPISODE_TITLE).Trim();
 
     this.SeasonIndex  = GetIndex(match, ItemMatchConstants.SEASON_INDEX) ?? ItemIndex.Default;
     this.EpisodeIndex = 

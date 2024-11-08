@@ -18,6 +18,6 @@ public class MovieItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = match.Required<string>(ItemMatchConstants.MOVIE_TITLE);
+    this.Title = match.Required<string>(ItemMatchConstants.MOVIE_TITLE).Trim();
   }
 }

@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Commands;
 
@@ -66,7 +67,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title,
-            Index = m.EpisodeIndex,
+            SeasonIndex = m.SeasonIndex,
+            EpisodeIndex = m.EpisodeIndex,
             Path = path 
           };
       }
@@ -175,9 +177,11 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           if (match.Success)
           {
             var m = new SeasonItemMatch(match);
-            return new SeasonItem(episodes) 
+            return new SeasonItem
               { 
                 Title = m.Title,
+                SeasonIndex = m.SeasonIndex,
+                Episodes = episodes.Collide(i => i.Title),
                 Path = path
               };
           }
@@ -192,9 +196,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           if (match.Success)
           {
             var m = new ShowItemMatch(match);
-            return new ShowItem(seasons)
+            return new ShowItem
               {
                 Title = m.Title,
+                Seasons = seasons.Collide(i => i.Title),
                 Path = path
               };
           }
@@ -203,22 +208,28 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       case ScanItemMask.Shows:
         // We need to construct the 'library' item from 'shows'
         //
-        return new LibraryItem(shows) 
+        return new LibraryItem
           { 
+            Shows = shows.Collide(i => i.Title),
+            Movies = [],
             Path = path
           };
       case ScanItemMask.Movies:
         // We need to construct the 'library' item from 'movies'
         //
-        return new LibraryItem(movies) 
+        return new LibraryItem
           { 
+            Shows = [],
+            Movies = movies.Collide(i => i.Title),
             Path = path
           };
       case ScanItemMask.Libraries:
         // We need to construct the 'library' item from 'library'
         //
-        return new LibraryItem(libraries) 
+        return new LibraryItem
           { 
+            Shows = libraries.SelectMany(i => i.Shows.Values).Collide(i => i.Title),
+            Movies = libraries.SelectMany(i => i.Movies.Values).Collide(i => i.Title),
             Path = path
           };
       default:

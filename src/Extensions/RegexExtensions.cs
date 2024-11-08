@@ -8,6 +8,11 @@ public static class RegexExtensions
     this Match @this,
     string key)
   {
+    if (string.IsNullOrEmpty(key))
+    {
+      throw new ArgumentException($"'{nameof(key)}' cannot be null or empty.", nameof(key));
+    }
+
     return @this.Groups.TryGetValue(key, out var group) 
       ? Convert<T>(group.Value) 
       : throw new InvalidOperationException($"The match must include \"{key}\" capture group");
@@ -17,6 +22,11 @@ public static class RegexExtensions
     this Match @this,
     string key)
   {
+    if (key is null)
+    {
+      throw new ArgumentNullException(nameof(key));
+    }
+
     return @this.Groups.TryGetValue(key, out var group) 
       ? Convert<T>(group.Value) 
       : default;
@@ -25,6 +35,11 @@ public static class RegexExtensions
   private static T Convert<T>(
     string value)
   {
+    if (string.IsNullOrEmpty(value))
+    {
+      throw new ArgumentException($"'{nameof(value)}' cannot be null or empty.", nameof(value));
+    }
+
     if (typeof(T) == typeof(string))
     {
       return (T)(object)value;

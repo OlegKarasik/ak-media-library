@@ -3,21 +3,25 @@ using System.Diagnostics;
 namespace MediaLibrary.Business.Items;
 
 [DebuggerDisplay($"{{{nameof(Title)}}}")]
-public class ShowItem : DirectoryItem
+public class ShowItem : DirectoryItem, IComparable<ShowItem>
 {
   public required string Title
   {
     get; init;
   }
 
-  public Dictionary<string, SeasonItem> Seasons 
+  public required Dictionary<string, SeasonItem> Seasons 
   { 
-    get;
+    get; init;
   }
 
-  public ShowItem(
-    IEnumerable<SeasonItem> seasons)
+  public int CompareTo(
+    ShowItem? other)
   {
-    this.Seasons = Collide<SeasonItem, SeasonItemDirectoryKey>(seasons);
+    if (other is null)
+    {
+      return 1;
+    }
+    return StringComparer.OrdinalIgnoreCase.Compare(this.Title, other.Title);
   }
 }
