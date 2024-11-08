@@ -1,7 +1,9 @@
 namespace MediaLibrary.Business.Items;
 
-public class EpisodeItemIndex
+public class ItemIndex
 {
+  public static readonly ItemIndex Default = new([0]);
+
   public int[] Values
   {
     get;
@@ -12,7 +14,7 @@ public class EpisodeItemIndex
     get;
   }
 
-  public EpisodeItemIndex(
+  public ItemIndex(
     int[] values)
   {
     this.Values = values ?? throw new ArgumentNullException(nameof(values));

@@ -1,42 +1,32 @@
 using System.Text.RegularExpressions;
+using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Business.Items;
-
 public abstract class ItemMatch
 {
-  private static T Convert<T>(
-    string value)
+  protected static ItemIndex? GetIndex(
+    Match match,
+    string indexGroup)
   {
-    if (typeof(T) == typeof(string))
+    var value = match.Optional<int?>(indexGroup);
+    if (value is not null)
     {
-      return (T)(object)value;
+      return new ItemIndex([value.Value]);
     }
-    if (typeof(T) == typeof(long) || typeof(T) == typeof(long?))
-    {
-      return (T)(object)long.Parse(value);
-    }
-    if (typeof(T) == typeof(int) || typeof(T) == typeof(int?))
-    {
-      return (T)(object)int.Parse(value);
-    }
-    throw new NotImplementedException();
+    return null;
   }
 
-  protected static T Required<T>(
+  protected static ItemIndex? GetSpanningIndex(
     Match match,
-    string key)
+    string fromGroup,
+    string toGroup)
   {
-    return match.Groups.TryGetValue(key, out var group) 
-      ? Convert<T>(group.Value) 
-      : throw new Exception($"The match must include \"{key}\" capture group");
-  }
-
-  protected static T? Optional<T>(
-    Match match,
-    string key)
-  {
-    return match.Groups.TryGetValue(key, out var group) 
-      ? Convert<T>(group.Value) 
-      : default;
+    var from = match.Optional<int?>(fromGroup); 
+    var to = match.Optional<int?>(toGroup);
+    if (from is not null && to is not null)
+    {
+      return new ItemIndex([from.Value, to.Value]);
+    }
+    return null;
   }
 }

@@ -10,7 +10,7 @@ public class EpisodeItem : FileItem
     get; init;
   }
 
-  public required EpisodeItemIndex Index
+  public required ItemIndex Index
   {
     get; init;
   }

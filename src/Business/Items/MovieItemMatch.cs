@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Business.Items;
 
@@ -17,6 +18,6 @@ public class MovieItemMatch : ItemMatch
       throw new ArgumentNullException(nameof(match));
     }
 
-    this.Title = Required<string>(match, "title");
+    this.Title = match.Required<string>(ItemMatchConstants.MOVIE_TITLE);
   }
 }

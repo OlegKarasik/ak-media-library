@@ -66,7 +66,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title,
-            Index = m.Index,
+            Index = m.EpisodeIndex,
             Path = path 
           };
       }
