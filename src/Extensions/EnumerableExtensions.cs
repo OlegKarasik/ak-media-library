@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace MediaLibrary.Extensions;
 
 public static class EnumerableExtensions
@@ -16,25 +19,22 @@ public static class EnumerableExtensions
     foreach (var item in @this.Order())
     {
       var key = keyFunc(item);
-      if (!result.TryAdd(key, item))
+      ref int index = ref CollectionsMarshal.GetValueRefOrAddDefault(indices, key, out var exists);
+      if (!exists)
       {
-        if (!indices.TryGetValue(key, out var index))
+        result[key] = item;
+        continue;
+      }
+      if (index == default)
+      {
+        index++;
+        if (result.Remove(key, out var current))
         {
-          index = 1;
-
-          if (result.Remove(key, out var current))
-          {
-            result[$"{key} ({index++})"] = current;
-          }
+          result[$"{key} ({index})"] = current;
         }
-
-        if (!result.TryAdd($"{key} ({index++})", item))
-        {
-          throw new Exception();
-        }
-
-        indices[key] = index;
-      }  
+      }
+      index++;
+      result[$"{key} ({index})"] = item;
     }
     return result;
   }
