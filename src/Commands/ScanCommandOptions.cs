@@ -46,7 +46,7 @@ public class ScanCommandOptions
       ];
     this.SeasonMatchPatterns = 
       [
-        @"^(?<stitle>.+)\s*(?<sindex>\d+)$"
+        @"^(?<stitle>.+\s*(?<sindex>\d+))$"
       ];
     this.MovieMatchPatterns = 
       [
