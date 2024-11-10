@@ -2,12 +2,16 @@ namespace MediaLibrary.Commands;
 
 public class ScanCommandOptions
 {
-  public IReadOnlyCollection<string> FileExtensions 
+  public IReadOnlyCollection<string> VideoExtensions 
+  { 
+    get; 
+  }
+  public IReadOnlyCollection<string> SubtitleExtensions 
   { 
     get; 
   }
 
-  public IReadOnlyCollection<string> FileIgnorePatterns 
+  public IReadOnlyCollection<string> IgnoreMatchPatterns 
   { 
     get; 
   }
@@ -34,12 +38,13 @@ public class ScanCommandOptions
 
   public ScanCommandOptions()
   {
-    this.FileExtensions = [".mp4", ".avi", ".mkv"];
-    this.FileIgnorePatterns = 
+    this.VideoExtensions = [".mp4", ".avi", ".mkv"];
+    this.SubtitleExtensions = [".srt", ".ass"];
+
+    this.IgnoreMatchPatterns = 
       [
         @"^\._"
       ];
-
     this.ShowMatchPatterns = 
       [
         @"^(?<htitle>.+)$"

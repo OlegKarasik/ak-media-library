@@ -38,21 +38,15 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   {
     // Rule out all unsupported files
     //
-    if (!this.options.FileExtensions.Contains(path.Extension))
+    if (!this.options.VideoExtensions.Contains(path.Extension))
     {
-      return new IgnoreItem 
-        { 
-          Path = path 
-        };
+      return new IgnoreItem();
     }
-    foreach (var pattern in this.options.FileIgnorePatterns)
+    foreach (var pattern in this.options.IgnoreMatchPatterns)
     {
       if (Regex.IsMatch(path.Name, pattern))
       {
-        return new IgnoreItem 
-          { 
-            Path = path 
-          };
+        return new IgnoreItem();
       }
     }
 
@@ -164,10 +158,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     switch (mask)
     {
       case ScanItemMask.None:
-        return new EmptyItem() 
-          { 
-            Path = path 
-          };
+        return new EmptyItem();
       case ScanItemMask.Episodes:
         // We need to construct the 'season' item from 'episodes'.
         //

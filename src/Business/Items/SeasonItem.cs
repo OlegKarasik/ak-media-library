@@ -19,6 +19,11 @@ public class SeasonItem : DirectoryItem, IComparable<SeasonItem>
   { 
     get; init;
   }
+  
+  public required DirectoryPath Path 
+  { 
+    get; init;
+  }
 
   public int CompareTo(
     SeasonItem? other)

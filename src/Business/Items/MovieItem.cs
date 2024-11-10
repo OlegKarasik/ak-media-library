@@ -9,6 +9,11 @@ public class MovieItem : FileItem, IComparable<MovieItem>
   {
     get; init;
   }
+  
+  public required FilePath Path 
+  { 
+    get; init; 
+  }
 
   public int CompareTo(
     MovieItem? other)

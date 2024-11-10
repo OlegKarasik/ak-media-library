@@ -14,6 +14,11 @@ public class ShowItem : DirectoryItem, IComparable<ShowItem>
   { 
     get; init;
   }
+  
+  public required DirectoryPath Path 
+  { 
+    get; init;
+  }
 
   public int CompareTo(
     ShowItem? other)
