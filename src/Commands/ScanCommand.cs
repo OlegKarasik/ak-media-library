@@ -50,6 +50,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       }
     }
 
+    // Perform lookup for subtitles
+    //
+    var subtitles = this.options.SubtitleExtensions
+      .Where(i => File.Exists(Path.ChangeExtension(path.Value, i)))
+      .ToArray();
+
     // Attempt to match the file by one of the episode patterns
     //
     foreach (var pattern in this.options.EpisodeMatchPatterns)
@@ -63,7 +69,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             Title = m.Title,
             SeasonIndex = m.SeasonIndex,
             EpisodeIndex = m.EpisodeIndex,
-            Path = path 
+            Path = path,
+            Subtitles = subtitles
           };
       }
     }
@@ -79,7 +86,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new MovieItem
           {
             Title = m.Title,
-            Path = path
+            Path = path,
+            Subtitles = subtitles
           };
       }
     }
