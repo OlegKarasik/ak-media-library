@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public class OpenLibraryCommandSettings : CommandSettings
+public class NormalizeCommandSettings : CommandSettings
 {
   [CommandArgument(0, "<library-path>")]
   public string LibraryPath
@@ -11,9 +11,16 @@ public class OpenLibraryCommandSettings : CommandSettings
     get; set; 
   }
 
-  public OpenLibraryCommandSettings()
+  [CommandArgument(0, "<index-path>")]
+  public string IndexPath
+  {
+    get; set; 
+  }
+
+  public NormalizeCommandSettings()
   {
     this.LibraryPath = string.Empty;
+    this.IndexPath = string.Empty;
   }
 
   public override ValidationResult Validate()

@@ -11,9 +11,4 @@ public class LibraryItem : DirectoryItem
   {
     get; init;
   }
-  
-  public required DirectoryPath Path 
-  { 
-    get; init;
-  }
 }

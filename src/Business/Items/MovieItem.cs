@@ -9,16 +9,6 @@ public class MovieItem : FileItem, IComparable<MovieItem>
   {
     get; init;
   }
-  
-  public required FilePath Path 
-  { 
-    get; init; 
-  }
-
-  public required string[] Subtitles
-  {
-    get; init;
-  }
 
   public int CompareTo(
     MovieItem? other)

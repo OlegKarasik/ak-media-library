@@ -19,16 +19,6 @@ public class EpisodeItem : FileItem, IComparable<EpisodeItem>
   {
     get; init;
   }
-  
-  public required FilePath Path 
-  { 
-    get; init; 
-  }
-
-  public required string[] Subtitles
-  {
-    get; init;
-  }
 
   public int CompareTo(
     EpisodeItem? other)

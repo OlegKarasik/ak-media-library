@@ -2,11 +2,11 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public class OpenLibraryCommand : AsyncCommand<OpenLibraryCommandSettings>
+public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
 {
   public override Task<int> ExecuteAsync(
     CommandContext context, 
-    OpenLibraryCommandSettings settings)
+    NormalizeCommandSettings settings)
   {
     return Task.FromResult(0);
   }

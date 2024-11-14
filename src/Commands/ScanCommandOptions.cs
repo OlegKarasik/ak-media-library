@@ -6,10 +6,6 @@ public class ScanCommandOptions
   { 
     get; 
   }
-  public IReadOnlyCollection<string> SubtitleExtensions 
-  { 
-    get; 
-  }
 
   public IReadOnlyCollection<string> IgnoreMatchPatterns 
   { 
@@ -39,7 +35,6 @@ public class ScanCommandOptions
   public ScanCommandOptions()
   {
     this.VideoExtensions = [".mp4", ".avi", ".mkv"];
-    this.SubtitleExtensions = [".srt", ".ass"];
 
     this.IgnoreMatchPatterns = 
       [

@@ -40,21 +40,21 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     //
     if (!this.options.VideoExtensions.Contains(path.Extension))
     {
-      return new IgnoreItem();
+      return new IgnoreItem
+      {
+        Path = path
+      };
     }
     foreach (var pattern in this.options.IgnoreMatchPatterns)
     {
       if (Regex.IsMatch(path.Name, pattern))
       {
-        return new IgnoreItem();
+        return new IgnoreItem
+        {
+          Path = path
+        };
       }
     }
-
-    // Perform lookup for subtitles
-    //
-    var subtitles = this.options.SubtitleExtensions
-      .Where(i => File.Exists(Path.ChangeExtension(path.Value, i)))
-      .ToArray();
 
     // Attempt to match the file by one of the episode patterns
     //
@@ -69,8 +69,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             Title = m.Title,
             SeasonIndex = m.SeasonIndex,
             EpisodeIndex = m.EpisodeIndex,
-            Path = path,
-            Subtitles = subtitles
+            Path = path
           };
       }
     }
@@ -86,8 +85,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new MovieItem
           {
             Title = m.Title,
-            Path = path,
-            Subtitles = subtitles
+            Path = path
           };
       }
     }
@@ -166,7 +164,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     switch (mask)
     {
       case ScanItemMask.None:
-        return new EmptyItem();
+        return new EmptyItem
+        {
+          Path = path
+        };
       case ScanItemMask.Episodes:
         // We need to construct the 'season' item from 'episodes'.
         //

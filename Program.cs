@@ -8,7 +8,7 @@ app.Configure(
   o =>
   {
     o.AddCommand<ScanCommand>("scan");
-    o.AddCommand<OpenLibraryCommand>("open");
+    o.AddCommand<NormalizeCommand>("open");
   });
 
 return await app.RunAsync(args);
