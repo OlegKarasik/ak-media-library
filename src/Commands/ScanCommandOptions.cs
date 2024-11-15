@@ -42,20 +42,20 @@ public class ScanCommandOptions
       ];
     this.ShowMatchPatterns = 
       [
-        @"^(?<htitle>.+)$"
+        @"^(?<ShowTitle>.+)$"
       ];
     this.SeasonMatchPatterns = 
       [
-        @"^(?<stitle>.+\s*(?<sindex>\d+))$"
+        @"^(?<SeasonTitle>.+\s*(?<Season>\d+))$"
       ];
     this.MovieMatchPatterns = 
       [
-        @"^(?<mtitle>.+)$"
+        @"^(?<MovieTitle>.+)$"
       ];
     this.EpisodeMatchPatterns =
       [
-        @"^S(?<sindex>\d+)E(?<eindexf>\d+)\s*-\s*E(?<eindext>\d+)\s*-?\s*(?<etitle>.+)$",
-        @"^S(?<sindex>\d+)E(?<eindex>\d+)\s*-?\s*(?<etitle>.+)$"
+        @"^S(?<Season>\d+)E(?<EpisodeOpen>\d+)\s*-\s*E(?<EpisodeClose>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
+        @"^S(?<Season>\d+)E(?<Episode>\d+)\s*-?\s*(?<EpisodeTitle>.+)$"
       ];
   }
 }
