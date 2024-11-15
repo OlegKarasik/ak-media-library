@@ -254,7 +254,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
       });
 
-    File.WriteAllText(Path.Combine(path.Value, "this.index.json"), content);
+    File.WriteAllText(new IndexPath(path.Value).Value, content);
   }
 
   public override Task<int> ExecuteAsync(
