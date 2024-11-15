@@ -11,7 +11,7 @@ public class NormalizeCommandSettings : CommandSettings
     get; set; 
   }
 
-  [CommandArgument(0, "<index-path>")]
+  [CommandArgument(1, "<index-path>")]
   public string IndexPath
   {
     get; set; 

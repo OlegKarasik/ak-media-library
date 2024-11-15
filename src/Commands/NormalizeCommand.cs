@@ -1,3 +1,7 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
+using MediaLibrary.Business.Items;
 using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
@@ -8,6 +12,17 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
     CommandContext context, 
     NormalizeCommandSettings settings)
   {
+    using (var fs = File.OpenRead(Path.Combine(settings.LibraryPath, "this.index.json"))) 
+    {
+      var library = JsonSerializer.Deserialize<LibraryItem>(
+        fs,
+        new JsonSerializerOptions
+        {
+          WriteIndented = true,
+          Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
+        });
+    }
+      
     return Task.FromResult(0);
   }
 }
