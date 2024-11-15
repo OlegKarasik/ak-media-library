@@ -2,7 +2,7 @@ namespace MediaLibrary.Business.Items;
 
 public class ItemIndex : IComparable<ItemIndex>
 {
-  public static readonly ItemIndex Default = new([0]);
+  public static readonly ItemIndex Default = new([1]);
 
   public int[] Values
   {
