@@ -22,6 +22,8 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
           WriteIndented = true,
           Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         });
+
+      var item = Navigation.GetItem(library, new NavigationPath());
     }
       
     return Task.FromResult(0);
