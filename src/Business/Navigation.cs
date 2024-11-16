@@ -10,10 +10,24 @@ public enum NavigationRoot
 
 public abstract class NavigationSegment
 {
-  public abstract Item this[string key]
+  public abstract NavigationSegment this[string key]
   {
     get;
   }
+}
+
+public class ItemNavigationSegment<TItem> : NavigationSegment
+  where TItem: Item
+{
+  private readonly TItem item;
+
+  public ItemNavigationSegment(
+    TItem item)
+  {
+    this.item = item ?? throw new ArgumentNullException(nameof(item));
+  }
+
+  public override NavigationSegment this[string key] => this;
 }
 
 public class MoviesNavigationSegment : NavigationSegment
@@ -26,7 +40,7 @@ public class MoviesNavigationSegment : NavigationSegment
     this.movies = movies ?? throw new ArgumentNullException(nameof(movies));
   }
 
-  public override Item this[string key] => this.movies[key];
+  public override NavigationSegment this[string key] => new ItemNavigationSegment<MovieItem>(this.movies[key]);
 }
 
 public class ShowsNavigationSegment : NavigationSegment
@@ -39,7 +53,33 @@ public class ShowsNavigationSegment : NavigationSegment
     this.shows = shows ?? throw new ArgumentNullException(nameof(shows));
   }
 
-  public override Item this[string key] => this.shows[key];
+  public override NavigationSegment this[string key] => new SeasonNavigationSegment(this.shows[key].Seasons);
+}
+
+public class SeasonNavigationSegment : NavigationSegment
+{
+  private readonly IDictionary<string, SeasonItem> seasons;
+
+  public SeasonNavigationSegment(
+    IDictionary<string, SeasonItem> seasons)
+  {
+    this.seasons = seasons ?? throw new ArgumentNullException(nameof(seasons));
+  }
+
+  public override NavigationSegment this[string key] => new EpisodeNavigationSegment(this.seasons[key].Episodes);
+}
+
+public class EpisodeNavigationSegment : NavigationSegment
+{
+  private readonly IDictionary<string, EpisodeItem> episodes;
+
+  public EpisodeNavigationSegment(
+    IDictionary<string, EpisodeItem> episodes)
+  {
+    this.episodes = episodes ?? throw new ArgumentNullException(nameof(episodes));
+  }
+
+  public override NavigationSegment this[string key] => new ItemNavigationSegment<EpisodeItem>(this.episodes[key]);
 }
 
 public class NavigationPath
