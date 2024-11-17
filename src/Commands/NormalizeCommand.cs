@@ -31,7 +31,7 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
       }
       library = result;
     }
-    switch (Navigator.GetItem(library, new NavigationQuery())) 
+    switch (Navigator.GetItem(library, new NavigationQuery(settings.IndexPath))) 
     {
 
     }
