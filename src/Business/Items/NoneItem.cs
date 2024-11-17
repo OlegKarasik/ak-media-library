@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace MediaLibrary.Business.Items;
 
-[DebuggerDisplay("<ignore>")]
-public class IgnoreItem : FileItem
+[DebuggerDisplay("<none>")]
+public class NoneItem : Item
 {
 }

@@ -5,11 +5,11 @@ public class IndexPath : FilePath
   public IndexPath(
     string value)
 
-    : base(Normalize(value))
+    : base(NormalizePath(value))
   {
   }
 
-  private static string Normalize(
+  private static string NormalizePath(
     string value)
   {
     const string INDEX_FILE = "this.index.json";

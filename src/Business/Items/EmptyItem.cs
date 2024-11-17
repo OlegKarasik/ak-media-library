@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace MediaLibrary.Business.Items;
 
-[DebuggerDisplay("")]
+[DebuggerDisplay("<empty>")]
 public class EmptyItem : DirectoryItem
 {
 }

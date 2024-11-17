@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Unicode;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
+using MediaLibrary.Business.Navigation;
 using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
@@ -23,7 +24,7 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
           Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         });
 
-      var item = Navigation.GetItem(library, new NavigationPath());
+      var item = Navigator.GetItem(library, new NavigationPath());
     }
       
     return Task.FromResult(0);
