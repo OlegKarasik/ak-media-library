@@ -12,7 +12,7 @@ public class ShowsNavigationSegment : NavigationSegment
     {
       if (this.shows.TryGetValue(key, out var show))
       {
-        return new ItemNavigationSegment(show);
+        return new ShowNavigationSegment(show);
       }
       return new NoneNavigationSegment();
     }

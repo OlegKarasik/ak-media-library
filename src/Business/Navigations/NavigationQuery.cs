@@ -38,11 +38,11 @@ public class NavigationQuery
 
     if (values.Length == 0 || values.Length == 1)
     {
-      throw new Exception();
+      throw new ArgumentException("The navigation query must include a root and path (for instance, 'Shows/Boston Legal')");
     }
     if (!Enum.TryParse<NavigationQueryRoot>(values[0], out var root))
     {
-      throw new ArgumentException();
+      throw new ArgumentException($"The navigation query must start from one of the roots: {string.Join(",", Enum.GetValues<NavigationQueryRoot>())}");
     }
 
     this.Root = root;
