@@ -2,43 +2,33 @@ using MediaLibrary.Business.Items;
 
 namespace MediaLibrary.Business.Navigation;
 
-public enum NavigationRoot
-{
-  Movies,
-  Shows
-}
-
-public class NavigationPath
-{
-  public NavigationRoot Root
-  {
-    get;
-  }
-}
-
 public class Navigator
 {
   public static Item GetItem(
     LibraryItem library,
-    NavigationPath path)
+    NavigationQuery query)
   {
     if (library is null)
     {
       throw new ArgumentNullException(nameof(library));
     }
-    if (path is null)
+    if (query is null)
     {
-      throw new ArgumentNullException(nameof(path));
+      throw new ArgumentNullException(nameof(query));
     }
 
-    NavigationSegment segment = path.Root switch
+    NavigationSegment segment = query.Root switch
     {
-      NavigationRoot.Movies => new MoviesNavigationSegment(library),
-      NavigationRoot.Shows => new ShowsNavigationSegment(library),
+      NavigationQueryRoot.Movies => new MoviesNavigationSegment(library),
+      NavigationQueryRoot.Shows => new ShowsNavigationSegment(library),
       _ => throw new NotImplementedException()
     };
+    
+    foreach (var section in query.Sections)
+    {
+      segment = segment[section];
+    }
 
-
-    return null;
+    return segment.Current;
   }
 }

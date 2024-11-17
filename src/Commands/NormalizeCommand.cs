@@ -24,7 +24,7 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
           Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         });
 
-      var item = Navigator.GetItem(library, new NavigationPath());
+      var item = Navigator.GetItem(library, new NavigationQuery());
     }
       
     return Task.FromResult(0);
