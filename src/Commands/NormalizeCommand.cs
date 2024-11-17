@@ -14,9 +14,10 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
     CommandContext context, 
     NormalizeCommandSettings settings)
   {
+    LibraryItem library;
     using (var fs = File.OpenRead(new IndexPath(settings.LibraryPath).Value)) 
     {
-      var library = JsonSerializer.Deserialize<LibraryItem>(
+      var result = JsonSerializer.Deserialize<LibraryItem>(
         fs,
         new JsonSerializerOptions
         {
@@ -24,7 +25,15 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
           Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
         });
 
-      var item = Navigator.GetItem(library, new NavigationQuery());
+      if (result is null)
+      {
+        throw new Exception();
+      }
+      library = result;
+    }
+    switch (Navigator.GetItem(library, new NavigationQuery())) 
+    {
+
     }
       
     return Task.FromResult(0);

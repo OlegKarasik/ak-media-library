@@ -8,7 +8,7 @@ public class ScanCommandSettings : CommandSettings
   [CommandArgument(0, "<library-path>")]
   public string LibraryPath
   {
-    get; set; 
+    get; init; 
   }
 
   public ScanCommandSettings()
@@ -20,7 +20,7 @@ public class ScanCommandSettings : CommandSettings
   {
     if (!Directory.Exists(this.LibraryPath))
     {
-      return ValidationResult.Error($"Invalid path \"{this.LibraryPath}\"");
+      return ValidationResult.Error($"The directory \"{this.LibraryPath}\" doesn't exist");
     }
 
     return base.Validate();

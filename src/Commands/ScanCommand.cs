@@ -6,7 +6,6 @@ using Spectre.Console.Cli;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using System.Text.Json;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using MediaLibrary.Extensions;
@@ -242,7 +241,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   {
     var library = this.ScanDirectory(path) switch
     {
-      LibraryItem libraryItem => libraryItem,
+      LibraryItem item => item,
       _ => throw new NotSupportedException()
     };
 
