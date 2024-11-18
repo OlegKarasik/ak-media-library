@@ -22,7 +22,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     Movies    = 0b00000010,
     Seasons   = 0b00000100,
     Shows     = 0b00001000,
-    Libraries = 0b00010000
+    Indices   = 0b00010000
   }
 
   private readonly ScanCommandOptions options;
@@ -66,8 +66,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new EpisodeItem 
           { 
             Title = m.Title,
-            SeasonIndex = m.SeasonIndex,
-            EpisodeIndex = m.EpisodeIndex,
+            SeasonPosition = m.SeasonIndex,
+            EpisodePosition = m.EpisodeIndex,
             Path = path
           };
       }
@@ -98,7 +98,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
 
     List<SeasonItem> seasons = [];
     List<ShowItem> shows = [];
-    List<LibraryItem> libraries = [];
+    List<IndexItem> indices = [];
     foreach (var directoryPath in Directory.EnumerateDirectories(path.Value))
     {
       var directoryItem = this.ScanDirectory(new DirectoryPath(directoryPath));
@@ -118,12 +118,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           }
           shows.Add(show);
           break;
-        case LibraryItem library:
-          if (libraries.Count == 0)
+        case IndexItem index:
+          if (indices.Count == 0)
           {
-            mask |= ScanItemMask.Libraries;
+            mask |= ScanItemMask.Indices;
           }
-          libraries.Add(library);
+          indices.Add(index);
           break;
         case EmptyItem:
           break;
@@ -179,7 +179,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             return new SeasonItem
               { 
                 Title = m.Title,
-                SeasonIndex = m.SeasonIndex,
+                SeasonPosition = m.SeasonIndex,
                 Episodes = episodes.Collide(i => i.Title),
                 Path = path
               };
@@ -205,30 +205,30 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         }
         throw new NotImplementedException();
       case ScanItemMask.Shows:
-        // We need to construct the 'library' item from 'shows'
+        // We need to construct the 'index' item from 'shows'
         //
-        return new LibraryItem
+        return new IndexItem
           { 
             Shows = shows.Collide(i => i.Title),
             Movies = [],
             Path = path
           };
       case ScanItemMask.Movies:
-        // We need to construct the 'library' item from 'movies'
+        // We need to construct the 'index' item from 'movies'
         //
-        return new LibraryItem
+        return new IndexItem
           { 
             Shows = [],
             Movies = movies.Collide(i => i.Title),
             Path = path
           };
-      case ScanItemMask.Libraries:
-        // We need to construct the 'library' item from 'library'
+      case ScanItemMask.Indices:
+        // We need to construct the 'index' item from 'index'
         //
-        return new LibraryItem
+        return new IndexItem
           { 
-            Shows = libraries.SelectMany(i => i.Shows.Values).Collide(i => i.Title),
-            Movies = libraries.SelectMany(i => i.Movies.Values).Collide(i => i.Title),
+            Shows = indices.SelectMany(i => i.Shows.Values).Collide(i => i.Title),
+            Movies = indices.SelectMany(i => i.Movies.Values).Collide(i => i.Title),
             Path = path
           };
       default:
@@ -239,14 +239,14 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   private void ScanLibrary(
     DirectoryPath path)
   {
-    var library = this.ScanDirectory(path) switch
+    var index = this.ScanDirectory(path) switch
     {
-      LibraryItem item => item,
+      IndexItem item => item,
       _ => throw new NotSupportedException()
     };
 
     var content = JsonSerializer.Serialize(
-      library, 
+      index, 
       new JsonSerializerOptions
       {
         WriteIndented = true,
@@ -262,7 +262,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
   {
     AnsiConsole
       .Status()
-      .Start("Scanning...", ctx => this.ScanLibrary(new DirectoryPath(settings.LibraryPath)));
+      .Start("Scanning...", ctx => this.ScanLibrary(settings.Directory));
         
     
 

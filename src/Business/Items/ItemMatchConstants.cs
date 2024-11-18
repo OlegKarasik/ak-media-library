@@ -8,17 +8,17 @@ public static class ItemMatchConstants
 
   public const string SEASON_TITLE = "SeasonTitle";
 
-  public const string SEASON_INDEX = "Season";
+  public const string SEASON_POSITION = "Season";
 
-  public const string SEASON_SPAN_INDEX_START = "SeasonOpen";
+  public const string SEASON_SPAN_POSITION_START = "SeasonOpen";
 
-  public const string SEASON_SPAN_INDEX_END = "SeasonClose";
+  public const string SEASON_SPAN_POSITION_END = "SeasonClose";
 
   public const string EPISODE_TITLE = "EpisodeTitle";
 
-  public const string EPISODE_INDEX = "Episode";
+  public const string EPISODE_POSITION = "Episode";
 
-  public const string EPISODE_SPAN_INDEX_START = "EpisodeOpen";
+  public const string EPISODE_SPAN_POSITION_START = "EpisodeOpen";
 
-  public const string EPISODE_SPAN_INDEX_END = "EpisodeClose";
+  public const string EPISODE_SPAN_POSITION_END = "EpisodeClose";
 }

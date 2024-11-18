@@ -10,7 +10,7 @@ public class SeasonItem : DirectoryItem, IComparable<SeasonItem>
     get; init;
   }
 
-  public required ItemIndex SeasonIndex
+  public required ItemPosition SeasonPosition
   {
     get; init;
   }
@@ -27,6 +27,6 @@ public class SeasonItem : DirectoryItem, IComparable<SeasonItem>
     {
       return 1;
     }
-    return this.SeasonIndex.CompareTo(other.SeasonIndex);
+    return this.SeasonPosition.CompareTo(other.SeasonPosition);
   }
 }

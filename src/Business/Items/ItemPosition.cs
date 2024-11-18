@@ -1,8 +1,8 @@
 namespace MediaLibrary.Business.Items;
 
-public class ItemIndex : IComparable<ItemIndex>
+public class ItemPosition : IComparable<ItemPosition>
 {
-  public static readonly ItemIndex Default = new([1]);
+  public static readonly ItemPosition Default = new([1]);
 
   public int[] Values
   {
@@ -14,7 +14,7 @@ public class ItemIndex : IComparable<ItemIndex>
     get;
   }
 
-  public ItemIndex(
+  public ItemPosition(
     int[] values)
   {
     this.Values = values ?? throw new ArgumentNullException(nameof(values));
@@ -22,7 +22,7 @@ public class ItemIndex : IComparable<ItemIndex>
   }
 
   public int CompareTo(
-    ItemIndex? other)
+    ItemPosition? other)
   {
     if (other is null)
     {

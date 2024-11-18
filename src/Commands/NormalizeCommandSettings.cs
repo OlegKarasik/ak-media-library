@@ -1,3 +1,5 @@
+using MediaLibrary.Business;
+using MediaLibrary.Business.Navigation;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -5,29 +7,24 @@ namespace MediaLibrary.Commands;
 
 public class NormalizeCommandSettings : CommandSettings
 {
-  [CommandArgument(0, "<library-path>")]
-  public string LibraryPath
+  [CommandArgument(0, "<index>")]
+  public required IndexPath Index
   {
     get; init; 
   }
 
-  [CommandArgument(1, "<index-path>")]
-  public string IndexPath
+  [CommandArgument(1, "<index-query>")]
+  public required IndexQuery IndexQuery
   {
     get; init; 
-  }
-
-  public NormalizeCommandSettings()
-  {
-    this.LibraryPath = string.Empty;
-    this.IndexPath = string.Empty;
   }
 
   public override ValidationResult Validate()
   {
-    if (!Directory.Exists(this.LibraryPath))
+    if (!File.Exists(this.Index.Value))
     {
-      return ValidationResult.Error($"The directory \"{this.LibraryPath}\" doesn't exist");
+      return ValidationResult.Error(
+        $"Can't find index \"{this.Index}\", please set first argument to be either path to the index or containing directory");
     }
 
     return base.Validate();

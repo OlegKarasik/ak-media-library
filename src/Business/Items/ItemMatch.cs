@@ -4,19 +4,19 @@ using MediaLibrary.Extensions;
 namespace MediaLibrary.Business.Items;
 public abstract class ItemMatch
 {
-  protected static ItemIndex? GetIndex(
+  protected static ItemPosition? GetIndex(
     Match match,
     string indexGroup)
   {
     var value = match.Optional<int?>(indexGroup);
     if (value is not null)
     {
-      return new ItemIndex([value.Value]);
+      return new ItemPosition([value.Value]);
     }
     return null;
   }
 
-  protected static ItemIndex? GetSpanningIndex(
+  protected static ItemPosition? GetSpanningIndex(
     Match match,
     string fromGroup,
     string toGroup)
@@ -25,7 +25,7 @@ public abstract class ItemMatch
     var to = match.Optional<int?>(toGroup);
     if (from is not null && to is not null)
     {
-      return new ItemIndex([from.Value, to.Value]);
+      return new ItemPosition([from.Value, to.Value]);
     }
     return null;
   }

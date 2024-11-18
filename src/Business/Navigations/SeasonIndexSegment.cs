@@ -2,23 +2,23 @@ using MediaLibrary.Business.Items;
 
 namespace MediaLibrary.Business.Navigation;
 
-public class SeasonNavigationSegment : NavigationSegment
+public class SeasonIndexSegment : IndexSegment
 {
   private readonly SeasonItem season;
 
-  public override NavigationSegment this[string key]
+  public override IndexSegment this[string key]
   {
     get
     {
       if (this.season.Episodes.TryGetValue(key, out var episode))
       {
-        return new ItemNavigationSegment(episode);
+        return new ItemIndexSegment(episode);
       }
-      return new NoneNavigationSegment();
+      return new NoneIndexSegment();
     }
   }
 
-  public SeasonNavigationSegment(
+  public SeasonIndexSegment(
     SeasonItem item)
 
     : base(item)

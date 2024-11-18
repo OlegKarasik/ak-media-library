@@ -1,6 +1,6 @@
 namespace MediaLibrary.Business.Navigation;
 
-public enum NavigationQueryRoot
+public enum IndexQueryRoot
 {
   Movies,
   Shows

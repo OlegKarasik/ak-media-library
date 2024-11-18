@@ -2,24 +2,24 @@ using MediaLibrary.Business.Items;
 
 namespace MediaLibrary.Business.Navigation;
 
-public class MoviesNavigationSegment : NavigationSegment
+public class MoviesIndexSegment : IndexSegment
 {
   private readonly IDictionary<string, MovieItem> movies;
 
-  public override NavigationSegment this[string key]
+  public override IndexSegment this[string key]
   {
     get
     {
       if (this.movies.TryGetValue(key, out var movie))
       {
-        return new ItemNavigationSegment(movie);
+        return new ItemIndexSegment(movie);
       }
-      return new NoneNavigationSegment();
+      return new NoneIndexSegment();
     }
   }
 
-  public MoviesNavigationSegment(
-    LibraryItem item)
+  public MoviesIndexSegment(
+    IndexItem item)
 
     : base(item)
   {

@@ -1,7 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
-using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
 using Spectre.Console.Cli;
@@ -14,10 +13,10 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
     CommandContext context, 
     NormalizeCommandSettings settings)
   {
-    LibraryItem library;
-    using (var fs = File.OpenRead(new IndexPath(settings.LibraryPath).Value)) 
+    IndexItem library;
+    using (var fs = File.OpenRead(settings.Index.Value)) 
     {
-      var result = JsonSerializer.Deserialize<LibraryItem>(
+      var result = JsonSerializer.Deserialize<IndexItem>(
         fs,
         new JsonSerializerOptions
         {
@@ -31,7 +30,7 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
       }
       library = result;
     }
-    switch (Navigator.GetItem(library, new NavigationQuery(settings.IndexPath))) 
+    switch (IndexSearch.GetItem(library, settings.IndexQuery)) 
     {
 
     }

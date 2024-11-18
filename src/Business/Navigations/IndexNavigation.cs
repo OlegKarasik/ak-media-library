@@ -2,11 +2,11 @@ using MediaLibrary.Business.Items;
 
 namespace MediaLibrary.Business.Navigation;
 
-public class Navigator
+public class IndexSearch
 {
   public static Item GetItem(
-    LibraryItem library,
-    NavigationQuery query)
+    IndexItem library,
+    IndexQuery query)
   {
     if (library is null)
     {
@@ -17,10 +17,10 @@ public class Navigator
       throw new ArgumentNullException(nameof(query));
     }
 
-    NavigationSegment segment = query.Root switch
+    IndexSegment segment = query.Root switch
     {
-      NavigationQueryRoot.Movies => new MoviesNavigationSegment(library),
-      NavigationQueryRoot.Shows => new ShowsNavigationSegment(library),
+      IndexQueryRoot.Movies => new MoviesIndexSegment(library),
+      IndexQueryRoot.Shows => new ShowsIndexSegment(library),
       _ => throw new NotImplementedException()
     };
     

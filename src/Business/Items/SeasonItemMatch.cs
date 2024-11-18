@@ -10,7 +10,7 @@ public class SeasonItemMatch : ItemMatch
     get;
   }
 
-  public ItemIndex SeasonIndex
+  public ItemPosition SeasonIndex
   {
     get;
   }
@@ -26,8 +26,8 @@ public class SeasonItemMatch : ItemMatch
     this.Title = match.Required<string>(ItemMatchConstants.SEASON_TITLE).Trim();
     
     this.SeasonIndex = 
-      GetIndex(match, ItemMatchConstants.SEASON_INDEX) ?? 
-      GetSpanningIndex(match, ItemMatchConstants.SEASON_SPAN_INDEX_START, ItemMatchConstants.SEASON_SPAN_INDEX_END) ?? 
+      GetIndex(match, ItemMatchConstants.SEASON_POSITION) ?? 
+      GetSpanningIndex(match, ItemMatchConstants.SEASON_SPAN_POSITION_START, ItemMatchConstants.SEASON_SPAN_POSITION_END) ?? 
       throw new ArgumentException("No season index can be match");;
   }
 }

@@ -10,12 +10,12 @@ public class EpisodeItemMatch : ItemMatch
     get;
   }
 
-  public ItemIndex SeasonIndex
+  public ItemPosition SeasonIndex
   {
     get;
   }
 
-  public ItemIndex EpisodeIndex
+  public ItemPosition EpisodeIndex
   {
     get;
   }
@@ -30,10 +30,10 @@ public class EpisodeItemMatch : ItemMatch
 
     this.Title = match.Required<string>(ItemMatchConstants.EPISODE_TITLE).Trim();
 
-    this.SeasonIndex  = GetIndex(match, ItemMatchConstants.SEASON_INDEX) ?? ItemIndex.Default;
+    this.SeasonIndex  = GetIndex(match, ItemMatchConstants.SEASON_POSITION) ?? ItemPosition.Default;
     this.EpisodeIndex = 
-      GetIndex(match, ItemMatchConstants.EPISODE_INDEX) ?? 
-      GetSpanningIndex(match, ItemMatchConstants.EPISODE_SPAN_INDEX_START, ItemMatchConstants.EPISODE_SPAN_INDEX_END) ?? 
+      GetIndex(match, ItemMatchConstants.EPISODE_POSITION) ?? 
+      GetSpanningIndex(match, ItemMatchConstants.EPISODE_SPAN_POSITION_START, ItemMatchConstants.EPISODE_SPAN_POSITION_END) ?? 
       throw new ArgumentException("No episode index can be match");;
   }
 }

@@ -10,12 +10,12 @@ public class EpisodeItem : FileItem, IComparable<EpisodeItem>
     get; init;
   }
 
-  public required ItemIndex SeasonIndex
+  public required ItemPosition SeasonPosition
   {
     get; init;
   }
 
-  public required ItemIndex EpisodeIndex
+  public required ItemPosition EpisodePosition
   {
     get; init;
   }
@@ -27,11 +27,11 @@ public class EpisodeItem : FileItem, IComparable<EpisodeItem>
     {
       return 1;
     }
-    var result = this.SeasonIndex.CompareTo(other.SeasonIndex);
+    var result = this.SeasonPosition.CompareTo(other.SeasonPosition);
     if (result != 0)
     {
       return result;
     }
-    return this.EpisodeIndex.CompareTo(other.EpisodeIndex);
+    return this.EpisodePosition.CompareTo(other.EpisodePosition);
   }
 }

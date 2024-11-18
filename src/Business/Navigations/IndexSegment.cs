@@ -4,19 +4,19 @@ using MediaLibrary.Business.Items;
 namespace MediaLibrary.Business.Navigation;
 
 [DebuggerDisplay($"{{{nameof(Current)}}}")]
-public abstract class NavigationSegment
+public abstract class IndexSegment
 {
   public Item Current
   {
     get;
   }
 
-  public abstract NavigationSegment this[string key]
+  public abstract IndexSegment this[string key]
   {
     get;
   }
 
-  protected NavigationSegment(
+  protected IndexSegment(
     Item item)
   {
     this.Current = item ?? throw new ArgumentNullException(nameof(item));

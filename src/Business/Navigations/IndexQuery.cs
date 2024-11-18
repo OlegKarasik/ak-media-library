@@ -2,10 +2,10 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
-namespace MediaLibrary.Business;
+namespace MediaLibrary.Business.Navigation;
 
 [TypeConverter(typeof(TypeConverter))]
-public class IndexPath : FilePath
+public class IndexQuery
 {
   public class TypeConverter : System.ComponentModel.TypeConverter
   {
@@ -27,7 +27,7 @@ public class IndexPath : FilePath
       CultureInfo? culture, 
       object value)
     {
-      return value is string s ? new IndexPath(s) : null;
+      return value is string s ? new IndexQuery(s) : null;
     }
 
     public override object? ConvertTo(
@@ -36,30 +36,48 @@ public class IndexPath : FilePath
       object? value, 
       Type destinationType)
     {
-      return value is IndexPath path ? path.Value : null;
+      return value is IndexQuery query ? query.ToString() : null;
     }
   }
-  
-  public IndexPath(
-    string value)
 
-    : base(NormalizePath(value))
+  private const string DELIMITER = "::";
+
+  public IndexQueryRoot Root
   {
+    get;
   }
 
-  private static string NormalizePath(
+  public IEnumerable<string> Sections
+  {
+    get;
+  }
+
+  public IndexQuery(
     string value)
   {
-    const string INDEX_FILE = "this.index.json";
-
     if (string.IsNullOrWhiteSpace(value))
     {
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
-    if (value.EndsWith(INDEX_FILE))
+
+    var values = value
+      .Split(DELIMITER, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    if (values.Length == 0 || values.Length == 1)
     {
-      return value;
+      throw new ArgumentException("The navigation query must include a root and path (for instance, 'Shows/Boston Legal')");
     }
-    return Path.Combine(value, INDEX_FILE);
+    if (!Enum.TryParse<IndexQueryRoot>(values[0], out var root))
+    {
+      throw new ArgumentException($"The navigation query must start from one of the roots: {string.Join(",", Enum.GetValues<IndexQueryRoot>())}");
+    }
+
+    this.Root = root;
+    this.Sections = new ArraySegment<string>(values, 1, values.Length - 1);
+  }
+
+  public override string ToString()
+  {
+    return $"{this.Root}{DELIMITER}{string.Join(DELIMITER, this.Sections)}";
   }
 }

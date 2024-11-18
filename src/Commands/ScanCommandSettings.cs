@@ -1,3 +1,4 @@
+using MediaLibrary.Business;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -5,22 +6,18 @@ namespace MediaLibrary.Commands;
 
 public class ScanCommandSettings : CommandSettings
 {
-  [CommandArgument(0, "<library-path>")]
-  public string LibraryPath
+  [CommandArgument(0, "<directory>")]
+  public required DirectoryPath Directory
   {
     get; init; 
   }
 
-  public ScanCommandSettings()
-  {
-    this.LibraryPath = string.Empty;
-  }
-
   public override ValidationResult Validate()
   {
-    if (!Directory.Exists(this.LibraryPath))
+    if (!System.IO.Directory.Exists(this.Directory.Value))
     {
-      return ValidationResult.Error($"The directory \"{this.LibraryPath}\" doesn't exist");
+      return ValidationResult.Error(
+        $"Can't find directory \"{this.Directory}\", please ensure directory exists");
     }
 
     return base.Validate();
