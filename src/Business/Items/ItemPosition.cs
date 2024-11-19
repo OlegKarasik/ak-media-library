@@ -13,6 +13,13 @@ public class ItemPosition : IComparable<ItemPosition>
   {
     get;
   }
+  
+  public bool IsSpanning => this.Values.Length != 1;
+
+  public int ValueStart => this.Values.First();
+
+  public int ValueEnd => this.Values.Last();
+
 
   public ItemPosition(
     int[] values)
