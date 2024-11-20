@@ -32,6 +32,22 @@ public static class RegexExtensions
       : default;
   }
 
+  public static ReadOnlySpan<char> Optional(
+    this Match @this,
+    string key)
+  {
+    if (key is null)
+    {
+      throw new ArgumentNullException(nameof(key));
+    }
+
+    if (@this.Groups.TryGetValue(key, out var group))
+    {
+      return group.ValueSpan;
+    }
+    return default;
+  }
+
   private static T Convert<T>(
     string value)
   {

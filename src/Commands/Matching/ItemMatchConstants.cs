@@ -1,4 +1,4 @@
-namespace MediaLibrary.Business.Items;
+namespace MediaLibrary.Commands.Matching;
 
 public static class ItemMatchConstants
 {

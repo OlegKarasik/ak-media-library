@@ -1,64 +1,15 @@
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Text.Unicode;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
+using MediaLibrary.Commands.Matching;
 using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
-
-public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
+public partial class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
 {
-  private class NormalizationData
-  {
-    public virtual string EpisodePosition => "";
-
-    public virtual string EpisodeSpanPositionStart => "";
-    
-    public virtual string EpisodeSpanPositionEnd => "";
-    
-    public virtual string EpisodeTitle => "";
-    
-    public virtual string SeasonPosition => "";
-    
-    public virtual string SeasonSpanPositionStart => "";
-    
-    public virtual string SeasonSpanPositionEnd => "";
-
-    public virtual string SeasonTitle => "";
-    
-    public virtual string ShowTitle => "";
-    
-    public virtual string MovieTitle => "";
-  }
-
-  private class EpisodeNormalizationData : NormalizationData
-  {
-    private readonly EpisodeItem episode;
-
-    public override string EpisodeTitle => episode.Title;
-
-    public override string EpisodePosition => episode.EpisodePosition.Value.ToString();
-
-    public override string EpisodeSpanPositionStart => episode.EpisodePosition.ValueStart.ToString();
-
-    public override string EpisodeSpanPositionEnd => episode.EpisodePosition.ValueEnd.ToString();
-
-    public override string SeasonPosition => episode.SeasonPosition.Value.ToString();
-
-    public override string SeasonSpanPositionStart => episode.SeasonPosition.ValueStart.ToString();
-
-    public override string SeasonSpanPositionEnd => episode.SeasonPosition.ValueEnd.ToString();
-
-    public EpisodeNormalizationData(
-      EpisodeItem item)
-    {
-      this.episode = item ?? throw new ArgumentNullException(nameof(item));
-    }
-  }
-
   private readonly NormalizeCommandOptions options;
 
   public NormalizeCommand()
@@ -66,32 +17,27 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
     this.options = new NormalizeCommandOptions();
   }
 
-  private string UnwrapNormalizationPattern(
+  private string EncodeItemMatch(
     string pattern,
-    NormalizationData data)
+    EncodeItemMatch match)
   {
-    return Regex.Replace(
-      pattern, 
-      "{.+?}", 
-      match => {
-        return match.Value switch
-        {
-          ItemMatchConstants.EPISODE_POSITION => data.EpisodePosition,
-          ItemMatchConstants.EPISODE_SPAN_POSITION_START => data.EpisodeSpanPositionStart,
-          ItemMatchConstants.EPISODE_SPAN_POSITION_END => data.EpisodeSpanPositionEnd,
-          ItemMatchConstants.EPISODE_TITLE => data.EpisodeTitle,
-          ItemMatchConstants.SEASON_POSITION => data.SeasonPosition,
-          ItemMatchConstants.SEASON_SPAN_POSITION_START => data.SeasonSpanPositionStart,
-          ItemMatchConstants.SEASON_SPAN_POSITION_END => data.SeasonSpanPositionEnd,
-          ItemMatchConstants.SEASON_TITLE => data.SeasonTitle,
-          ItemMatchConstants.SHOW_TITLE => data.ShowTitle,
-          ItemMatchConstants.MOVIE_TITLE => data.MovieTitle,
-          _ => throw new NotImplementedException(),
-        };
-      });
+    if (string.IsNullOrEmpty(pattern))
+    {
+      throw new ArgumentException($"'{nameof(pattern)}' cannot be null or empty.", nameof(pattern));
+    }
+
+    if (match is null)
+    {
+      throw new ArgumentNullException(nameof(match));
+    }
+
+    return NormalizeItemRegex().Replace(pattern, match.Encode);
   }
 
-  private string GetNormalizatinPattern(
+  [GeneratedRegex("{(?<Match>.+?)}")]
+  private static partial Regex NormalizeItemRegex();
+
+  private string GetEncodePattern(
     EpisodeItem episode)
   {
     if (episode.SeasonPosition.IsSpanning)
@@ -134,9 +80,9 @@ public class NormalizeCommand : AsyncCommand<NormalizeCommandSettings>
     {
       case EpisodeItem episode:
         {
-          this.UnwrapNormalizationPattern(
-            this.GetNormalizatinPattern(episode),
-            new EpisodeNormalizationData(episode));
+          var result = this.EncodeItemMatch(
+            this.GetEncodePattern(episode), 
+            new EncodeEpisodeItemMatch(episode));
         }
         break;
 

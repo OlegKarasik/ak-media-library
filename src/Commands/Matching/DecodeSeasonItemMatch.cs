@@ -1,9 +1,10 @@
 using System.Text.RegularExpressions;
+using MediaLibrary.Business.Items;
 using MediaLibrary.Extensions;
 
-namespace MediaLibrary.Business.Items;
+namespace MediaLibrary.Commands.Matching;
 
-public class SeasonItemMatch : ItemMatch
+public class DecodeSeasonItemMatch : DecodeItemMatch
 {
   public string Title
   {
@@ -15,7 +16,7 @@ public class SeasonItemMatch : ItemMatch
     get;
   }
 
-  public SeasonItemMatch(
+  public DecodeSeasonItemMatch(
     Match match)
   {
     if (match is null)

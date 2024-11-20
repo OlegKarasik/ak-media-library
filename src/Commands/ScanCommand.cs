@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using MediaLibrary.Extensions;
+using MediaLibrary.Commands.Matching;
 
 namespace MediaLibrary.Commands;
 
@@ -62,7 +63,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
-        var m = new EpisodeItemMatch(match);
+        var m = new DecodeEpisodeItemMatch(match);
         return new EpisodeItem 
           { 
             Title = m.Title,
@@ -80,7 +81,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
-        var m = new MovieItemMatch(match);
+        var m = new DecodeMovieItemMatch(match);
         return new MovieItem
           {
             Title = m.Title,
@@ -175,7 +176,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
-            var m = new SeasonItemMatch(match);
+            var m = new DecodeSeasonItemMatch(match);
             return new SeasonItem
               { 
                 Title = m.Title,
@@ -194,7 +195,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
-            var m = new ShowItemMatch(match);
+            var m = new DecodeShowItemMatch(match);
             return new ShowItem
               {
                 Title = m.Title,

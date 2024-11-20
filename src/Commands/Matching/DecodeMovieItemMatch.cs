@@ -1,16 +1,16 @@
 using System.Text.RegularExpressions;
 using MediaLibrary.Extensions;
 
-namespace MediaLibrary.Business.Items;
+namespace MediaLibrary.Commands.Matching;
 
-public class MovieItemMatch : ItemMatch
+public class DecodeMovieItemMatch : DecodeItemMatch
 {
   public string Title
   {
     get;
   }
 
-  public MovieItemMatch(
+  public DecodeMovieItemMatch(
     Match match)
   {
     if (match is null)

@@ -1,8 +1,10 @@
 using System.Text.RegularExpressions;
+using MediaLibrary.Business.Items;
 using MediaLibrary.Extensions;
 
-namespace MediaLibrary.Business.Items;
-public abstract class ItemMatch
+namespace MediaLibrary.Commands.Matching;
+
+public abstract class DecodeItemMatch
 {
   protected static ItemPosition? GetIndex(
     Match match,
