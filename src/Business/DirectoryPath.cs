@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace MediaLibrary.Business;
 
@@ -42,6 +43,7 @@ public class DirectoryPath
     }
   }
   
+  [JsonIgnore]
   public string Name 
   { 
     get; 
@@ -52,6 +54,7 @@ public class DirectoryPath
     get; 
   }
 
+  [JsonConstructor]
   public DirectoryPath(
     string value)
   {

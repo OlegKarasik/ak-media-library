@@ -6,18 +6,20 @@ namespace MediaLibrary.Commands;
 
 public class ScanCommandSettings : CommandSettings
 {
-  [CommandArgument(0, "<directory>")]
-  public required DirectoryPath Directory
+  [CommandOption("-l|--library")]
+  public required DirectoryPath Library
   {
-    get; init; 
+    get; set; 
   }
 
   public override ValidationResult Validate()
   {
-    if (!System.IO.Directory.Exists(this.Directory.Value))
+    this.Library ??= new DirectoryPath(Environment.CurrentDirectory);
+
+    if (!Directory.Exists(this.Library.Value))
     {
       return ValidationResult.Error(
-        $"Can't find directory \"{this.Directory}\", please ensure directory exists");
+        $"Directory \"{this.Library}\" doesn't exist, please ensure directory exists");
     }
 
     return base.Validate();

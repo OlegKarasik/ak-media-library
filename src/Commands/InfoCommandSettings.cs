@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public class NormalizeCommandSettings : CommandSettings
+public class InfoCommandSettings : CommandSettings
 {
   [CommandArgument(0, "<index>")]
   public required IndexPath Index

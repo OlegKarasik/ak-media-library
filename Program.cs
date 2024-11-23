@@ -8,7 +8,7 @@ app.Configure(
   o =>
   {
     o.AddCommand<ScanCommand>("scan");
-    o.AddCommand<NormalizeCommand>("normalize");
+    o.AddCommand<InfoCommand>("info");
   });
 
 return await app.RunAsync(args);

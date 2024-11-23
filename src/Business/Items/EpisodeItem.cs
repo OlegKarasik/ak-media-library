@@ -3,19 +3,14 @@ using System.Diagnostics;
 namespace MediaLibrary.Business.Items;
 
 [DebuggerDisplay($"{{{nameof(Title)}}}")]
-public class EpisodeItem : FileItem, IComparable<EpisodeItem>
+public class EpisodeItem : Item<FilePath>, IComparable<EpisodeItem>
 {
   public required string Title
   { 
     get; init;
   }
 
-  public required ItemPosition SeasonPosition
-  {
-    get; init;
-  }
-
-  public required ItemPosition EpisodePosition
+  public required Position Position
   {
     get; init;
   }
@@ -27,11 +22,6 @@ public class EpisodeItem : FileItem, IComparable<EpisodeItem>
     {
       return 1;
     }
-    var result = this.SeasonPosition.CompareTo(other.SeasonPosition);
-    if (result != 0)
-    {
-      return result;
-    }
-    return this.EpisodePosition.CompareTo(other.EpisodePosition);
+    return this.Position.CompareTo(other.Position);
   }
 }

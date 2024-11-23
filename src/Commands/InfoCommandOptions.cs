@@ -1,6 +1,6 @@
 namespace MediaLibrary.Commands;
 
-public class NormalizeCommandOptions
+public class InfoCommandOptions
 {
   public IReadOnlyCollection<string> RelatedExtensions 
   { 
@@ -16,17 +16,12 @@ public class NormalizeCommandOptions
   { 
     get; 
   }
-  public string EpisodeSeasonRangePattern 
-  { 
-    get; 
-  }
 
-  public NormalizeCommandOptions()
+  public InfoCommandOptions()
   {
     this.RelatedExtensions = [".srt", ".ass", ".props.json"];
 
     this.EpisodePattern = "S{Season}E{Episode} - {EpisodeTitle}";
     this.EpisodeRangePattern = "S{Season}E{EpisodeOpen} - E{EpisodeClose} - {EpisodeTitle}";
-    this.EpisodeSeasonRangePattern = "S{SeasonOpen}E{EpisodeOpen} - S{SeasonClose}E{EpisodeClose} - {EpisodeTitle}";
   }
 }

@@ -1,15 +1,18 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace MediaLibrary.Business;
 
 [DebuggerDisplay($"{{{nameof(Name)},nq}}{{{nameof(Extension)},nq}}")]
 public class FilePath
 {
+  [JsonIgnore]
   public string Name 
   { 
     get; 
   }
 
+  [JsonIgnore]
   public string Extension 
   { 
     get; 
@@ -20,6 +23,7 @@ public class FilePath
     get; 
   }
 
+  [JsonConstructor]
   public FilePath(
     string value)
   {

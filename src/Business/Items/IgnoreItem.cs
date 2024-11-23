@@ -1,8 +1,0 @@
-using System.Diagnostics;
-
-namespace MediaLibrary.Business.Items;
-
-[DebuggerDisplay("<ignore>")]
-public class IgnoreItem : FileItem
-{
-}

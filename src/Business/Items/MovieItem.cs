@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace MediaLibrary.Business.Items;
 
 [DebuggerDisplay($"{{{nameof(Title)}}}")]
-public class MovieItem : FileItem, IComparable<MovieItem>
+public class MovieItem : Item<FilePath>, IComparable<MovieItem>
 {
   public required string Title
   {

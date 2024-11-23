@@ -3,14 +3,14 @@ using System.Diagnostics;
 namespace MediaLibrary.Business.Items;
 
 [DebuggerDisplay($"{{{nameof(Title)}}}")]
-public class SeasonItem : DirectoryItem, IComparable<SeasonItem>
+public class SeasonItem : Item<DirectoryPath>, IComparable<SeasonItem>
 {
   public required string Title
   {
     get; init;
   }
 
-  public required ItemPosition SeasonPosition
+  public required Position Position
   {
     get; init;
   }
@@ -27,6 +27,6 @@ public class SeasonItem : DirectoryItem, IComparable<SeasonItem>
     {
       return 1;
     }
-    return this.SeasonPosition.CompareTo(other.SeasonPosition);
+    return this.Position.CompareTo(other.Position);
   }
 }

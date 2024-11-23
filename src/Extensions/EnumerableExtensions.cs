@@ -4,6 +4,14 @@ namespace MediaLibrary.Extensions;
 
 public static class EnumerableExtensions
 {
+  public static Dictionary<string, T> CollideMany<S, T>(
+    this IEnumerable<S> source,
+    Func<S, IEnumerable<T>> manyFunc,
+    Func<T, string> keyFunc)
+  {
+    return source.SelectMany(s => manyFunc(s)).Collide(keyFunc);
+  }
+
   public static Dictionary<string, T> Collide<T>(
     this IEnumerable<T> @this,
     Func<T, string> keyFunc)

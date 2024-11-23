@@ -68,6 +68,26 @@ public static class RegexExtensions
     {
       return (T)(object)int.Parse(value);
     }
+    if (typeof(T) == typeof(short) || typeof(T) == typeof(short?))
+    {
+      return (T)(object)short.Parse(value);
+    }
+    if (typeof(T) == typeof(ulong) || typeof(T) == typeof(ulong?))
+    {
+      return (T)(object)ulong.Parse(value);
+    }
+    if (typeof(T) == typeof(uint) || typeof(T) == typeof(uint?))
+    {
+      return (T)(object)uint.Parse(value);
+    }
+    if (typeof(T) == typeof(ushort) || typeof(T) == typeof(ushort?))
+    {
+      return (T)(object)ushort.Parse(value);
+    }
+    if (typeof(T) == typeof(byte) || typeof(T) == typeof(byte?))
+    {
+      return (T)(object)byte.Parse(value);
+    }
     throw new NotImplementedException();
   }
 }

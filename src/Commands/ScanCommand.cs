@@ -5,11 +5,8 @@ using Spectre.Console.Cli;
 
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
-using System.Text.Json;
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
 using MediaLibrary.Extensions;
-using MediaLibrary.Commands.Matching;
+using MediaLibrary.Extensions.Services;
 
 namespace MediaLibrary.Commands;
 
@@ -33,26 +30,20 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     this.options = new ScanCommandOptions();
   }
 
-  private FileItem ScanFile(
+  private Item Scan(
     FilePath path)
   {
     // Rule out all unsupported files
     //
     if (!this.options.VideoExtensions.Contains(path.Extension))
     {
-      return new IgnoreItem
-      {
-        Path = path
-      };
+      return NoneItem.Default;
     }
     foreach (var pattern in this.options.IgnoreMatchPatterns)
     {
       if (Regex.IsMatch(path.Name, pattern))
       {
-        return new IgnoreItem
-        {
-          Path = path
-        };
+        return NoneItem.Default;
       }
     }
 
@@ -63,12 +54,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
-        var m = new DecodeEpisodeItemMatch(match);
         return new EpisodeItem 
           { 
-            Title = m.Title,
-            SeasonPosition = m.SeasonIndex,
-            EpisodePosition = m.EpisodeIndex,
+            Title = match.GetTitle<EpisodeItem>(),
+            Position = match.GetPosition<EpisodeItem>(),
             Path = path
           };
       }
@@ -81,10 +70,9 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
-        var m = new DecodeMovieItemMatch(match);
         return new MovieItem
           {
-            Title = m.Title,
+            Title = match.GetTitle<MovieItem>(),
             Path = path
           };
       }
@@ -92,7 +80,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     throw new NotImplementedException();
   }
 
-  private DirectoryItem ScanDirectory(
+  private Item Scan(
     DirectoryPath path)
   {
     var mask = ScanItemMask.None;
@@ -102,7 +90,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     List<IndexItem> indices = [];
     foreach (var directoryPath in Directory.EnumerateDirectories(path.Value))
     {
-      var directoryItem = this.ScanDirectory(new DirectoryPath(directoryPath));
+      var directoryItem = this.Scan(new DirectoryPath(directoryPath));
       switch (directoryItem)
       {
         case SeasonItem season:
@@ -126,10 +114,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           }
           indices.Add(index);
           break;
-        case EmptyItem:
-          break;
         default:
-          throw new NotImplementedException();
+          break;
       }
     }
 
@@ -137,7 +123,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     List<MovieItem> movies = [];
     foreach (var filePath in Directory.EnumerateFiles(path.Value))
     {
-      var fileItem = this.ScanFile(new FilePath(filePath));
+      var fileItem = this.Scan(new FilePath(filePath));
       switch (fileItem)
       {
         case EpisodeItem episode:
@@ -154,20 +140,15 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           }
           movies.Add(movie);
           break;
-        case IgnoreItem:
-          break;
         default:
-          throw new NotImplementedException();
+          break;
       }
     }
 
     switch (mask)
     {
       case ScanItemMask.None:
-        return new EmptyItem
-        {
-          Path = path
-        };
+        return NoneItem.Default;
       case ScanItemMask.Episodes:
         // We need to construct the 'season' item from 'episodes'.
         //
@@ -176,11 +157,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
-            var m = new DecodeSeasonItemMatch(match);
             return new SeasonItem
               { 
-                Title = m.Title,
-                SeasonPosition = m.SeasonIndex,
+                Title = match.GetTitle<SeasonItem>(),
+                Position = match.GetPosition<SeasonItem>(),
                 Episodes = episodes.Collide(i => i.Title),
                 Path = path
               };
@@ -195,10 +175,9 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
-            var m = new DecodeShowItemMatch(match);
             return new ShowItem
               {
-                Title = m.Title,
+                Title = match.GetTitle<ShowItem>(),
                 Seasons = seasons.Collide(i => i.Title),
                 Path = path
               };
@@ -228,8 +207,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         //
         return new IndexItem
           { 
-            Shows = indices.SelectMany(i => i.Shows.Values).Collide(i => i.Title),
-            Movies = indices.SelectMany(i => i.Movies.Values).Collide(i => i.Title),
+            Shows = indices.CollideMany(i => i.Shows.Values, i => i.Title),
+            Movies = indices.CollideMany(i => i.Movies.Values, i => i.Title),
             Path = path
           };
       default:
@@ -237,36 +216,53 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     }
   }
 
-  private void ScanLibrary(
+  private IndexItem ScanIndex(
     DirectoryPath path)
   {
-    var index = this.ScanDirectory(path) switch
+    return this.Scan(path) switch
     {
       IndexItem item => item,
       _ => throw new NotSupportedException()
     };
-
-    var content = JsonSerializer.Serialize(
-      index, 
-      new JsonSerializerOptions
-      {
-        WriteIndented = true,
-        Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.Cyrillic)
-      });
-
-    File.WriteAllText(new IndexPath(path.Value).Value, content);
   }
 
-  public override Task<int> ExecuteAsync(
+  public override async Task<int> ExecuteAsync(
     CommandContext context, 
     ScanCommandSettings settings)
   {
-    AnsiConsole
-      .Status()
-      .Start("Scanning...", ctx => this.ScanLibrary(settings.Directory));
-        
+    var confirmation = AnsiConsole.Prompt(
+      new ConfirmationPrompt($"Perform scan of '{settings.Library}'?"));
     
+    if (!confirmation)
+    {
+      AnsiConsole.WriteLine("Cancelled, exiting...");
+    }
+    else
+    {
+      await AnsiConsole
+        .Status()
+        .StartAsync(
+          "Initialising...", 
+          async ctx => 
+          {
+            var measurement = await TimeServices.MeasureAsync(
+              async () => 
+              {
+                ctx.Status("Scanning...");
+                // Scan library directory
+                //
+                var index = this.ScanIndex(settings.Library);
+                
+                ctx.Status("Saving...");
+                // Save index file
+                //
+                await FileServices.Save(index, index.Path);
+              });
 
-    return Task.FromResult(0);
+              AnsiConsole.WriteLine($"Scanning completed. Took: {measurement.Elapsed}");
+          });
+    }
+
+    return 0;
   }
 }
