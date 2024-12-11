@@ -18,6 +18,19 @@ public static class FileServices
     };
   }
 
+  public static async Task<IndexItem> Load(
+    IndexFilePath path)
+  {
+    if (path is null)
+    {
+      throw new ArgumentNullException(nameof(path));
+    }
+
+    using var fs = File.OpenRead(path.Value);
+    return await JsonSerializer.DeserializeAsync<IndexItem>(fs, options)
+      ?? throw new InvalidOperationException($"Unable to load index from {path.Value}");
+  }
+
   public static async Task Save(
     IndexItem index,
     DirectoryPath path)
@@ -27,12 +40,17 @@ public static class FileServices
       throw new ArgumentNullException(nameof(index));
     }
 
+    if (path is null)
+    {
+      throw new ArgumentNullException(nameof(path));
+    }
+
     var content = JsonSerializer.Serialize(
       index,
       options);
 
     await File.WriteAllTextAsync(
-      new IndexPath(path.Value).Value, 
+      new IndexFilePath(path).Value, 
       content);
   }
 }

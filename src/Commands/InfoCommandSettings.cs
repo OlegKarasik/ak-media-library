@@ -7,13 +7,13 @@ namespace MediaLibrary.Commands;
 
 public class InfoCommandSettings : CommandSettings
 {
-  [CommandArgument(0, "<index>")]
-  public required IndexPath Index
+  [CommandOption("-l|--library")]
+  public required DirectoryPath Library
   {
     get; init; 
   }
 
-  [CommandArgument(1, "<index-query>")]
+  [CommandOption("-q|--query")]
   public required IndexQuery IndexQuery
   {
     get; init; 
@@ -21,10 +21,10 @@ public class InfoCommandSettings : CommandSettings
 
   public override ValidationResult Validate()
   {
-    if (!File.Exists(this.Index.Value))
+    if (!Directory.Exists(this.Library.Value))
     {
       return ValidationResult.Error(
-        $"Can't find index \"{this.Index}\", please set first argument to be either path to the index or containing directory");
+        $"Directory \"{this.Library}\" doesn't exist, please ensure directory exists");
     }
 
     return base.Validate();

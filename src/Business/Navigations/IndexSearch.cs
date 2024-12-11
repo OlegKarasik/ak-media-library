@@ -5,22 +5,22 @@ namespace MediaLibrary.Business.Navigation;
 public class IndexSearch
 {
   public static Item GetItem(
-    IndexItem library,
+    IndexItem index,
     IndexQuery query)
   {
-    if (library is null)
+    if (index is null)
     {
-      throw new ArgumentNullException(nameof(library));
+      throw new ArgumentNullException(nameof(index));
     }
     if (query is null)
     {
       throw new ArgumentNullException(nameof(query));
     }
 
-    IndexSegment segment = query.Root switch
+    IndexSearchPosition segment = query.Root switch
     {
-      IndexQueryRoot.Movies => new MoviesIndexSegment(library),
-      IndexQueryRoot.Shows => new ShowsIndexSegment(library),
+      IndexQueryRoot.Movies => new IndexSearchPositionAtMovieCollection(index),
+      IndexQueryRoot.Shows => new IndexSearchPositionAtShowCollection(index),
       _ => throw new NotImplementedException()
     };
     
