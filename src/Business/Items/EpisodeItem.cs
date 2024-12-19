@@ -10,7 +10,7 @@ public class EpisodeItem : Item<FilePath>, IComparable<EpisodeItem>
     get; init;
   }
 
-  public required Position Position
+  public required ItemPosition Position
   {
     get; init;
   }

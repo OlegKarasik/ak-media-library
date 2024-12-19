@@ -32,8 +32,8 @@ public class FilePath
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
 
-    this.Name = Path.GetFileNameWithoutExtension(value);
-    this.Extension = Path.GetExtension(value);
+    this.Name = System.IO.Path.GetFileNameWithoutExtension(value);
+    this.Extension = System.IO.Path.GetExtension(value);
     this.Value = value;
   }
 

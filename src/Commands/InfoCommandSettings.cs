@@ -10,17 +10,20 @@ public class InfoCommandSettings : CommandSettings
   [CommandOption("-l|--library")]
   public required DirectoryPath Library
   {
-    get; init; 
+    get; set; 
   }
 
-  [CommandOption("-q|--query")]
-  public required IndexQuery IndexQuery
+  [CommandOption("-r|--request")]
+  public required IndexSearchRequest SearchRequest
   {
-    get; init; 
+    get; set;
   }
 
   public override ValidationResult Validate()
   {
+    this.Library ??= new DirectoryPath(Environment.CurrentDirectory);
+    this.SearchRequest ??= new IndexSearchRequest(IndexSearchRoot.Movies.ToString());
+
     if (!Directory.Exists(this.Library.Value))
     {
       return ValidationResult.Error(

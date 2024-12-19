@@ -10,7 +10,7 @@ public class SeasonItem : Item<DirectoryPath>, IComparable<SeasonItem>
     get; init;
   }
 
-  public required Position Position
+  public required ItemPosition Position
   {
     get; init;
   }

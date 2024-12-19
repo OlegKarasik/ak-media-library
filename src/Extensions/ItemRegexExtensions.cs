@@ -44,7 +44,7 @@ public static class ItemRegexExtensions
       : string.Empty;
   }
 
-  public static Position GetPosition<T>(
+  public static ItemPosition GetPosition<T>(
     this Match match)
 
     where T: Item
@@ -59,26 +59,26 @@ public static class ItemRegexExtensions
       {
         if (value is not null)
         {
-          return new Position(group.Value, value.Value);
+          return new ItemPosition(group.Value, value.Value);
         }
         if (open is not null && close is not null)
         {
-          return new Position(group.Value, open.Value, close.Value);
+          return new ItemPosition(group.Value, open.Value, close.Value);
         }
       }
       else
       {
         if (value is not null)
         {
-          return new Position(value.Value);
+          return new ItemPosition(value.Value);
         }
         if (open is not null && close is not null)
         {
-          return new Position(open.Value, close.Value);
+          return new ItemPosition(open.Value, close.Value);
         }
       }
-      return Position.Default;
+      return ItemPosition.Default;
     }
-    return Position.Default;
+    return ItemPosition.Default;
   }
 }

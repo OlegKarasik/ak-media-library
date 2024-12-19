@@ -3,29 +3,29 @@ namespace MediaLibrary.Business;
 public class PropsFilePath : FilePath
 {
   public PropsFilePath(
-    FilePath value)
+    FilePath path)
 
-    : base(NormalizePath(value))
+    : base(NormalizePath(path))
   {
   }
 
   public PropsFilePath(
-    DirectoryPath value)
+    DirectoryPath path)
 
-    : base(NormalizePath(value))
+    : base(NormalizePath(path))
   {
   }
 
   private static string NormalizePath(
-    FilePath value)
+    FilePath path)
   {
     const string PROPS_POSTFIX = ".props.json";
 
-    if (value.Value.EndsWith(PROPS_POSTFIX))
+    if (path.Value.EndsWith(PROPS_POSTFIX))
     {
-      return value.Value;
+      return path.Value;
     }
-    return string.Concat(value, PROPS_POSTFIX);
+    return string.Concat(path, PROPS_POSTFIX);
   }
 
   private static string NormalizePath(

@@ -6,29 +6,29 @@ public class IndexSearch
 {
   public static Item GetItem(
     IndexItem index,
-    IndexQuery query)
+    IndexSearchRequest request)
   {
     if (index is null)
     {
       throw new ArgumentNullException(nameof(index));
     }
-    if (query is null)
+    if (request is null)
     {
-      throw new ArgumentNullException(nameof(query));
+      throw new ArgumentNullException(nameof(request));
     }
 
-    IndexSearchPosition segment = query.Root switch
+    IndexSearchPosition position = request.Root switch
     {
-      IndexQueryRoot.Movies => new IndexSearchPositionAtMovieCollection(index),
-      IndexQueryRoot.Shows => new IndexSearchPositionAtShowCollection(index),
+      IndexSearchRoot.Movies => new IndexSearchPositionAtMovieCollection(index),
+      IndexSearchRoot.Shows => new IndexSearchPositionAtShowCollection(index),
       _ => throw new NotImplementedException()
     };
     
-    foreach (var section in query.Sections)
+    foreach (var section in request.Sections)
     {
-      segment = segment[section];
+      position = position[section];
     }
 
-    return segment.Current;
+    return position.Current;
   }
 }

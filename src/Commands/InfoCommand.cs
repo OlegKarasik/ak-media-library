@@ -25,13 +25,34 @@ public partial class InfoCommand : AsyncCommand<InfoCommandSettings>
     InfoCommandSettings settings)
   {
     IndexItem index = await FileServices.Load(new IndexFilePath(settings.Library));
-    switch (IndexSearch.GetItem(index, settings.IndexQuery)) 
+
+    FilePath[] suppliments = [];
+    switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case MovieItem movie:
-        AnsiConsole.WriteLine("Found");
+        {
+          AnsiConsole.WriteLine($"{movie.Path}");
+
+          suppliments = [
+            new PropsFilePath(movie.Path),
+            .. this.options.SubtitleExtensions.Select(extension => new SubtitlesFilePath(new FilePath(Path.ChangeExtension(movie.Path.Value, extension))))
+          ];
+        }
         break;
       default:
-        throw new InvalidOperationException($"The '{settings.IndexQuery}' isn't found in index");
+        throw new InvalidOperationException($"The '{settings.SearchRequest}' isn't found in index");
+    }
+    foreach (var path in suppliments)
+    {
+      switch (path)
+      {
+        case PropsFilePath props:
+          AnsiConsole.WriteLine("Props: TRUE");
+          break;
+        case SubtitlesFilePath subtitles:
+          AnsiConsole.WriteLine($"{subtitles.Extension}: TRUE");
+          break;
+      }
     }
 
     return 0;

@@ -5,7 +5,7 @@ using System.Globalization;
 namespace MediaLibrary.Business.Navigation;
 
 [TypeConverter(typeof(TypeConverter))]
-public class IndexQuery
+public class IndexSearchRequest
 {
   public class TypeConverter : System.ComponentModel.TypeConverter
   {
@@ -27,7 +27,7 @@ public class IndexQuery
       CultureInfo? culture, 
       object value)
     {
-      return value is string s ? new IndexQuery(s) : null;
+      return value is string s ? new IndexSearchRequest(s) : null;
     }
 
     public override object? ConvertTo(
@@ -36,13 +36,13 @@ public class IndexQuery
       object? value, 
       Type destinationType)
     {
-      return value is IndexQuery query ? query.ToString() : null;
+      return value is IndexSearchRequest query ? query.ToString() : null;
     }
   }
 
   private const string DELIMITER = "::";
 
-  public IndexQueryRoot Root
+  public IndexSearchRoot Root
   {
     get;
   }
@@ -52,7 +52,7 @@ public class IndexQuery
     get;
   }
 
-  public IndexQuery(
+  public IndexSearchRequest(
     string value)
   {
     if (string.IsNullOrWhiteSpace(value))
@@ -67,9 +67,9 @@ public class IndexQuery
     {
       throw new ArgumentException("The navigation query must include a root and path (for instance, 'Shows/Boston Legal')");
     }
-    if (!Enum.TryParse<IndexQueryRoot>(values[0], out var root))
+    if (!Enum.TryParse<IndexSearchRoot>(values[0], out var root))
     {
-      throw new ArgumentException($"The navigation query must start from one of the roots: {string.Join(",", Enum.GetValues<IndexQueryRoot>())}");
+      throw new ArgumentException($"The navigation query must start from one of the roots: {string.Join(",", Enum.GetValues<IndexSearchRoot>())}");
     }
 
     this.Root = root;

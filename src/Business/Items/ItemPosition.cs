@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization;
 
-namespace MediaLibrary.Business;
+namespace MediaLibrary.Business.Items;
 
-public class Position : IComparable<Position>
+public class ItemPosition : IComparable<ItemPosition>
 {
   private const ulong GROUP_BIT = 1UL << 63;
   private const ulong SPAN_BIT  = 1UL << 62;
 
-  public static readonly Position Default = new(1);
+  public static readonly ItemPosition Default = new(1);
 
   [JsonIgnore]
   public bool HasGroup => (this.Value & GROUP_BIT) != 0;
@@ -21,31 +21,31 @@ public class Position : IComparable<Position>
   }
 
   [JsonConstructor]
-  public Position(
+  public ItemPosition(
     ulong value)
   {
     this.Value = value;
   }
 
-  public Position(
+  public ItemPosition(
     ushort value)
   {
     this.Value = SetPosition(value);
   }
 
-  public Position(
+  public ItemPosition(
     ushort open, ushort close)
   {
     this.Value = SetSpanPosition(open, close);
   }
 
-  public Position(
+  public ItemPosition(
     byte group, ushort value)
   {
     this.Value = SetGroup(group) | SetPosition(value);
   }
 
-  public Position(
+  public ItemPosition(
     byte group, ushort open, ushort close)
   {
     this.Value = SetGroup(group) | SetSpanPosition(open, close);
@@ -85,7 +85,7 @@ public class Position : IComparable<Position>
   }
 
   public int CompareTo(
-    Position? other)
+    ItemPosition? other)
   {
     if (other is null)
     {

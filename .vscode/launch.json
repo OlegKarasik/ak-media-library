@@ -12,7 +12,9 @@
       // If you have changed target frameworks, make sure to update the program path.
       "program": "${workspaceFolder}/bin/Debug/net8.0/ak-media-library.dll",
       "args": [
-        "scan"
+        "info",
+        "--request",
+        "Movies::The Rock"
       ],
       "cwd": "D:\\Media",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
