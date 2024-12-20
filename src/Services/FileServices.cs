@@ -19,7 +19,7 @@ public static class FileServices
   }
 
   public static async Task<IndexItem> Load(
-    IndexFilePath path)
+    DirectoryIndexFilePath path)
   {
     if (path is null)
     {
@@ -50,7 +50,7 @@ public static class FileServices
       options);
 
     await File.WriteAllTextAsync(
-      new IndexFilePath(path).Value, 
+      new DirectoryIndexFilePath(path.Value).Value, 
       content);
   }
 }
