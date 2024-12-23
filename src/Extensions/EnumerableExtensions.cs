@@ -2,6 +2,53 @@ using System.Runtime.InteropServices;
 
 namespace MediaLibrary.Extensions;
 
+public static class StringExtensions
+{
+  public static int CalculateLevenshteinDistance(
+    this string @this, 
+    string right)
+  {
+    var memory = new Dictionary<(int, int), int>();
+
+    var r =  Recursion(memory, @this, right, @this.Length, right.Length);
+
+    return r;
+
+    static int Recursion(Dictionary<(int, int), int> memory, string x, string y, int m, int n)
+    {
+      if (m == 0)
+      {
+        return n;
+      }
+      if (n == 0)
+      {
+        return m;
+      }
+
+      if (x[m - 1] == y[n - 1])
+      {
+        return memory.TryGetValue((m - 1, n - 1), out var result)
+          ? result
+          : memory[(m - 1, n - 1)] = Recursion(memory, x, y, m - 1, n - 1);
+      }
+
+      var insertion = memory.TryGetValue((m, n - 1), out var insertionResult) 
+        ? insertionResult
+        : memory[(m, n - 1)] = Recursion(memory, x, y, m, n - 1);
+
+      var removal = memory.TryGetValue((m - 1, n), out var removalResult) 
+        ? removalResult
+        : memory[(m - 1, n)] = Recursion(memory, x, y, m - 1, n);
+
+      var replacement = memory.TryGetValue((m - 1, n - 1), out var replacementResult) 
+        ? replacementResult
+        : memory[(m - 1, n - 1)] = Recursion(memory, x, y, m - 1, n - 1);
+
+      return 1 + Math.Min(Math.Min(insertion, removal), replacement);
+    }
+  }
+}
+
 public static class EnumerableExtensions
 {
   public static Dictionary<string, T> CollideMany<S, T>(

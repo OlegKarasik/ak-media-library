@@ -1,6 +1,7 @@
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
+using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -66,6 +67,13 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
             else
             {
               AnsiConsole.WriteLine($"Unmatched: {episode.Value.Title}");
+              foreach (var k in c.Keys)
+              {
+                if (k.CalculateLevenshteinDistance(episode.Value.Title) < 2)
+                {
+                  AnsiConsole.WriteLine($"Possible match: {k}");
+                }
+              }
             }
           }
         }
