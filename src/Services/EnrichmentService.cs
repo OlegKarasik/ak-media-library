@@ -48,10 +48,46 @@ public class EnrichmentService
     }
   }
 
+  public class EpisodeListData
+  {
+    [JsonPropertyName("id")]
+    public required long Id
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("name")]
+    public required string Name
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("isMovie")]
+    public required EpisodeKind Kind
+    {
+      get; init;
+    }
+  }
+
+  public class SeriesListData
+  {
+    [JsonPropertyName("episodes")]
+    public required EpisodeListData[] Episodes
+    {
+      get; init;
+    }
+  }
+
   public enum SearchTarget
   {
     Movie,
     Series
+  }
+
+  public enum EpisodeKind
+  {
+    Movie = 1,
+    Episode = 0
   }
 
   public class AuthorizationTokenSource
@@ -158,5 +194,14 @@ public class EnrichmentService
       $"https://api4.thetvdb.com/v4/search?{q}");
 
     return result?.Data ?? [];
+  }
+
+  public async Task<EpisodeListData[]> GetEpisodeListAsync(
+    long showId)
+  {
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SeriesListData>>(
+      $"https://api4.thetvdb.com/v4/series/{showId}/episodes/default");
+
+    return result?.Data?.Episodes.Where(i => i.Kind == EpisodeKind.Episode).ToArray() ?? [];
   }
 }
