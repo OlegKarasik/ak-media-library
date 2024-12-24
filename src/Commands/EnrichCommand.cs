@@ -28,35 +28,36 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
-      case MovieItem movie:
-        {
-          var a = await this.enrichment.Search(movie.Title, EnrichmentService.SearchTarget.Movie);
-          foreach (var x in a)
-          {
-            AnsiConsole.WriteLine(x.Name);
-            if (x.Overview is not null)
-            {
-              AnsiConsole.WriteLine(x.Overview);
-            }
-            AnsiConsole.WriteLine();
-          }
-        }
-        break;
       case ShowItem show:
         {
-          var a = await this.enrichment.Search(show.Title, EnrichmentService.SearchTarget.Series);
-          foreach (var x in a)
+          var shows = await this.enrichment.SearchShowAsync(show.Title, EnrichmentService.SearchTarget.Series);
+
+          EnrichmentService.SearchData current;
+          for (;;)
           {
-            AnsiConsole.WriteLine(x.Name);
-            if (x.Overview is not null)
+            var prompt = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                  .Title("Please select potential show match:")
+                  .AddChoices(shows.Select(i => i.Name)));
+            
+            var selection = shows.First(i => i.Name == prompt);
+            if (selection.Overview is not null)
             {
-              AnsiConsole.WriteLine(x.Overview);
+              AnsiConsole.WriteLine(selection.Overview);
             }
-            AnsiConsole.WriteLine();
-          }
+
+            var confirmation = AnsiConsole.Prompt(
+              new ConfirmationPrompt($"Enrich show using data from '{selection.Name}'?"));
+
+            if (confirmation)
+            {
+              current = selection;
+              break;
+            }
+          };
           
-          var b = await this.enrichment.GetEpisodeListAsync(a[0].Id);
-          var c = b.ToDictionary(i => i.Name, i => i.Id);
+          var episodes = await this.enrichment.ListShowEpisodesAsync(current.Id);
+          var c = episodes.ToDictionary(i => i.Name, i => i.Id);
 
           foreach (var episode in show.Seasons.SelectMany(i => i.Value.Episodes))
           {

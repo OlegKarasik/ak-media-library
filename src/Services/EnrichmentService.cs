@@ -176,27 +176,33 @@ public class EnrichmentService
     this.httpClient = httpClient;
   }
 
-  public async Task<SearchData[]> Search(
+  public async Task<SearchData[]> SearchShowAsync(
     string title,
     SearchTarget target)
   {
+    if (string.IsNullOrWhiteSpace(title))
+    {
+      throw new ArgumentException($"'{nameof(title)}' cannot be null or whitespace.", nameof(title));
+    }
+
     var type = target switch {
       SearchTarget.Series => "series",
       SearchTarget.Movie => "movie",
       _ => throw new ArgumentOutOfRangeException(nameof(target))
     };
 
-    var q = HttpUtility.ParseQueryString("");
-    q.Add("query", title);
-    q.Add("type", type);
+    var query = HttpUtility.ParseQueryString("");
+    query.Add("query", title);
+    query.Add("type", type);
+    query.Add("limit", "5");
 
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchData[]>>(
-      $"https://api4.thetvdb.com/v4/search?{q}");
+      $"https://api4.thetvdb.com/v4/search?{query}");
 
     return result?.Data ?? [];
   }
 
-  public async Task<EpisodeListData[]> GetEpisodeListAsync(
+  public async Task<EpisodeListData[]> ListShowEpisodesAsync(
     long showId)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SeriesListData>>(
