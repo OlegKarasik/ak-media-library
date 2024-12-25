@@ -2,6 +2,28 @@ namespace MediaLibrary.Extensions;
 
 public static class StringExtensions
 {
+  private ref struct LevensteinDistanceMemory
+  {
+    private Span<int> memory;
+    private int rows;
+    private int cols;
+
+    public LevensteinDistanceMemory(
+      Span<int> memory,
+      int rows,
+      int cols)
+    {
+      this.memory = memory;
+      this.rows = rows;
+      this.cols = cols;
+    }
+
+    public ref int At(int x, int y)
+    {
+      return ref memory[x * this.cols + y];
+    }
+  }
+
   public static int CalculateLevenshteinDistance(
     this string @this, 
     string other)
@@ -19,11 +41,15 @@ public static class StringExtensions
 
     memory.Fill(-1);
 
-    return Recursion(memory, other.Length, @this, other, @this.Length, other.Length);
+    return Recursion(
+      new LevensteinDistanceMemory(memory, @this.Length, other.Length), 
+      @this, 
+      other, 
+      @this.Length, 
+      other.Length);
 
     static int Recursion(
-      Span<int> memory, 
-      int sz,
+      LevensteinDistanceMemory memory, 
       string x, 
       string y, 
       int m, 
@@ -37,24 +63,17 @@ public static class StringExtensions
       {
         return m;
       }
-
-      if (memory[m * sz + n] != -1)
+      if (memory.At(m, n) != -1)
       {
-        return memory[m * sz + n];
+        return memory.At(m, n);
       }
 
       if (char.ToLower(x[m - 1]) == char.ToLower(y[n - 1]))
       {
-        return Recursion(memory, sz, x, y, m - 1, n - 1);
+        return Recursion(memory, x, y, m - 1, n - 1);
       }
-
-      return memory[m * sz + n] 
-        = 1 + 
-          Math.Min(
-            Math.Min(
-              Recursion(memory, sz, x, y, m, n - 1), 
-              Recursion(memory, sz, x, y, m - 1, n)), 
-            Recursion(memory, sz, x, y, m - 1, n - 1));
+      return memory.At(m, n) 
+        = 1 + new int[] { Recursion(memory, x, y, m, n - 1), Recursion(memory, x, y, m - 1, n), Recursion(memory, x, y, m - 1, n - 1) }.Min();
     }
   }
 }
