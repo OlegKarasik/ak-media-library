@@ -29,32 +29,12 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     {
       case ShowItem show:
         {
-          var id = await this.MatchAsync(show.Title, EnrichmentService.SearchTarget.Series);    
-          if (id < 0)
+          var remoteId = await this.MatchAsync(show.Title, EnrichmentService.SearchTarget.Series);    
+          if (remoteId < 0)
           {
             return 1;
           }      
-          var episodes = await this.enrichment.ListEpisodesAsync(id);
-          var c = episodes.ToDictionary(i => i.Name, i => i.Id);
-
-          foreach (var episode in show.Seasons.SelectMany(i => i.Value.Episodes))
-          {
-            if (c.TryGetValue(episode.Value.Title, out var xxx))
-            {
-              AnsiConsole.WriteLine($"Matched: {episode.Value.Title}");
-            }
-            else
-            {
-              AnsiConsole.WriteLine($"Unmatched: {episode.Value.Title}");
-              foreach (var k in c.Keys)
-              {
-                if (k.CalculateLevenshteinDistance(episode.Value.Title) < 2)
-                {
-                  AnsiConsole.WriteLine($"Possible match: {k}");
-                }
-              }
-            }
-          }
+          await this.MatchEpisodesAsync(show, remoteId);
         }
         break;
       default:
@@ -115,5 +95,62 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         }
       }
     };
+  }
+
+  private async Task<Dictionary<long, EpisodeItem>> MatchEpisodesAsync(
+    ShowItem show,
+    long remoteId)
+  {
+    const string SKIP_CHOICE = "[Yellow]Skip[/]";
+    
+    const int DISTANCE_CONSTANT = 5;
+
+    var output = new Dictionary<long, EpisodeItem>();
+
+    var episodes = show.Seasons
+      .SelectMany(i => i.Value.Episodes)
+      .ToDictionary(i => i.Key, i => i.Value);
+
+    foreach (var item in await this.enrichment.ListEpisodesAsync(remoteId))
+    {
+      if (episodes.TryGetValue(item.Name, out var episode))
+      {
+        output[item.Id] = episode;
+      }
+      else
+      {
+        var matches = new List<EpisodeItem>();
+        foreach (var (title, value) in episodes)
+        {
+          if (title.CalculateLevenshteinDistance(item.Name) < DISTANCE_CONSTANT)
+          {
+            matches.Add(value);
+          }
+        }
+        if (matches.Count == 0)
+        {
+          AnsiConsole.WriteLine($"Unmatched remote: {item.Name}");
+          continue;
+        }
+
+        var prompt = new SelectionPrompt<string>()
+          .Title("No direct match found, please select one of the [Blue]potential matches[/]:")
+          .AddChoiceGroup("Matches", matches.Select(i => i.Title));
+        
+        prompt.AddChoice(SKIP_CHOICE);
+
+        var choice = AnsiConsole.Prompt(prompt);
+        switch (choice)
+        {
+          case SKIP_CHOICE:
+            AnsiConsole.WriteLine($"Skipping remote: {item.Name}");
+            break;
+          default:
+            output[item.Id] = matches.First(i => i.Title == choice);
+            break;
+        }
+      }
+    }
+    return output;
   }
 }
