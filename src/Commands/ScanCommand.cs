@@ -191,7 +191,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = shows.Collide(i => i.Title),
             Movies = [],
-            Path = path
+            Path = new DirectoryIndexFilePath(path)
           };
       case ScanItemMask.Movies:
         // We need to construct the 'index' item from 'movies'
@@ -200,7 +200,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = [],
             Movies = movies.Collide(i => i.Title),
-            Path = path
+            Path = new DirectoryIndexFilePath(path)
           };
       case ScanItemMask.Indices:
         // We need to construct the 'index' item from 'index'
@@ -209,7 +209,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = indices.CollideMany(i => i.Shows.Values, i => i.Title),
             Movies = indices.CollideMany(i => i.Movies.Values, i => i.Title),
-            Path = path
+            Path = new DirectoryIndexFilePath(path)
           };
       default:
         throw new NotImplementedException($"The scanning of \"{mask}\" isn't supported yet");
@@ -230,9 +230,9 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     CommandContext context, 
     ScanCommandSettings settings)
   {
-    var confirmation = AnsiConsole.Prompt(
-      new ConfirmationPrompt($"Perform scan of [Blue]{settings.Library}[/]?"));
-    
+    // var confirmation = AnsiConsole.Prompt(
+    //   new ConfirmationPrompt($"Perform scan of [Blue]{settings.Library}[/]?"));
+    var confirmation = true;
     if (!confirmation)
     {
       AnsiConsole.WriteLine("Cancelled, exiting...");

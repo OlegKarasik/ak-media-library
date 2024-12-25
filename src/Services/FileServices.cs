@@ -14,6 +14,7 @@ public static class FileServices
     options = new JsonSerializerOptions
     {
       WriteIndented = true,
+      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
       Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
   }
@@ -33,7 +34,7 @@ public static class FileServices
 
   public static async Task SaveAsync(
     IndexItem index,
-    DirectoryPath path)
+    DirectoryIndexFilePath path)
   {
     if (index is null)
     {
@@ -50,7 +51,20 @@ public static class FileServices
       options);
 
     await File.WriteAllTextAsync(
-      new DirectoryIndexFilePath(path.Value).Value, 
+      path.Value, 
+      content);
+  }
+
+  public static async Task SaveAsync(
+    EpisodePropsItem props,
+    FilePropsFilePath path)
+  {
+    var content = JsonSerializer.Serialize(
+      props,
+      options);
+
+    await File.WriteAllTextAsync(
+      path.Value, 
       content);
   }
 }

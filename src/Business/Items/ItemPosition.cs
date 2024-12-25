@@ -7,7 +7,7 @@ public class ItemPosition : IComparable<ItemPosition>
   private const ulong GROUP_BIT = 1UL << 63;
   private const ulong SPAN_BIT  = 1UL << 62;
 
-  public static readonly ItemPosition Default = new(1);
+  public static readonly ItemPosition Default = new(0);
 
   [JsonIgnore]
   public bool HasGroup => (this.Value & GROUP_BIT) != 0;

@@ -1,11 +1,21 @@
+using System.Text.Json.Serialization;
+
 namespace MediaLibrary.Business;
 
 public class DirectoryIndexFilePath : FilePath
 {
+  [JsonConstructor]
   public DirectoryIndexFilePath(
     string value)
 
     : base(NormalizePath(value))
+  {
+  }
+
+  public DirectoryIndexFilePath(
+    DirectoryPath path)
+
+    : base(NormalizePath(path.Value))
   {
   }
 

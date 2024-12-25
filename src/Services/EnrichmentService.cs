@@ -39,7 +39,7 @@ public class EnrichmentService
     }
   }
 
-  public class SearchData
+  public class SearchResult
   {
     [JsonPropertyName("tvdb_id")]
     public required long Id
@@ -49,6 +49,12 @@ public class EnrichmentService
 
     [JsonPropertyName("name")]
     public required string Name
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("year")]
+    public string? Year
     {
       get; init;
     }
@@ -261,7 +267,7 @@ public class EnrichmentService
     this.httpClient = httpClient;
   }
 
-  public async Task<SearchData[]> SearchAsync(
+  public async Task<SearchResult[]> SearchAsync(
     string title,
     SearchTarget target,
     int offset = 0,
@@ -284,7 +290,7 @@ public class EnrichmentService
     query.Add("offset", offset.ToString());
     query.Add("limit", limit.ToString());
 
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchData[]>>(
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchResult[]>>(
       $"https://api4.thetvdb.com/v4/search?{query}");
 
     return result?.Data ?? [];
@@ -294,7 +300,7 @@ public class EnrichmentService
     long remoteSeriesId)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Series>>(
-      $"https://api4.thetvdb.com/v4/series/{remoteSeriesId}/episodes/default");
+      $"https://api4.thetvdb.com/v4/series/{remoteSeriesId}/extended?meta=episodes");
 
     return result?.Data;
   }
