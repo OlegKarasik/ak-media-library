@@ -34,7 +34,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
           {
             return 1;
           }      
-          await this.MatchEpisodesAsync(show, remoteId);
+          var matches = await this.MatchSeriesAsync(show, remoteId);
         }
         break;
       default:
@@ -48,8 +48,6 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     string title,
     EnrichmentService.SearchTarget target)
   {
-    const string CANCEL_CHOICE = "[Yellow]Cancel[/]";
-
     const int OFFSET = 0;
     const int LIMIT  = 20;
     for (;;)
@@ -60,44 +58,30 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
       for (;;)
       {
-        var prompt = new SelectionPrompt<string>()
-          .Title("Select [Blue]an item[/] to view [Green]more[/]:")
-          .AddChoiceGroup("Matches", results.Select(i => i.Name));
+        var value = AnsiConsole.Prompt(
+          new SelectionPrompt<string>()
+          .Title("Pick [Blue]an item[/] to view [Green]more[/]:")
+          .AddChoices(results.Select(i => i.Name)));
 
-        prompt.AddChoice(CANCEL_CHOICE);
+        var match = results.First(i => i.Name == value);
 
-        var value = AnsiConsole.Prompt(prompt);
-        switch (value)
+        AnsiConsole.Write(new Markup($"[Green]{match.Name}[/]"));
+        AnsiConsole.WriteLine();
+        if (match.Overview is not null)
         {
-          case CANCEL_CHOICE:
-            return -1;
-          default:
-            {
-              var match = results.First(i => i.Name == value);
+          AnsiConsole.Write(match.Overview);
+          AnsiConsole.WriteLine();
+        }
 
-              AnsiConsole.Write(new Markup($"[Green]{match.Name}[/]"));
-              AnsiConsole.WriteLine();
-              if (match.Overview is not null)
-              {
-                AnsiConsole.Write(match.Overview);
-                AnsiConsole.WriteLine();
-              }
-
-              var confirmation = AnsiConsole.Prompt(
-                new ConfirmationPrompt($"Perform enriment using [Blue]{match.Name}[/]?"));
-
-              if (confirmation)
-              {
-                return match.Id;
-              }
-              continue;
-            }
+        if (ConsoleServices.YesNoConfirmation("Accept match?"))
+        {
+          return match.Id;
         }
       }
     };
   }
 
-  private async Task<Dictionary<long, EpisodeItem>> MatchEpisodesAsync(
+  private async Task<Dictionary<long, EpisodeItem>> MatchSeriesAsync(
     ShowItem show,
     long remoteId)
   {
@@ -111,7 +95,11 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       .SelectMany(i => i.Value.Episodes)
       .ToDictionary(i => i.Key, i => i.Value);
 
-    foreach (var item in await this.enrichment.ListEpisodesAsync(remoteId))
+    var series = await AnsiConsole
+      .Status()
+      .StartAsync("Getting series information", async ctx => await this.enrichment.GetSeriesAsync(remoteId));
+
+    foreach (var item in series?.Episodes ?? [])
     {
       if (episodes.TryGetValue(item.Name, out var episode))
       {

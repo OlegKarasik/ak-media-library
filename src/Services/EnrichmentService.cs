@@ -11,6 +11,18 @@ namespace MediaLibrary.Extensions.Services;
 
 public class EnrichmentService
 {
+  public enum SearchTarget
+  {
+    Movie,
+    Series
+  }
+
+  public enum EpisodeKind
+  {
+    Movie = 1,
+    Episode = 0
+  }
+
   private class GenericResponse<T>
     where T : class
   {
@@ -48,8 +60,57 @@ public class EnrichmentService
     }
   }
 
-  public class EpisodeListData
+  public class Genre
   {
+    [JsonPropertyName("name")]
+    public required string Name
+    {
+      get; init;
+    }
+  }
+
+  public class Series
+  {
+    [JsonPropertyName("name")]
+    public required string Name
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("year")]
+    public string? Year
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("overview")]
+    public string? Overview
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("genres")]
+    public Genre[]? Genres
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("episodes")]
+    public Episode[]? Episodes
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("characters")]
+    public Character[]? Characters
+    {
+      get; init;
+    }
+  }
+
+  public class Episode
+  {
+    
     [JsonPropertyName("id")]
     public required long Id
     {
@@ -67,27 +128,51 @@ public class EnrichmentService
     {
       get; init;
     }
-  }
 
-  public class SeriesListData
-  {
-    [JsonPropertyName("episodes")]
-    public required EpisodeListData[] Episodes
+    [JsonPropertyName("aired")]
+    public string? Date
+    {
+      get; init; 
+    }
+
+    [JsonPropertyName("year")]
+    public string? Year
+    {
+      get; init; 
+    }
+
+    [JsonPropertyName("overview")]
+    public string? Overview
+    {
+      get; init; 
+    }
+
+    [JsonPropertyName("characters")]
+    public Character[]? Characters
     {
       get; init;
     }
   }
-
-  public enum SearchTarget
+  
+  public class Character
   {
-    Movie,
-    Series
-  }
+    [JsonPropertyName("name")]
+    public string? Name
+    {
+      get; init;
+    }
 
-  public enum EpisodeKind
-  {
-    Movie = 1,
-    Episode = 0
+    [JsonPropertyName("personName")]
+    public required string PersonName 
+    { 
+      get; init; 
+    }
+
+    [JsonPropertyName("peopleType")]
+    public required string PersonType 
+    {
+      get; init;
+    }
   }
 
   public class AuthorizationTokenSource
@@ -205,12 +290,21 @@ public class EnrichmentService
     return result?.Data ?? [];
   }
 
-  public async Task<EpisodeListData[]> ListEpisodesAsync(
-    long showId)
+  public async Task<Series?> GetSeriesAsync(
+    long remoteSeriesId)
   {
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SeriesListData>>(
-      $"https://api4.thetvdb.com/v4/series/{showId}/episodes/default");
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Series>>(
+      $"https://api4.thetvdb.com/v4/series/{remoteSeriesId}/episodes/default");
 
-    return result?.Data?.Episodes.Where(i => i.Kind == EpisodeKind.Episode).ToArray() ?? [];
+    return result?.Data;
+  }
+
+  public async Task<Episode?> GetEpisodeAsync(
+    long remoteEpisodeId)
+  {
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Episode>>(
+      $"https://api4.thetvdb.com/v4/episodes/{remoteEpisodeId}/extended");
+
+    return result?.Data;
   }
 }
