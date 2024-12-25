@@ -176,9 +176,11 @@ public class EnrichmentService
     this.httpClient = httpClient;
   }
 
-  public async Task<SearchData[]> SearchShowAsync(
+  public async Task<SearchData[]> SearchAsync(
     string title,
-    SearchTarget target)
+    SearchTarget target,
+    int offset = 0,
+    int limit = 5)
   {
     if (string.IsNullOrWhiteSpace(title))
     {
@@ -194,7 +196,8 @@ public class EnrichmentService
     var query = HttpUtility.ParseQueryString("");
     query.Add("query", title);
     query.Add("type", type);
-    query.Add("limit", "5");
+    query.Add("offset", offset.ToString());
+    query.Add("limit", limit.ToString());
 
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchData[]>>(
       $"https://api4.thetvdb.com/v4/search?{query}");
@@ -202,7 +205,7 @@ public class EnrichmentService
     return result?.Data ?? [];
   }
 
-  public async Task<EpisodeListData[]> ListShowEpisodesAsync(
+  public async Task<EpisodeListData[]> ListEpisodesAsync(
     long showId)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SeriesListData>>(

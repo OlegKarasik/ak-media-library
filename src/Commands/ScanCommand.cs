@@ -231,7 +231,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     ScanCommandSettings settings)
   {
     var confirmation = AnsiConsole.Prompt(
-      new ConfirmationPrompt($"Perform scan of '{settings.Library}'?"));
+      new ConfirmationPrompt($"Perform scan of [Blue]{settings.Library}[/]?"));
     
     if (!confirmation)
     {
@@ -256,7 +256,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
                 ctx.Status("Saving...");
                 // Save index file
                 //
-                await FileServices.Save(index, index.Path);
+                await FileServices.SaveAsync(index, index.Path);
               });
 
               AnsiConsole.WriteLine($"Scanning completed. Took: {measurement.Elapsed}");

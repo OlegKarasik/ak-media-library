@@ -21,7 +21,7 @@ public partial class InfoCommand : AsyncCommand<InfoCommandSettings>
     CommandContext context, 
     InfoCommandSettings settings)
   {
-    IndexItem index = await FileServices.Load(new DirectoryIndexFilePath(settings.Library.Value));
+    IndexItem index = await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value));
 
     PanelHeader outputTitle = null;
 

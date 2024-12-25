@@ -24,44 +24,22 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     CommandContext context, 
     EnrichCommandSettings settings)
   {
-    IndexItem index = await FileServices.Load(new DirectoryIndexFilePath(settings.Library.Value));
-
+    var index = await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value));
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case ShowItem show:
         {
-          var shows = await this.enrichment.SearchShowAsync(show.Title, EnrichmentService.SearchTarget.Series);
-
-          EnrichmentService.SearchData current;
-          for (;;)
+          var id = await this.MatchAsync(show.Title, EnrichmentService.SearchTarget.Series);    
+          if (id < 0)
           {
-            var prompt = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                  .Title("Please select potential show match:")
-                  .AddChoices(shows.Select(i => i.Name)));
-            
-            var selection = shows.First(i => i.Name == prompt);
-            if (selection.Overview is not null)
-            {
-              AnsiConsole.WriteLine(selection.Overview);
-            }
-
-            var confirmation = AnsiConsole.Prompt(
-              new ConfirmationPrompt($"Enrich show using data from '{selection.Name}'?"));
-
-            if (confirmation)
-            {
-              current = selection;
-              break;
-            }
-          };
-          
-          var episodes = await this.enrichment.ListShowEpisodesAsync(current.Id);
+            return 1;
+          }      
+          var episodes = await this.enrichment.ListEpisodesAsync(id);
           var c = episodes.ToDictionary(i => i.Name, i => i.Id);
 
           foreach (var episode in show.Seasons.SelectMany(i => i.Value.Episodes))
           {
-            if (c.TryGetValue(episode.Value.Title, out var id))
+            if (c.TryGetValue(episode.Value.Title, out var xxx))
             {
               AnsiConsole.WriteLine($"Matched: {episode.Value.Title}");
             }
@@ -84,5 +62,58 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     }
 
     return 0;
+  }
+
+  private async Task<long> MatchAsync(
+    string title,
+    EnrichmentService.SearchTarget target)
+  {
+    const string CANCEL_CHOICE = "[Yellow]Cancel[/]";
+
+    const int OFFSET = 0;
+    const int LIMIT  = 20;
+    for (;;)
+    {
+      var results = await AnsiConsole
+        .Status()
+        .StartAsync("Searching", async ctx => await this.enrichment.SearchAsync(title, target, OFFSET, LIMIT));
+
+      for (;;)
+      {
+        var prompt = new SelectionPrompt<string>()
+          .Title("Select [Blue]an item[/] to view [Green]more[/]:")
+          .AddChoiceGroup("Matches", results.Select(i => i.Name));
+
+        prompt.AddChoice(CANCEL_CHOICE);
+
+        var value = AnsiConsole.Prompt(prompt);
+        switch (value)
+        {
+          case CANCEL_CHOICE:
+            return -1;
+          default:
+            {
+              var match = results.First(i => i.Name == value);
+
+              AnsiConsole.Write(new Markup($"[Green]{match.Name}[/]"));
+              AnsiConsole.WriteLine();
+              if (match.Overview is not null)
+              {
+                AnsiConsole.Write(match.Overview);
+                AnsiConsole.WriteLine();
+              }
+
+              var confirmation = AnsiConsole.Prompt(
+                new ConfirmationPrompt($"Perform enriment using [Blue]{match.Name}[/]?"));
+
+              if (confirmation)
+              {
+                return match.Id;
+              }
+              continue;
+            }
+        }
+      }
+    };
   }
 }

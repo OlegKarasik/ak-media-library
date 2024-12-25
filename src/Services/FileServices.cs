@@ -18,7 +18,7 @@ public static class FileServices
     };
   }
 
-  public static async Task<IndexItem> Load(
+  public static async Task<IndexItem> LoadAsync(
     DirectoryIndexFilePath path)
   {
     if (path is null)
@@ -31,7 +31,7 @@ public static class FileServices
       ?? throw new InvalidOperationException($"Unable to load index from {path.Value}");
   }
 
-  public static async Task Save(
+  public static async Task SaveAsync(
     IndexItem index,
     DirectoryPath path)
   {
