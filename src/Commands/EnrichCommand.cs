@@ -10,6 +10,8 @@ namespace MediaLibrary.Commands;
 
 public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 {
+  private int FUZZY_MATCH_CONSTANT = 6;
+
   private readonly EnrichCommandOptions options;
   private readonly EnrichmentService enrichment;
 
@@ -24,15 +26,37 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     CommandContext context, 
     EnrichCommandSettings settings)
   {
-    var index = await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value));
+    var index = await AnsiConsole
+        .Status()
+        .StartAsync("Loading index", async ctx => await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value)));
+
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case ShowItem show:
         {
-          await this.EnrichAsync(
-            show, 
-            await this.GetRemoteSeriesAsync(
-              await this.GetRemoteIdAsync(show.Title, EnrichmentService.SearchTarget.Series)));
+          var remoteSeries = await this.PickSeriesMatchAsync(show.Title);
+          if (remoteSeries is null)
+          {
+            return -1;
+          }
+
+          // TODO: Enrich series information
+          //
+
+          foreach (var season in show.Seasons.Values)
+          {
+            foreach (var episode in season.Episodes.Values)
+            {
+              // var remoteEpisode = await this.PickEpisodeMatchAsync(episode.Title, remoteEpisodes);
+              // if (remoteEpisode is null)
+              // {
+              //   continue;
+              // }
+
+              // TODO: Enrich episode information
+              //
+            }
+          }
         }
         break;
       default:
@@ -42,132 +66,105 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     return 0;
   }
 
-  private async Task<long> GetRemoteIdAsync(
+  
+
+  private async Task<long> PickMatchAsync(
     string title,
     EnrichmentService.SearchTarget target)
   {
-    const int OFFSET = 0;
-    const int LIMIT  = 20;
+    var results = await AnsiConsole
+      .Status()
+      .StartAsync("Searching", async ctx => await this.enrichment.SearchAsync(title, target));
+    
     for (;;)
     {
-      var results = await AnsiConsole
-        .Status()
-        .StartAsync("Searching", async ctx => await this.enrichment.SearchAsync(title, target, OFFSET, LIMIT));
+      var match = AnsiConsole.Prompt(
+        new SelectionPrompt<EnrichmentService.SearchResult>()
+          .Title($"Found {results.Length} matches, select one to continue or use CTRL+C to cancel:")
+          .UseConverter(i => $"{i.Name} ({i.Year ?? "N/A"})")
+          .AddChoices(results));
 
-      for (;;)
+      AnsiConsole.Write(
+        new Panel(
+          new Rows(
+            new Markup("Overview"),
+            new Text(match.Overview ?? "N/A")))
+          .Header(match.Name.ToUpper(), Justify.Left));
+
+      if (AnsiConsole.Prompt(new ConfirmationPrompt("Continue?")))
       {
-        var value = AnsiConsole.Prompt(
-          new SelectionPrompt<string>()
-          .Title("Pick the best [Blue]match[/]:")
-          .AddChoices(results.Select(i => i.Name)));
-
-        var match = results.First(i => i.Name == value);
-
-        AnsiConsole.Write(new Markup($"[Green]{match.Name}[/]"));
-        AnsiConsole.WriteLine();
-
-        if (match.Overview is not null)
-        {
-          AnsiConsole.Write(match.Overview);
-          AnsiConsole.WriteLine();
-        }
-
-        if (ConsoleServices.YesNoConfirmation("Accept match?"))
-        {
-          return match.Id;
-        }
+        return match.Id;
       }
-    };
+    }
   }
 
-  private async Task<EnrichmentService.Series> GetRemoteSeriesAsync(
-    long remoteId)
+  private async Task<EnrichmentService.Series> PickSeriesMatchAsync(
+    string seriesTitle)
   {
+    var id = await this.PickMatchAsync(seriesTitle, EnrichmentService.SearchTarget.Series);
     return await AnsiConsole
       .Status()
-      .StartAsync("Getting series", async ctx => (await this.enrichment.GetSeriesAsync(remoteId))!);
+      .StartAsync("Loading", async ctx => (await this.enrichment.GetSeriesAsync(id))!);
   }
 
-  private async Task EnrichAsync(
-    ShowItem show,
-    EnrichmentService.Series series)
-  {
-    const string SKIP_CHOICE = "[Yellow]Skip[/]";
+  // private Task<EnrichmentService.Episode> PickEpisodeMatchAsync(
+  //   string episodeTitle,
+  //   IDictionary<string, EnrichmentService.Episode> remoteEpisodes)
+  // {
+  //   if (remoteEpisodes.TryGetValue(episodeTitle, out var episode))
+  //   {
+  //     return episode;
+  //   }
+  //   else
+  //   {
+  //     var fuzzy = new List<EpisodeItem>();
+  //     foreach (var (title, value) in localEpisodesDictionary)
+  //     {
+  //       if (title.CalculateLevenshteinDistance(remoteEpisode.Name) < FUZZY_MATCH_CONSTANT)
+  //       {
+  //         fuzzy.Add(value);
+  //       }
+  //     }
+  //     if (fuzzy.Count == 0)
+  //     {
+  //       AnsiConsole.MarkupLineInterpolated($"[Red]ERRO[/]: No local episode matches [Green]{remoteEpisode.Name}[/]");
+  //       continue;
+  //     }
+  //     AnsiConsole.MarkupLineInterpolated($"[Yellow]WARN[/]: Multiple local episodes matches [Green]{remoteEpisode.Name}[/]");
+  //     AnsiConsole.Write(
+  //       new Rows(fuzzy.Select((i, index) => new Markup($"{index}. {i.Title}"))));
+
+  //     if (AnsiConsole.Confirm("Pick one [Blue](y)[/] or skip [Blue](n)[/]?"))
+  //     {
+  //       var match = AnsiConsole.Prompt(
+  //         new SelectionPrompt<EpisodeItem>()
+  //           .Title("[Yellow]WARN[/]: Multiple local episodes matches [Green]{item.Name}[/], pick one or skip:")
+  //           .AddChoices(fuzzy));
+
+  //       yield return (match, remoteEpisode.Id);
+  //     }
+  //   }
+  // }
     
-    const int DISTANCE_CONSTANT = 5;
+  //   async Task EnrichEpisodeAsync(
+  //     EpisodeItem episode,
+  //     EnrichmentService.Episode remoteEpisode)
+  //   {
+  //     remoteEpisode = (await this.enrichment.GetEpisodeAsync(remoteEpisode.Id))!;
+  //     await FileServices.SaveAsync(
+  //       new EpisodePropsItem
+  //       {
+  //         Date = remoteEpisode.Date,
+  //         Summary = remoteEpisode.Overview,
+  //         Directors = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
+  //         Writers = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
+  //       }, 
+  //       new FilePropsFilePath(episode.Path.Value));
+  //   }
 
-    var episodes = show.Seasons
-      .SelectMany(i => i.Value.Episodes)
-      .ToDictionary(i => i.Key, i => i.Value);
-
-    foreach (var item in (series?.Episodes ?? []).Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
-    {
-      if (episodes.TryGetValue(item.Name, out var episode))
-      {
-        await EnrichEpisodeAsync(
-          episode, 
-          await ReloadAsync(item.Id));
-      }
-      else
-      {
-        var matches = new List<EpisodeItem>();
-        foreach (var (title, value) in episodes)
-        {
-          if (title.CalculateLevenshteinDistance(item.Name) < DISTANCE_CONSTANT)
-          {
-            matches.Add(value);
-          }
-        }
-        if (matches.Count == 0)
-        {
-          AnsiConsole.Write($"[Red]FAILED: Unable to match {item.Name}[/]");
-          AnsiConsole.WriteLine();
-          continue;
-        }
-        AnsiConsole.Write($"[Yellow]Warning: No precise match {item.Name}[/]");
-        AnsiConsole.WriteLine();
-
-        var prompt = new SelectionPrompt<string>()
-          .Title("Pick the [Blue]best match[/] or [Yellow]skip[/]:")
-          .AddChoiceGroup("Matches", matches.Select(i => i.Title))
-          .AddChoices(SKIP_CHOICE);
-
-        var choice = AnsiConsole.Prompt(prompt);
-        switch (choice)
-        {
-          case SKIP_CHOICE:
-            AnsiConsole.WriteLine($"Skipping remote: {item.Name}");
-            break;
-          default:
-            await EnrichEpisodeAsync(
-              matches.First(i => i.Title == choice), 
-              await ReloadAsync(item.Id));
-
-            break;
-        }
-      }
-    }
-    
-    async Task EnrichEpisodeAsync(
-      EpisodeItem episode,
-      EnrichmentService.Episode remoteEpisode)
-    {
-      remoteEpisode = (await this.enrichment.GetEpisodeAsync(remoteEpisode.Id))!;
-      await FileServices.SaveAsync(
-        new EpisodePropsItem
-        {
-          Date = remoteEpisode.Date,
-          Summary = remoteEpisode.Overview,
-          Directors = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
-          Writers = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
-        }, 
-        new FilePropsFilePath(episode.Path.Value));
-    }
-
-    async Task<EnrichmentService.Episode> ReloadAsync(
-      long remoteId)
-    {
-      return (await this.enrichment.GetEpisodeAsync(remoteId))!;
-    }
-  }
+  //   async Task<EnrichmentService.Episode> ReloadAsync(
+  //     long remoteId)
+  //   {
+  //     return (await this.enrichment.GetEpisodeAsync(remoteId))!;
+  //   }
 }

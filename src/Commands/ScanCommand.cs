@@ -230,38 +230,28 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     CommandContext context, 
     ScanCommandSettings settings)
   {
-    // var confirmation = AnsiConsole.Prompt(
-    //   new ConfirmationPrompt($"Perform scan of [Blue]{settings.Library}[/]?"));
-    var confirmation = true;
-    if (!confirmation)
-    {
-      AnsiConsole.WriteLine("Cancelled, exiting...");
-    }
-    else
-    {
-      await AnsiConsole
-        .Status()
-        .StartAsync(
-          "Initialising...", 
-          async ctx => 
-          {
-            var measurement = await TimeServices.MeasureAsync(
-              async () => 
-              {
-                ctx.Status("Scanning...");
-                // Scan library directory
-                //
-                var index = this.ScanIndex(settings.Library);
-                
-                ctx.Status("Saving...");
-                // Save index file
-                //
-                await FileServices.SaveAsync(index, index.Path);
-              });
+    await AnsiConsole
+      .Status()
+      .StartAsync(
+        "Initialising...", 
+        async ctx => 
+        {
+          var measurement = await TimeServices.MeasureAsync(
+            async () => 
+            {
+              ctx.Status("Scanning...");
+              // Scan library directory
+              //
+              var index = this.ScanIndex(settings.Library);
+              
+              ctx.Status("Saving...");
+              // Save index file
+              //
+              await FileServices.SaveAsync(index, index.Path);
+            });
 
-              AnsiConsole.WriteLine($"Scanning completed. Took: {measurement.Elapsed}");
-          });
-    }
+            AnsiConsole.MarkupLineInterpolated($"Scanning completed [Green]Elapsed: {measurement.Elapsed}[/]");
+        });
 
     return 0;
   }

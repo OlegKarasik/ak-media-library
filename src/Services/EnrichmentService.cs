@@ -101,6 +101,12 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("seasons")]
+    public Season[]? Seasons
+    {
+      get; init;
+    }
+
     [JsonPropertyName("episodes")]
     public Episode[]? Episodes
     {
@@ -114,9 +120,35 @@ public class EnrichmentService
     }
   }
 
+  public class Season
+  {
+    [JsonPropertyName("id")]
+    public required long Id
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("name")]
+    public string? Name
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("number")]
+    public required long Index
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("year")]
+    public string? Year
+    {
+      get; init; 
+    }
+  }
+
   public class Episode
   {
-    
     [JsonPropertyName("id")]
     public required long Id
     {
@@ -270,6 +302,7 @@ public class EnrichmentService
   public async Task<SearchResult[]> SearchAsync(
     string title,
     SearchTarget target,
+    string language = "eng",
     int offset = 0,
     int limit = 5)
   {
@@ -287,6 +320,7 @@ public class EnrichmentService
     var query = HttpUtility.ParseQueryString("");
     query.Add("query", title);
     query.Add("type", type);
+    query.Add("language", language);
     query.Add("offset", offset.ToString());
     query.Add("limit", limit.ToString());
 
@@ -301,6 +335,15 @@ public class EnrichmentService
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Series>>(
       $"https://api4.thetvdb.com/v4/series/{remoteSeriesId}/extended?meta=episodes");
+
+    return result?.Data;
+  }
+
+  public async Task<Season?> GetSeasonAsync(
+    long remoteSeasonId)
+  {
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Season>>(
+      $"https://api4.thetvdb.com/v4/seasons/{remoteSeasonId}/extended");
 
     return result?.Data;
   }
