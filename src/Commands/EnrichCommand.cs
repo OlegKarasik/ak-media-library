@@ -27,15 +27,15 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     EnrichCommandSettings settings)
   {
     var index = await AnsiConsole
-        .Status()
-        .StartAsync("Loading index", async ctx => await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value)));
+      .Status()
+      .StartAsync("Loading index", async ctx => await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value)));
 
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case ShowItem show:
         {
-          var remoteSeries = await this.PickSeriesMatchAsync(show.Title);
-          if (remoteSeries is null)
+          var _show = await this.PickSeriesMatchAsync(show.Title);
+          if (_show is null)
           {
             return -1;
           }
@@ -45,13 +45,19 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
           foreach (var season in show.Seasons.Values)
           {
+            // TODO: Pick season
+            //
+
+            // TODO: Enrich season information
+            //
+
             foreach (var episode in season.Episodes.Values)
             {
-              // var remoteEpisode = await this.PickEpisodeMatchAsync(episode.Title, remoteEpisodes);
-              // if (remoteEpisode is null)
-              // {
-              //   continue;
-              // }
+              var _episode = await this.PickEpisodeMatchAsync(episode.Title, _show);
+              if (_episode is null)
+              {
+                continue;
+              }
 
               // TODO: Enrich episode information
               //
@@ -66,85 +72,146 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     return 0;
   }
 
-  
-
   private async Task<long> PickMatchAsync(
-    string title,
-    EnrichmentService.SearchTarget target)
+    string lookupTitle,
+    EnrichmentService.SearchTarget lookupTarget)
   {
-    var results = await AnsiConsole
-      .Status()
-      .StartAsync("Searching", async ctx => await this.enrichment.SearchAsync(title, target));
+    var measurement = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync("Searching matches", async ctx => await this.enrichment.SearchAsync(lookupTitle, lookupTarget)));
+
+    AnsiConsole.MarkupLineInterpolated($"Found [Green]{measurement.Data.Length}[/] series. Elapsed [Green]{measurement.Elapsed}[/]");
     
     for (;;)
     {
       var match = AnsiConsole.Prompt(
         new SelectionPrompt<EnrichmentService.SearchResult>()
-          .Title($"Found {results.Length} matches, select one to continue or use CTRL+C to cancel:")
-          .UseConverter(i => $"{i.Name} ({i.Year ?? "N/A"})")
-          .AddChoices(results));
+          .Title($"Select match to continue or use CTRL+C to cancel:")
+          .UseConverter(i => $"{i.Name} ({i.Year ?? "[Red]N/A[/]"})")
+          .AddChoices(measurement.Data));
+
+      AnsiConsole.MarkupLineInterpolated($"Selected [Green]{match.Name}[/]");
 
       AnsiConsole.Write(
-        new Panel(
-          new Rows(
-            new Markup("Overview"),
-            new Text(match.Overview ?? "N/A")))
+        new Panel(new Text(match.Overview ?? "[Red]N/A[/]"))
           .Header(match.Name.ToUpper(), Justify.Left));
 
-      if (AnsiConsole.Prompt(new ConfirmationPrompt("Continue?")))
+      switch (
+        AnsiConsole.Prompt(
+          new SelectionPrompt<string>()
+            .AddChoices("Continue", "Back")))
       {
-        return match.Id;
+        case "Continue":
+          return match.Id;
+        case "Back":
+          break;
       }
     }
   }
 
-  private async Task<EnrichmentService.Series> PickSeriesMatchAsync(
-    string seriesTitle)
+  private async Task<EnrichmentService.Series?> PickSeriesMatchAsync(
+    string lookupTitle)
   {
-    var id = await this.PickMatchAsync(seriesTitle, EnrichmentService.SearchTarget.Series);
-    return await AnsiConsole
-      .Status()
-      .StartAsync("Loading", async ctx => (await this.enrichment.GetSeriesAsync(id))!);
+    var id = await this.PickMatchAsync(lookupTitle, EnrichmentService.SearchTarget.Series);
+
+    var measurement = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync($"Loading {lookupTitle}", async ctx => await this.enrichment.GetSeriesAsync(id)));
+
+    if (measurement.Data is not null)
+    {
+      AnsiConsole.MarkupLineInterpolated($"Loaded information about [Green]{lookupTitle}[/] series. Elapsed [Green]{measurement.Elapsed}[/]");
+    }
+    return measurement.Data;
   }
 
-  // private Task<EnrichmentService.Episode> PickEpisodeMatchAsync(
-  //   string episodeTitle,
-  //   IDictionary<string, EnrichmentService.Episode> remoteEpisodes)
-  // {
-  //   if (remoteEpisodes.TryGetValue(episodeTitle, out var episode))
-  //   {
-  //     return episode;
-  //   }
-  //   else
-  //   {
-  //     var fuzzy = new List<EpisodeItem>();
-  //     foreach (var (title, value) in localEpisodesDictionary)
-  //     {
-  //       if (title.CalculateLevenshteinDistance(remoteEpisode.Name) < FUZZY_MATCH_CONSTANT)
-  //       {
-  //         fuzzy.Add(value);
-  //       }
-  //     }
-  //     if (fuzzy.Count == 0)
-  //     {
-  //       AnsiConsole.MarkupLineInterpolated($"[Red]ERRO[/]: No local episode matches [Green]{remoteEpisode.Name}[/]");
-  //       continue;
-  //     }
-  //     AnsiConsole.MarkupLineInterpolated($"[Yellow]WARN[/]: Multiple local episodes matches [Green]{remoteEpisode.Name}[/]");
-  //     AnsiConsole.Write(
-  //       new Rows(fuzzy.Select((i, index) => new Markup($"{index}. {i.Title}"))));
+  private async Task<EnrichmentService.Episode?> PickEpisodeMatchAsync(
+    string lookupTitle,
+    EnrichmentService.Series series)
+  {
+    EnrichmentService.Episode? match = null;
+    foreach (var episode in (series.Episodes ?? []).Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
+    {
+      if (lookupTitle.Equals(episode.Name, StringComparison.OrdinalIgnoreCase))
+      {
+        match = episode;
+        break;
+      }
+    }
 
-  //     if (AnsiConsole.Confirm("Pick one [Blue](y)[/] or skip [Blue](n)[/]?"))
-  //     {
-  //       var match = AnsiConsole.Prompt(
-  //         new SelectionPrompt<EpisodeItem>()
-  //           .Title("[Yellow]WARN[/]: Multiple local episodes matches [Green]{item.Name}[/], pick one or skip:")
-  //           .AddChoices(fuzzy));
+    if (match is null)
+    {
+      var fuzzy = new List<EnrichmentService.Episode>();
+      foreach (var episode in (series.Episodes ?? []).Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
+      {
+        if (lookupTitle.CalculateLevenshteinDistance(episode.Name) < FUZZY_MATCH_CONSTANT)
+        {
+          fuzzy.Add(episode);
+        }
+      }
+      if (fuzzy.Count == 0)
+      {
+        AnsiConsole.MarkupLineInterpolated($"[Red]FAILED[/]: No remote episode matches [Green]{lookupTitle}[/]");
+        return null;
+      }
 
-  //       yield return (match, remoteEpisode.Id);
-  //     }
-  //   }
-  // }
+      for (;;)
+      {
+        match = AnsiConsole.Prompt(
+          new SelectionPrompt<EnrichmentService.Episode>()
+            .Title($"No episodes matched [Green]{lookupTitle}[/] automatically, select match to continue:")
+            .UseConverter(i => $"{i.Name} ({i.Year ?? "[Red]N/A[/]"})")
+            .AddChoices(fuzzy));
+
+        AnsiConsole.MarkupLineInterpolated($"Selected [Green]{match.Name}[/]");
+
+        AnsiConsole.Write(
+          new Panel(
+            new Rows(
+              new Text(string.Empty),
+              new Text(match.Overview ?? "[Red]N/A[/]"),
+              new Text(string.Empty)))
+            .Header(match.Name.ToUpper(), Justify.Left));
+
+        switch (
+          AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+              .AddChoices("Continue", "Skip", "Back")))
+        {
+          case "Continue":
+            break;
+          case "Back":
+            continue;
+          case "Skip":
+            match = null;
+
+            AnsiConsole.MarkupLineInterpolated($"Skipped matching of [Green]{lookupTitle}[/] episode");
+            break;
+        }
+        break;
+      }
+    }
+    if (match is not null)
+    {
+      var measurement = await TimeServices.MeasureAsync(
+        async () => 
+          await AnsiConsole
+            .Status()
+            .StartAsync($"Loading {lookupTitle}", async ctx => await this.enrichment.GetEpisodeAsync(match.Id)));
+      
+      if (measurement.Data is not null)
+      {
+        AnsiConsole.MarkupLineInterpolated($"Loaded information about [Green]{lookupTitle}[/] episode. Elapsed [Green]{measurement.Elapsed}[/]");
+      }
+
+      match = measurement.Data;
+    }
+    return match;
+  }
     
   //   async Task EnrichEpisodeAsync(
   //     EpisodeItem episode,
