@@ -185,6 +185,12 @@ public class EnrichmentService
       get; init; 
     }
 
+    [JsonPropertyName("seasonNumber")]
+    public long SeasonIndex
+    {
+      get; init;
+    }
+
     [JsonPropertyName("characters")]
     public Character[]? Characters
     {

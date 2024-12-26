@@ -10,7 +10,7 @@ namespace MediaLibrary.Commands;
 
 public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 {
-  private int FUZZY_MATCH_CONSTANT = 6;
+  private const int FUZZY_MATCH_CONSTANT = 6;
 
   private readonly EnrichCommandOptions options;
   private readonly EnrichmentService enrichment;
@@ -104,8 +104,10 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
             .AddChoices("Continue", "Back")))
       {
         case "Continue":
+          AnsiConsole.MarkupLine("Continue...");
           return match.Id;
         case "Back":
+          AnsiConsole.MarkupLine("Returning back...");
           break;
       }
     }
@@ -164,17 +166,13 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         match = AnsiConsole.Prompt(
           new SelectionPrompt<EnrichmentService.Episode>()
             .Title($"No episodes matched [Green]{lookupTitle}[/] automatically, select match to continue:")
-            .UseConverter(i => $"{i.Name} ({i.Year ?? "[Red]N/A[/]"})")
+            .UseConverter(i => $"{i.Name} ({i.SeasonIndex}, {i.Year ?? "[Red]N/A[/]"})")
             .AddChoices(fuzzy));
 
         AnsiConsole.MarkupLineInterpolated($"Selected [Green]{match.Name}[/]");
 
         AnsiConsole.Write(
-          new Panel(
-            new Rows(
-              new Text(string.Empty),
-              new Text(match.Overview ?? "[Red]N/A[/]"),
-              new Text(string.Empty)))
+          new Panel(new Text(match.Overview ?? "[Red]N/A[/]"))
             .Header(match.Name.ToUpper(), Justify.Left));
 
         switch (
@@ -183,14 +181,16 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
               .AddChoices("Continue", "Skip", "Back")))
         {
           case "Continue":
+            AnsiConsole.MarkupLine("Continue...");
             break;
-          case "Back":
-            continue;
           case "Skip":
             match = null;
 
             AnsiConsole.MarkupLineInterpolated($"Skipped matching of [Green]{lookupTitle}[/] episode");
             break;
+          case "Back":
+            AnsiConsole.MarkupLine("Returning back...");
+            continue;
         }
         break;
       }
