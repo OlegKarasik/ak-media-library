@@ -10,8 +10,6 @@ namespace MediaLibrary.Commands;
 
 public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 {
-  private const int FUZZY_MATCH_CONSTANT = 10;
-
   private readonly EnrichCommandOptions options;
   private readonly EnrichmentService enrichment;
 
@@ -60,7 +58,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
             foreach (var episode in season.Episodes.Values)
             {
-              var _episode = await this.PickEpisodeMatchAsync(episode.Title, _season);
+              var _episode = await this.PickEpisodeMatchAsync(episode.Title, _season, settings);
               if (_episode is null)
               {
                 continue;
@@ -163,7 +161,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
   private async Task<EnrichmentService.Episode?> PickEpisodeMatchAsync(
     string lookupTitle,
-    EnrichmentService.Season season)
+    EnrichmentService.Season season,
+    EnrichCommandSettings settings)
   {
     EnrichmentService.Season.Episode? match = null;
     foreach (var episode in season.Episodes.Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
@@ -180,7 +179,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       var fuzzy = new List<EnrichmentService.Season.Episode>();
       foreach (var episode in season.Episodes.Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
       {
-        if (lookupTitle.CalculateLevenshteinDistance(episode.Name) < FUZZY_MATCH_CONSTANT)
+        if (lookupTitle.CalculateLevenshteinDistance(episode.Name) < settings.MatchAllowance)
         {
           fuzzy.Add(episode);
         }

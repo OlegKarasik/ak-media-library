@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Navigation;
 using Spectre.Console;
@@ -7,6 +8,8 @@ namespace MediaLibrary.Commands;
 
 public class EnrichCommandSettings : CommandSettings
 {
+  private const int MATCH_ALLOWANCE_CONSTANT = 10;
+
   [CommandOption("-l|--library")]
   public required DirectoryPath Library
   {
@@ -15,6 +18,13 @@ public class EnrichCommandSettings : CommandSettings
 
   [CommandOption("-r|--request")]
   public required IndexSearchRequest SearchRequest
+  {
+    get; set;
+  }
+
+  [CommandOption("-a|--match-allowance")]
+  [DefaultValue(MATCH_ALLOWANCE_CONSTANT)]
+  public required long MatchAllowance
   {
     get; set;
   }
