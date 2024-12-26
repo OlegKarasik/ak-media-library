@@ -11,16 +11,17 @@ namespace MediaLibrary.Extensions.Services;
 
 public class EnrichmentService
 {
-  public enum SearchTarget
-  {
-    Movie,
-    Series
-  }
-
+  private const string NA = "N/A";
   public enum EpisodeKind
   {
     Movie = 1,
     Episode = 0
+  }
+
+  public enum SearchTarget
+  {
+    Movie,
+    Series
   }
 
   private class GenericResponse<T>
@@ -54,15 +55,21 @@ public class EnrichmentService
     }
 
     [JsonPropertyName("year")]
-    public string? Year
+    public string Year
     {
       get; init;
     }
 
     [JsonPropertyName("overview")]
-    public string? Overview
+    public string Overview
     {
       get; init;
+    }
+
+    public SearchResult()
+    {
+      this.Year = NA;
+      this.Overview = NA;
     }
   }
 
@@ -77,6 +84,21 @@ public class EnrichmentService
 
   public class Series
   {
+    public class Season
+    {
+      [JsonPropertyName("id")]
+      public required long Id
+      {
+        get; init;
+      }
+
+      [JsonPropertyName("number")]
+      public required long Index
+      {
+        get; init;
+      }
+    }
+
     [JsonPropertyName("name")]
     public required string Name
     {
@@ -84,52 +106,81 @@ public class EnrichmentService
     }
 
     [JsonPropertyName("year")]
-    public string? Year
+    public string Year
     {
       get; init;
     }
 
     [JsonPropertyName("overview")]
-    public string? Overview
+    public string Overview
     {
       get; init;
     }
 
     [JsonPropertyName("genres")]
-    public Genre[]? Genres
+    public Genre[] Genres
     {
       get; init;
     }
 
     [JsonPropertyName("seasons")]
-    public Season[]? Seasons
-    {
-      get; init;
-    }
-
-    [JsonPropertyName("episodes")]
-    public Episode[]? Episodes
+    public Season[] Seasons
     {
       get; init;
     }
 
     [JsonPropertyName("characters")]
-    public Character[]? Characters
+    public Character[] Characters
     {
       get; init;
+    }
+
+    public Series()
+    {
+      this.Year = NA;
+      this.Overview = NA;
+      this.Genres = [];
+      this.Seasons = [];
+      this.Characters = [];
     }
   }
 
   public class Season
   {
-    [JsonPropertyName("id")]
-    public required long Id
+    public class Episode
     {
-      get; init;
+      [JsonPropertyName("id")]
+      public required long Id
+      {
+        get; init;
+      }
+
+      [JsonPropertyName("name")]
+      public required string Name
+      {
+        get; init;
+      }
+
+      [JsonPropertyName("isMovie")]
+      public required EpisodeKind Kind
+      {
+        get; init;
+      }
+
+      [JsonPropertyName("overview")]
+      public string Overview
+      {
+        get; init; 
+      }
+
+      public Episode()
+      {
+        this.Overview = NA;
+      }
     }
 
-    [JsonPropertyName("name")]
-    public string? Name
+    [JsonPropertyName("id")]
+    public required long Id
     {
       get; init;
     }
@@ -141,9 +192,21 @@ public class EnrichmentService
     }
 
     [JsonPropertyName("year")]
-    public string? Year
+    public string Year
     {
       get; init; 
+    }
+
+    [JsonPropertyName("episodes")]
+    public Episode[] Episodes
+    {
+      get; init;
+    }
+
+    public Season()
+    {
+      this.Year = NA;
+      this.Episodes = [];
     }
   }
 
@@ -168,33 +231,35 @@ public class EnrichmentService
     }
 
     [JsonPropertyName("aired")]
-    public string? Date
+    public string Date
     {
       get; init; 
     }
 
     [JsonPropertyName("year")]
-    public string? Year
+    public string Year
     {
       get; init; 
     }
 
     [JsonPropertyName("overview")]
-    public string? Overview
+    public string Overview
     {
       get; init; 
     }
 
-    [JsonPropertyName("seasonNumber")]
-    public long SeasonIndex
+    [JsonPropertyName("characters")]
+    public Character[] Characters
     {
       get; init;
     }
 
-    [JsonPropertyName("characters")]
-    public Character[]? Characters
+    public Episode()
     {
-      get; init;
+      this.Date = NA;
+      this.Year = NA;
+      this.Overview = NA;
+      this.Characters = [];
     }
   }
   
@@ -305,7 +370,7 @@ public class EnrichmentService
     this.httpClient = httpClient;
   }
 
-  public async Task<SearchResult[]> SearchAsync(
+  public async Task<SearchResult[]?> SearchAsync(
     string title,
     SearchTarget target,
     string language = "eng",
@@ -333,32 +398,32 @@ public class EnrichmentService
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchResult[]>>(
       $"https://api4.thetvdb.com/v4/search?{query}");
 
-    return result?.Data ?? [];
+    return result?.Data;
   }
 
   public async Task<Series?> GetSeriesAsync(
-    long remoteSeriesId)
+    long id)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Series>>(
-      $"https://api4.thetvdb.com/v4/series/{remoteSeriesId}/extended?meta=episodes");
+      $"https://api4.thetvdb.com/v4/series/{id}/extended");
 
     return result?.Data;
   }
 
   public async Task<Season?> GetSeasonAsync(
-    long remoteSeasonId)
+    long id)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Season>>(
-      $"https://api4.thetvdb.com/v4/seasons/{remoteSeasonId}/extended");
+      $"https://api4.thetvdb.com/v4/seasons/{id}/extended");
 
     return result?.Data;
   }
 
   public async Task<Episode?> GetEpisodeAsync(
-    long remoteEpisodeId)
+    long id)
   {
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Episode>>(
-      $"https://api4.thetvdb.com/v4/episodes/{remoteEpisodeId}/extended");
+      $"https://api4.thetvdb.com/v4/episodes/{id}/extended");
 
     return result?.Data;
   }
