@@ -55,6 +55,20 @@ public static class FileServices
       content);
   }
 
+  public static async Task SaveAsync(
+    byte[] bytes,
+    DirectoryImageBackgroundFilePath path)
+  {
+    await File.WriteAllBytesAsync(path.Value, bytes);
+  }
+
+  public static async Task SaveAsync(
+    byte[] bytes,
+    DirectoryImageFilePath path)
+  {
+    await File.WriteAllBytesAsync(path.Value, bytes);
+  }
+
   public static async Task SaveAsync<T>(
     T props,
     DirectoryPropsFilePath path)

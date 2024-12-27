@@ -589,4 +589,10 @@ public class EnrichmentService
 
     return episode;
   }
+
+  public async Task<byte[]> DownloadArtworkAsync(
+    Artwork artwork)
+  {
+    return await this.httpClient.GetByteArrayAsync(artwork.Image);
+  }
 }

@@ -32,12 +32,15 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     {
       case ShowItem show:
         {
-          var _show = await this.PickSeriesMatchAsync(show.Title, settings);
+          var _show = await this.PickShowMatchAsync(show.Title, settings);
           if (_show is null)
           {
             return -1;
           }
-          await this.EnrichShowAsync(show.Path, _show);
+          await this.EnrichShowAsync(
+            show.Path, 
+            await this.PickShowPosterAsync(_show, settings),
+            _show);
 
           AnsiConsoleService.Rule(_show.Name);
 
@@ -48,7 +51,10 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
             {
               return -1;
             }
-            await this.EnrichSeasonAsync(season.Path, _season);
+            await this.EnrichSeasonAsync(
+              season.Path, 
+              await this.PickSeasonPosterAsync(_season, settings),
+              _season);
 
             AnsiConsoleService.Rule($"Season {_season.Index}");
 
@@ -106,7 +112,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     }
   }
 
-  private async Task<EnrichmentService.Series?> PickSeriesMatchAsync(
+  private async Task<EnrichmentService.Series?> PickShowMatchAsync(
     string lookupTitle,
     EnrichCommandSettings settings)
   {
@@ -227,44 +233,117 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     return null;
   }
 
+  private Task<EnrichmentService.Artwork?> PickShowPosterAsync(
+    EnrichmentService.Series series,
+    EnrichCommandSettings settings)
+  {
+    return Task.FromResult(
+      series.Artworks
+        .Where(i => i.Kind == EnrichmentService.ArtworkKind.SeriesPoster)
+        .OrderByDescending(i => i.Score)
+        .FirstOrDefault());
+  }
+
+  private Task<EnrichmentService.Artwork?> PickSeasonPosterAsync(
+    EnrichmentService.Season season,
+    EnrichCommandSettings settings)
+  {
+    return Task.FromResult(
+      season.Artworks
+        .Where(i => i.Kind == EnrichmentService.ArtworkKind.SeasonPoster)
+        .OrderByDescending(i => i.Score)
+        .FirstOrDefault());
+  }
+
   private async Task EnrichShowAsync(
     DirectoryPath path,
+    EnrichmentService.Artwork? poster,
     EnrichmentService.Series series)
   {
-    await FileServices.SaveAsync(
-      new ShowPropsItem
-      {
-        Summary = [series.Overview],
-        Date = series.Date,
-        Genres = [.. series.Genres.Select(i => i.Name)]
-      }, 
-      new DirectoryPropsFilePath(path.Value));
+    var measurement = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync(
+            $"Enriching [Green]{series.Name}[/]",
+            async ctx => 
+            {
+              if (poster is not null)
+              {
+                var bytes = await this.enrichment.DownloadArtworkAsync(poster);
+                await FileServices.SaveAsync(
+                  bytes,
+                  new DirectoryImageFilePath(path.Value));
+              }
+
+              await FileServices.SaveAsync(
+                new ShowPropsItem
+                {
+                  Summary = [series.Overview],
+                  Date = series.Date,
+                  Genres = [.. series.Genres.Select(i => i.Name)]
+                }, 
+                new DirectoryPropsFilePath(path.Value));
+            }));
+
+    AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{series.Name}[/]. Elapsed [Green]{measurement.Elapsed}[/]");
   }
     
   private async Task EnrichSeasonAsync(
     DirectoryPath path,
+    EnrichmentService.Artwork? poster,
     EnrichmentService.Season season)
   {
-    await FileServices.SaveAsync(
-      new SeasonPropsItem
-      {
-        Summary = [season.Overview],
-      }, 
-      new DirectoryPropsFilePath(path.Value));
+    var measurement = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync(
+            $"Enriching [Green]Season {season.Index}[/]",
+            async ctx => 
+            {
+              if (poster is not null)
+              {
+                var bytes = await this.enrichment.DownloadArtworkAsync(poster);
+                await FileServices.SaveAsync(
+                  bytes,
+                  new DirectoryImageFilePath(path.Value));
+              }
+
+              await FileServices.SaveAsync(
+                new SeasonPropsItem
+                {
+                  Summary = [season.Overview],
+                }, 
+                new DirectoryPropsFilePath(path.Value));
+            }));
+
+    AnsiConsole.MarkupLineInterpolated($"Enriched [Green]Season {season.Index}[/]. Elapsed [Green]{measurement.Elapsed}[/]");
   }
 
   private async Task EnrichEpisodeAsync(
     FilePath path,
     EnrichmentService.Episode episode)
   {
-    await FileServices.SaveAsync(
-      new EpisodePropsItem
-      {
-        Date = episode.Date,
-        Summary = [episode.Overview],
-        Directors = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
-        Writers = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
-      }, 
-      new FilePropsFilePath(path.Value));
+    var measurement = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync(
+            $"Enriching [Green]{episode.Name}[/]",
+            async ctx => 
+            {
+              await FileServices.SaveAsync(
+                new EpisodePropsItem
+                {
+                  Date = episode.Date,
+                  Summary = [episode.Overview],
+                  Directors = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
+                  Writers = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
+                }, 
+                new FilePropsFilePath(path.Value));
+            }));
+
+    AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{episode.Name}[/]. Elapsed [Green]{measurement.Elapsed}[/]");
   }
 }
