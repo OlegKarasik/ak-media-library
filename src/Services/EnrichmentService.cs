@@ -79,10 +79,17 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("overviews")]
+    public Dictionary<string, string> Overviews
+    {
+      get; init;
+    }
+
     public SearchResult()
     {
       this.Year = None;
       this.Overview = None;
+      this.Overviews = [];
     }
   }
 
@@ -535,8 +542,13 @@ public class EnrichmentService
     query.Add("offset", offset.ToString());
     query.Add("limit", limit.ToString());
 
-    return await this.GetAsync<SearchResult[]>(
+    var results = await this.GetAsync<SearchResult[]>(
       $"https://api4.thetvdb.com/v4/search?{query}");
+
+    return [.. results.Select(
+      result => result with {
+        Overview = result.Overviews.TryGetValue(language, out var overview) ? overview : result.Overview
+      })];
   }
 
   public async Task<Series> GetSeriesAsync(
