@@ -8,7 +8,7 @@ namespace MediaLibrary.Commands;
 
 public class EnrichCommandSettings : CommandSettings
 {
-  private const int MATCH_ALLOWANCE_CONSTANT = 10;
+  private const int FUZZY_MATCH_CONSTANT = 10;
 
   [CommandOption("-l|--library")]
   public required DirectoryPath Library
@@ -22,9 +22,16 @@ public class EnrichCommandSettings : CommandSettings
     get; set;
   }
 
-  [CommandOption("-a|--match-allowance")]
-  [DefaultValue(MATCH_ALLOWANCE_CONSTANT)]
-  public required long MatchAllowance
+  [CommandOption("-c|--language-code")]
+  [DefaultValue("eng")]
+  public required string Language
+  {
+    get; set;
+  }
+
+  [CommandOption("-f|--fuzzy-match")]
+  [DefaultValue(FUZZY_MATCH_CONSTANT)]
+  public required int FuzzyMatch
   {
     get; set;
   }

@@ -12,6 +12,19 @@ namespace MediaLibrary.Extensions.Services;
 public class EnrichmentService
 {
   private const string NA = "N/A";
+
+  public enum ArtworkKind
+  {
+    SeriesBanner = 1,
+    SeriesPoster = 2,
+    SeriesBackground = 3,
+    SeriesIcon = 5,
+    SeasonBanner = 6,
+    SeasonPoster = 7,
+    SeasonBackground = 8,
+    SeasonIcon = 10
+  }
+
   public enum EpisodeKind
   {
     Movie = 1,
@@ -82,6 +95,44 @@ public class EnrichmentService
     }
   }
 
+  public class Artwork
+  {
+    [JsonPropertyName("id")]
+    public required long Id
+    {
+      get; init;
+    }
+    
+    [JsonPropertyName("image")]
+    public required string Image
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("type")]
+    public required ArtworkKind Kind
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("includesText")]
+    public required bool IncludesText
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("language")]
+    public string Language
+    {
+      get; init;
+    }
+
+    public Artwork()
+    {
+      this.Language = NA;
+    }
+  }
+
   public class Series
   {
     public class Season
@@ -135,6 +186,12 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("artworks")]
+    public Artwork[] Artworks
+    {
+      get; init;
+    }
+
     public Series()
     {
       this.Year = NA;
@@ -142,6 +199,7 @@ public class EnrichmentService
       this.Genres = [];
       this.Seasons = [];
       this.Characters = [];
+      this.Artworks = [];
     }
   }
 
@@ -197,8 +255,20 @@ public class EnrichmentService
       get; init; 
     }
 
+    [JsonPropertyName("image")]
+    public string Image
+    {
+      get; init;
+    }
+
     [JsonPropertyName("episodes")]
     public Episode[] Episodes
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("artwork")]
+    public Artwork[] Artworks
     {
       get; init;
     }
@@ -206,7 +276,9 @@ public class EnrichmentService
     public Season()
     {
       this.Year = NA;
+      this.Image = NA;
       this.Episodes = [];
+      this.Artworks = [];
     }
   }
 

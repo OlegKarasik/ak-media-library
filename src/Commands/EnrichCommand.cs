@@ -32,7 +32,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     {
       case ShowItem show:
         {
-          var _show = await this.PickSeriesMatchAsync(show.Title);
+          var _show = await this.PickSeriesMatchAsync(show.Title, settings);
           if (_show is null)
           {
             return -1;
@@ -79,13 +79,14 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
   private async Task<long?> PickMatchAsync(
     string lookupTitle,
-    EnrichmentService.SearchTarget lookupTarget)
+    EnrichmentService.SearchTarget lookupTarget,
+    EnrichCommandSettings settings)
   {
     var measurement = await TimeServices.MeasureAsync(
       async () => 
         await AnsiConsole
           .Status()
-          .StartAsync("Searching matches", async ctx => await this.enrichment.SearchAsync(lookupTitle, lookupTarget)));
+          .StartAsync("Searching matches", async ctx => await this.enrichment.SearchAsync(lookupTitle, lookupTarget, settings.Language)));
 
     if (measurement.Data is null)
     {
@@ -112,9 +113,10 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
   }
 
   private async Task<EnrichmentService.Series?> PickSeriesMatchAsync(
-    string lookupTitle)
+    string lookupTitle,
+    EnrichCommandSettings settings)
   {
-    var lookupId = await this.PickMatchAsync(lookupTitle, EnrichmentService.SearchTarget.Series);
+    var lookupId = await this.PickMatchAsync(lookupTitle, EnrichmentService.SearchTarget.Series, settings);
     if (lookupId is null)
     {
       return null;
@@ -179,7 +181,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       var fuzzy = new List<EnrichmentService.Season.Episode>();
       foreach (var episode in season.Episodes.Where(i => i.Kind == EnrichmentService.EpisodeKind.Episode))
       {
-        if (lookupTitle.CalculateLevenshteinDistance(episode.Name) < settings.MatchAllowance)
+        if (lookupTitle.CalculateLevenshteinDistance(episode.Name) < settings.FuzzyMatch)
         {
           fuzzy.Add(episode);
         }
