@@ -150,7 +150,7 @@ public class EnrichmentService
 
   public record class Series
   {
-    public class Season
+    public record class Season
     {
       [JsonPropertyName("id")]
       public required long Id
@@ -162,6 +162,17 @@ public class EnrichmentService
       public required long Index
       {
         get; init;
+      }
+
+      [JsonPropertyName("overviewTranslations")]
+      public string[] SupportedTranslations
+      {
+        get; init;
+      }
+
+      public Season()
+      {
+        this.SupportedTranslations = [];
       }
     }
 
@@ -528,7 +539,7 @@ public class EnrichmentService
       $"https://api4.thetvdb.com/v4/search?{query}");
   }
 
-  public async Task<Series?> GetSeriesAsync(
+  public async Task<Series> GetSeriesAsync(
     long id,
     string language = "eng")
   {
@@ -542,19 +553,27 @@ public class EnrichmentService
 
       return series with {
         Overview = translation.Overview ?? series.Overview,
-        Artworks = [.. series.Artworks.Where(i => i.Language == language || i.Language is null)]
+        Seasons = [.. series.Seasons.Select(
+          i => i with {
+            SupportedTranslations = [.. i.SupportedTranslations.SelectMany(i => i.Split(','))]
+          }
+        )]
       };
     }
 
     return series;
   }
 
-  public async Task<Season?> GetSeasonAsync(
+  public async Task<Season> GetSeasonAsync(
     long id,
     string language = "eng")
   {
     var season = await this.GetAsync<Season>(
       $"https://api4.thetvdb.com/v4/seasons/{id}/extended");
+
+    season = season with {
+      SupportedTranslations = [.. season.SupportedTranslations.SelectMany(i => i.Split(','))]
+    };
 
     if (season.SupportedTranslations.Contains(language))
     {
@@ -562,15 +581,14 @@ public class EnrichmentService
         $"https://api4.thetvdb.com/v4/seasons/{id}/translations/{language}");
 
       season = season with {
-        Overview = translation.Overview ?? season.Overview,
-        Artworks = [.. season.Artworks.Where(i => i.Language == language || i.Language is null)]
+        Overview = translation.Overview ?? season.Overview
       };
     }
 
     return season;
   }
 
-  public async Task<Episode?> GetEpisodeAsync(
+  public async Task<Episode> GetEpisodeAsync(
     long id,
     string language = "eng")
   {

@@ -57,6 +57,25 @@ public class AnsiConsoleService
     return selection;
   }
 
+  public static bool SelectYesNo()
+  {
+    var prompt = new SelectionPrompt<string>()
+      .Title(string.Empty)
+      .AddChoices(["Yes", "No"]);
+
+    switch (AnsiConsole.Prompt(prompt))
+    {
+      case "Yes":
+        AnsiConsole.MarkupLine("Yes");
+        return true;
+      case "No":
+        AnsiConsole.MarkupLine("No");
+        return false;
+      default:
+        throw new NotSupportedException();
+    }
+  }
+
   public static ContinueBack SelectContinueBack()
   {
     var prompt = new SelectionPrompt<ContinueBack>()
