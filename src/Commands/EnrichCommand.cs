@@ -1,3 +1,4 @@
+using System.Buffers;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
@@ -360,16 +361,20 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     
     if (!episode.Title.Equals(_episode.Name, StringComparison.OrdinalIgnoreCase))
     {
-      AnsiConsole.MarkupLineInterpolated($"Do you want to rename [Red]{episode.Title}[/] to [Red]{_episode.Name}[/]?");
-      if (AnsiConsoleService.SelectYesNo())
+      var invalidCharacters = SearchValues.Create(Path.GetInvalidFileNameChars());
+      if (!_episode.Name.AsSpan().ContainsAny(invalidCharacters))
       {
-        var directory = Path.GetDirectoryName(episode.Path.Value)!;
-        foreach (var item in Directory.EnumerateFiles(directory, $"*{episode.Title}.*"))
+        AnsiConsole.MarkupLineInterpolated($"Do you want to rename [Red]{episode.Title}[/] to [Red]{_episode.Name}[/]?");
+        if (AnsiConsoleService.SelectYesNo())
         {
-          var name   = Path.GetFileName(item).Replace(episode.Title, _episode.Name);
-          var target = Path.Combine(directory, name);
+          var directory = Path.GetDirectoryName(episode.Path.Value)!;
+          foreach (var item in Directory.EnumerateFiles(directory, $"*{episode.Title}.*"))
+          {
+            var name   = Path.GetFileName(item).Replace(episode.Title, _episode.Name);
+            var target = Path.Combine(directory, name);
 
-          File.Move(item, target);
+            File.Move(item, target);
+          }
         }
       }
     }
