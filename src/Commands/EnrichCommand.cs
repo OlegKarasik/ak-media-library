@@ -37,24 +37,20 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
           {
             return -1;
           }
+          await this.EnrichShowAsync(show.Path, _show);
 
           AnsiConsoleService.Rule(_show.Name);
 
-          // TODO: Enrich series information
-          //
-
           foreach (var season in show.Seasons.Values)
           {
-            var _season = await this.PickSeasonMatchAsync((long)season.Position.GetPosition(), _show);
+            var _season = await this.PickSeasonMatchAsync((long)season.Position.GetPosition(), _show, settings);
             if (_season is null)
             {
               return -1;
             }
+            await this.EnrichSeasonAsync(season.Path, _season);
 
             AnsiConsoleService.Rule($"Season {_season.Index}");
-
-            // TODO: Enrich season information
-            //
 
             foreach (var episode in season.Episodes.Values)
             {
@@ -63,9 +59,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
               {
                 continue;
               }
-
-              // TODO: Enrich episode information
-              //
+              await this.EnrichEpisodeAsync(episode.Path, _episode);
             }
           }
         }
@@ -126,7 +120,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       async () => 
         await AnsiConsole
           .Status()
-          .StartAsync($"Loading [Green]{lookupTitle}[/]", async ctx => await this.enrichment.GetSeriesAsync(lookupId.Value)));
+          .StartAsync($"Loading [Green]{lookupTitle}[/]", async ctx => await this.enrichment.GetSeriesAsync(lookupId.Value, settings.Language)));
 
     if (measurement.Data is not null)
     {
@@ -137,7 +131,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
   private async Task<EnrichmentService.Season?> PickSeasonMatchAsync(
     long lookupIndex,
-    EnrichmentService.Series series)
+    EnrichmentService.Series series,
+    EnrichCommandSettings settings)
   {
     var season = series.Seasons
       .Where(i => i.Index == lookupIndex)
@@ -152,7 +147,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       async () => 
         await AnsiConsole
           .Status()
-          .StartAsync($"Loading [Green]Season {lookupIndex}[/]", async ctx => await this.enrichment.GetSeasonAsync(season.Id)));
+          .StartAsync($"Loading [Green]Season {lookupIndex}[/]", async ctx => await this.enrichment.GetSeasonAsync(season.Id, settings.Language)));
     
     if (measurement.Data is not null)
     {
@@ -220,7 +215,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         async () => 
           await AnsiConsole
             .Status()
-            .StartAsync($"Loading {lookupTitle}", async ctx => await this.enrichment.GetEpisodeAsync(match.Id)));
+            .StartAsync($"Loading {lookupTitle}", async ctx => await this.enrichment.GetEpisodeAsync(match.Id, settings.Language)));
       
       if (measurement.Data is not null)
       {
@@ -231,26 +226,45 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     }
     return null;
   }
-    
-  //   async Task EnrichEpisodeAsync(
-  //     EpisodeItem episode,
-  //     EnrichmentService.Episode remoteEpisode)
-  //   {
-  //     remoteEpisode = (await this.enrichment.GetEpisodeAsync(remoteEpisode.Id))!;
-  //     await FileServices.SaveAsync(
-  //       new EpisodePropsItem
-  //       {
-  //         Date = remoteEpisode.Date,
-  //         Summary = remoteEpisode.Overview,
-  //         Directors = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
-  //         Writers = [.. (remoteEpisode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
-  //       }, 
-  //       new FilePropsFilePath(episode.Path.Value));
-  //   }
 
-  //   async Task<EnrichmentService.Episode> ReloadAsync(
-  //     long remoteId)
-  //   {
-  //     return (await this.enrichment.GetEpisodeAsync(remoteId))!;
-  //   }
+  private async Task EnrichShowAsync(
+    DirectoryPath path,
+    EnrichmentService.Series series)
+  {
+    await FileServices.SaveAsync(
+      new ShowPropsItem
+      {
+        Summary = series.Overview,
+        Date = series.Year,
+        Genres = [.. series.Genres.Select(i => i.Name)]
+      }, 
+      new DirectoryPropsFilePath(path.Value));
+  }
+    
+  private async Task EnrichSeasonAsync(
+    DirectoryPath path,
+    EnrichmentService.Season season)
+  {
+    await FileServices.SaveAsync(
+      new SeasonPropsItem
+      {
+        Summary = season.Overview,
+      }, 
+      new DirectoryPropsFilePath(path.Value));
+  }
+
+  private async Task EnrichEpisodeAsync(
+    FilePath path,
+    EnrichmentService.Episode episode)
+  {
+    await FileServices.SaveAsync(
+      new EpisodePropsItem
+      {
+        Date = episode.Date,
+        Summary = episode.Overview,
+        Directors = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
+        Writers = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
+      }, 
+      new FilePropsFilePath(path.Value));
+  }
 }

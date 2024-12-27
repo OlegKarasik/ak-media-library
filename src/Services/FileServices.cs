@@ -55,8 +55,21 @@ public static class FileServices
       content);
   }
 
-  public static async Task SaveAsync(
-    EpisodePropsItem props,
+  public static async Task SaveAsync<T>(
+    T props,
+    DirectoryPropsFilePath path)
+  {
+    var content = JsonSerializer.Serialize(
+      props,
+      options);
+
+    await File.WriteAllTextAsync(
+      path.Value, 
+      content);
+  }
+
+  public static async Task SaveAsync<T>(
+    T props,
     FilePropsFilePath path)
   {
     var content = JsonSerializer.Serialize(

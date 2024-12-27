@@ -11,7 +11,7 @@ namespace MediaLibrary.Extensions.Services;
 
 public class EnrichmentService
 {
-  private const string NA = "N/A";
+  private const string None = "";
 
   public enum ArtworkKind
   {
@@ -47,13 +47,13 @@ public class EnrichmentService
     }
 
     [JsonPropertyName("data")]
-    public T? Data
+    public required T Data
     {
       get; set;
     }
   }
 
-  public class SearchResult
+  public record class SearchResult
   {
     [JsonPropertyName("tvdb_id")]
     public required long Id
@@ -81,12 +81,21 @@ public class EnrichmentService
 
     public SearchResult()
     {
-      this.Year = NA;
-      this.Overview = NA;
+      this.Year = None;
+      this.Overview = None;
     }
   }
 
-  public class Genre
+  public record class Translation
+  {
+    [JsonPropertyName("overview")]
+    public required string Overview
+    {
+      get; init;
+    }
+  }
+
+  public record class Genre
   {
     [JsonPropertyName("name")]
     public required string Name
@@ -95,7 +104,7 @@ public class EnrichmentService
     }
   }
 
-  public class Artwork
+  public record class Artwork
   {
     [JsonPropertyName("id")]
     public required long Id
@@ -115,6 +124,12 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("score")]
+    public required long Score
+    {
+      get; init;
+    }
+
     [JsonPropertyName("includesText")]
     public required bool IncludesText
     {
@@ -129,11 +144,11 @@ public class EnrichmentService
 
     public Artwork()
     {
-      this.Language = NA;
+      this.Language = None;
     }
   }
 
-  public class Series
+  public record class Series
   {
     public class Season
     {
@@ -192,18 +207,25 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("overviewTranslations")]
+    public string[] SupportedTranslations
+    {
+      get; init;
+    }
+
     public Series()
     {
-      this.Year = NA;
-      this.Overview = NA;
+      this.Year = None;
+      this.Overview = None;
       this.Genres = [];
       this.Seasons = [];
       this.Characters = [];
       this.Artworks = [];
+      this.SupportedTranslations = [];
     }
   }
 
-  public class Season
+  public record class Season
   {
     public class Episode
     {
@@ -233,7 +255,7 @@ public class EnrichmentService
 
       public Episode()
       {
-        this.Overview = NA;
+        this.Overview = None;
       }
     }
 
@@ -261,6 +283,11 @@ public class EnrichmentService
       get; init;
     }
 
+    public string Overview
+    {
+      get; init;
+    }
+
     [JsonPropertyName("episodes")]
     public Episode[] Episodes
     {
@@ -273,16 +300,24 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("overviewTranslations")]
+    public string[] SupportedTranslations
+    {
+      get; init;
+    }
+
     public Season()
     {
-      this.Year = NA;
-      this.Image = NA;
+      this.Overview = None;
+      this.Year = None;
+      this.Image = None;
       this.Episodes = [];
       this.Artworks = [];
+      this.SupportedTranslations = [];
     }
   }
 
-  public class Episode
+  public record class Episode
   {
     [JsonPropertyName("id")]
     public required long Id
@@ -326,16 +361,23 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("overviewTranslations")]
+    public string[] SupportedTranslations
+    {
+      get; init;
+    }
+
     public Episode()
     {
-      this.Date = NA;
-      this.Year = NA;
-      this.Overview = NA;
+      this.Date = None;
+      this.Year = None;
+      this.Overview = None;
       this.Characters = [];
+      this.SupportedTranslations = [];
     }
   }
   
-  public class Character
+  public record class Character
   {
     [JsonPropertyName("name")]
     public string? Name
@@ -442,6 +484,15 @@ public class EnrichmentService
     this.httpClient = httpClient;
   }
 
+  private async Task<T> GetAsync<T>(
+    string uri)
+
+    where T : class
+  {
+    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<T>>(uri);
+    return result!.Data;
+  }
+
   public async Task<SearchResult[]?> SearchAsync(
     string title,
     SearchTarget target,
@@ -467,36 +518,69 @@ public class EnrichmentService
     query.Add("offset", offset.ToString());
     query.Add("limit", limit.ToString());
 
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<SearchResult[]>>(
+    return await this.GetAsync<SearchResult[]>(
       $"https://api4.thetvdb.com/v4/search?{query}");
-
-    return result?.Data;
   }
 
   public async Task<Series?> GetSeriesAsync(
-    long id)
+    long id,
+    string language = "eng")
   {
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Series>>(
+    var series = await this.GetAsync<Series>(
       $"https://api4.thetvdb.com/v4/series/{id}/extended");
 
-    return result?.Data;
+    if (series.SupportedTranslations.Contains(language))
+    {
+      var translation = await this.GetAsync<Translation>(
+        $"https://api4.thetvdb.com/v4/series/{id}/translations/{language}");
+
+      return series with {
+        Overview = translation.Overview ?? series.Overview,
+        Artworks = [.. series.Artworks.Where(i => i.Language == language || i.Language is null)]
+      };
+    }
+
+    return series;
   }
 
   public async Task<Season?> GetSeasonAsync(
-    long id)
+    long id,
+    string language = "eng")
   {
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Season>>(
+    var season = await this.GetAsync<Season>(
       $"https://api4.thetvdb.com/v4/seasons/{id}/extended");
 
-    return result?.Data;
+    if (season.SupportedTranslations.Contains(language))
+    {
+      var translation = await this.GetAsync<Translation>(
+        $"https://api4.thetvdb.com/v4/seasons/{id}/translations/{language}");
+
+      season = season with {
+        Overview = translation.Overview ?? season.Overview,
+        Artworks = [.. season.Artworks.Where(i => i.Language == language || i.Language is null)]
+      };
+    }
+
+    return season;
   }
 
   public async Task<Episode?> GetEpisodeAsync(
-    long id)
+    long id,
+    string language = "eng")
   {
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<Episode>>(
+    var episode = await this.GetAsync<Episode>(
       $"https://api4.thetvdb.com/v4/episodes/{id}/extended");
 
-    return result?.Data;
+    if (episode.SupportedTranslations.Contains(language))
+    {
+      var translation = await this.GetAsync<Translation>(
+        $"https://api4.thetvdb.com/v4/episodes/{id}/translations/{language}");
+
+      episode = episode with {
+        Overview = translation.Overview ?? episode.Overview
+      };
+    }
+
+    return episode;
   }
 }
