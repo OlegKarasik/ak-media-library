@@ -234,8 +234,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new ShowPropsItem
       {
-        Summary = series.Overview,
-        Date = series.Year,
+        Summary = [series.Overview],
+        Date = series.Date,
         Genres = [.. series.Genres.Select(i => i.Name)]
       }, 
       new DirectoryPropsFilePath(path.Value));
@@ -248,7 +248,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new SeasonPropsItem
       {
-        Summary = season.Overview,
+        Summary = [season.Overview],
       }, 
       new DirectoryPropsFilePath(path.Value));
   }
@@ -261,7 +261,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       new EpisodePropsItem
       {
         Date = episode.Date,
-        Summary = episode.Overview,
+        Summary = [episode.Overview],
         Directors = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Director").Select(i => i.PersonName)],
         Writers = [.. (episode.Characters ?? []).Where(i => i.PersonType == "Writer").Select(i => i.PersonName)],
       }, 

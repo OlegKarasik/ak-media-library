@@ -2,7 +2,7 @@ namespace MediaLibrary.Business.Items;
 
 public class EpisodePropsItem
 {
-  public string? Summary
+  public string[]? Summary
   {
     get; init;
   }

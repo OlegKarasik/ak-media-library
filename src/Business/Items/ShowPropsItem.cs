@@ -2,7 +2,7 @@ namespace MediaLibrary.Business.Items;
 
 public class ShowPropsItem
 {
-  public string? Summary
+  public string[]? Summary
   {
     get; init;
   }

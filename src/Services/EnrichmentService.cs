@@ -171,6 +171,12 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("firstAired")]
+    public required string Date
+    {
+      get; init;
+    }
+
     [JsonPropertyName("year")]
     public string Year
     {
