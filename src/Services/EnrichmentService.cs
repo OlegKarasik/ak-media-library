@@ -555,14 +555,13 @@ public class EnrichmentService
   {
     var hash = BitConverter.ToString(CacheHash.ComputeHash(Encoding.Unicode.GetBytes(uri)));
     var path = Path.Combine(CacheDirectory, hash);
-var opt = new JsonSerializerOptions()
+    var opt = new JsonSerializerOptions()
       {
         NumberHandling = JsonNumberHandling.AllowReadingFromString,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
       };
     if (File.Exists(path))
     {
-      
       return JsonSerializer.Deserialize<GenericResponse<T>>(File.ReadAllText(path), opt).Data;
     }
 
