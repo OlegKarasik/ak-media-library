@@ -7,7 +7,7 @@ public record class Search
     get; init;
   }
 
-  public required string Name
+  public required string Title
   {
     get; init;
   }

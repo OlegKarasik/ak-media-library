@@ -25,7 +25,7 @@ public class EnrichmentService
     var result = await this.client.SearchSeriesAsync(title, language);
     return [.. result.Select(i => new Search{
       Id = i.Id,
-      Name = i.Name,
+      Title = i.Name,
       Overview = i.Overview,
       Year = i.Year
     })];
@@ -82,11 +82,12 @@ public class EnrichmentService
       Image = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeriesPoster, language),
       ImageBackground = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeriesBackground, language),
     };
-    foreach (var (index, season) in result.Seasons)
+    foreach (var (index, resultSeason) in result.Seasons)
     {
-      result.Seasons[index] = season with {
-        Image = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonPoster, language),
-        ImageBackground = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonBackground, language),
+      var season = seasons.First(i => i.Index == index);
+      result.Seasons[index] = resultSeason with {
+        Image = await GetArtwork(season.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonPoster, language),
+        ImageBackground = await GetArtwork(season.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonBackground, language),
       };
     }
 

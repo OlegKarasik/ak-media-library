@@ -32,66 +32,41 @@ public static class FileServices
       ?? throw new InvalidOperationException($"Unable to load index from {path.Value}");
   }
 
-  public static async Task SaveAsync(
-    IndexItem index,
-    DirectoryIndexFilePath path)
-  {
-    if (index is null)
-    {
-      throw new ArgumentNullException(nameof(index));
-    }
+  public static async Task SaveAsync<T>(
+    byte[] bytes,
+    T path)
 
+    where T: FilePath
+  {
+    if (bytes is null)
+    {
+      throw new ArgumentNullException(nameof(bytes));
+    }
     if (path is null)
     {
       throw new ArgumentNullException(nameof(path));
     }
 
-    var content = JsonSerializer.Serialize(
-      index,
-      options);
-
-    await File.WriteAllTextAsync(
-      path.Value, 
-      content);
-  }
-
-  public static async Task SaveAsync(
-    byte[] bytes,
-    DirectoryImageBackgroundFilePath path)
-  {
     await File.WriteAllBytesAsync(path.Value, bytes);
   }
 
-  public static async Task SaveAsync(
-    byte[] bytes,
-    DirectoryImageFilePath path)
-  {
-    await File.WriteAllBytesAsync(path.Value, bytes);
-  }
+  public static async Task SaveAsync<T, K>(
+    T value,
+    K path)
 
-  public static async Task SaveAsync<T>(
-    T props,
-    DirectoryPropsFilePath path)
+    where T: class
+    where K: FilePath
   {
-    var content = JsonSerializer.Serialize(
-      props,
-      options);
+    if (value is null)
+    {
+      throw new ArgumentNullException(nameof(value));
+    }
+    if (path is null)
+    {
+      throw new ArgumentNullException(nameof(path));
+    }
 
     await File.WriteAllTextAsync(
-      path.Value, 
-      content);
-  }
-
-  public static async Task SaveAsync<T>(
-    T props,
-    FilePropsFilePath path)
-  {
-    var content = JsonSerializer.Serialize(
-      props,
-      options);
-
-    await File.WriteAllTextAsync(
-      path.Value, 
-      content);
+      path.Value, JsonSerializer.Serialize(value, options));
   }
 }
