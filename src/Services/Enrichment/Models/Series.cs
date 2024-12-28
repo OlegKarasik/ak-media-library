@@ -1,0 +1,50 @@
+namespace MediaLibrary.Extensions.Services.Enrichment.Models;
+
+public record class Series
+{
+  public required string Title
+  {
+    get; init;
+  }
+
+  public string? Date
+  {
+    get; init;
+  }
+
+  public string? Year
+  {
+    get; init;
+  }
+
+  public string? Overview
+  {
+    get; init;
+  }
+
+  public byte[]? Image
+  {
+    get; init;
+  }
+
+  public byte[]? ImageBackground
+  {
+    get; init;
+  }
+
+  public string[] Genres
+  {
+    get; init;
+  }
+
+  public Dictionary<long, Season> Seasons
+  {
+    get; init;
+  }
+
+  public Series()
+  {
+    this.Genres = [];
+    this.Seasons = [];
+  }
+}

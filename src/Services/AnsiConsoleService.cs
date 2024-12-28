@@ -1,3 +1,4 @@
+using MediaLibrary.Extensions.Services.Enrichment.Models;
 using Spectre.Console;
 
 namespace MediaLibrary.Extensions.Services;
@@ -55,6 +56,24 @@ public class AnsiConsoleService
     AnsiConsole.MarkupLineInterpolated($"Proceed with [Green]{converter(selection)}[/]");
 
     return selection;
+  }
+
+  public static bool Question(
+    string question)
+  {
+    AnsiConsole.MarkupLine(question);
+
+    var convertion = new Func<bool, string>(i => i switch { true => "Yes", false => "No" });
+    var prompt = new SelectionPrompt<bool>()
+      .Title(string.Empty)
+      .UseConverter(convertion)
+      .AddChoices(true, false);
+
+    var result = AnsiConsole.Prompt(prompt);
+
+    AnsiConsole.MarkupLineInterpolated($"[Blue]{convertion(result)}[/]");
+
+    return result;
   }
 
   public static bool SelectYesNo()
@@ -120,39 +139,5 @@ public class AnsiConsoleService
       default:
         throw new NotSupportedException();
     }
-  }
-
-  public static EnrichmentService.SearchResult Print(
-    EnrichmentService.SearchResult series)
-  {
-    if (series is null)
-    {
-      throw new ArgumentNullException(nameof(series));
-    }
-
-    AnsiConsole.Write(
-      new Rows(
-        new Text(string.Empty),
-        new Panel(new Text(series.Overview))
-          .Header(series.Name.ToUpper(), Justify.Left)));
-    
-    return series;
-  }
-
-  public static EnrichmentService.Season.Episode Print(
-    EnrichmentService.Season.Episode episode)
-  {
-    if (episode is null)
-    {
-      throw new ArgumentNullException(nameof(episode));
-    }
-
-    AnsiConsole.Write(
-      new Rows(
-        new Text(string.Empty),
-        new Panel(new Text(episode.Overview))
-          .Header(episode.Name.ToUpper(), Justify.Left)));
-
-    return episode;
   }
 }

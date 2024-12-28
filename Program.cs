@@ -4,21 +4,28 @@ using MediaLibrary.Commands;
 using MediaLibrary.Extensions.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using MediaLibrary.Extensions.Services.Enrichment.Http;
 
 var configuration = new ConfigurationBuilder()
+  .AddJsonFile("appsettings.json")
   .AddUserSecrets<EnrichCommand>()
   .Build();
 
 var services = new ServiceCollection();
 
 services
-  .AddSingleton<IConfigurationRoot>(configuration)
-  .AddTransient<EnrichmentService.AuthorizationTokenSource>()
-  .AddTransient<EnrichmentService.Authorization>();
+  .AddSingleton(configuration)
+  .AddTransient<EnrichmentService>()
+  .AddTransient<EnrichmentHttpCache>()
+  .AddTransient<EnrichmentHttpClient.AuthorizationTokenSource>()
+  .AddTransient<EnrichmentHttpClient.Authorization>();
 
 services
-  .AddHttpClient<EnrichmentService>()
-  .AddHttpMessageHandler<EnrichmentService.Authorization>();
+  .Configure<EnrichmentHttpCacheOptions>(configuration.GetSection("EnrichmentHttpCache"));
+
+services
+  .AddHttpClient<EnrichmentHttpClient>()
+  .AddHttpMessageHandler<EnrichmentHttpClient.Authorization>();
 
 var app = new CommandApp(new TypeRegistrationService(services));
 app.Configure(
