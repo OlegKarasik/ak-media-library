@@ -13,6 +13,12 @@ public class FilePath
   }
 
   [JsonIgnore]
+  public string Directory
+  {
+    get;
+  }
+
+  [JsonIgnore]
   public string Extension 
   { 
     get; 
@@ -32,8 +38,9 @@ public class FilePath
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
 
-    this.Name = System.IO.Path.GetFileNameWithoutExtension(value);
-    this.Extension = System.IO.Path.GetExtension(value);
+    this.Name = Path.GetFileNameWithoutExtension(value);
+    this.Directory = Path.GetDirectoryName(value) ?? Path.GetPathRoot(value) ?? string.Empty;
+    this.Extension = Path.GetExtension(value);
     this.Value = value;
   }
 

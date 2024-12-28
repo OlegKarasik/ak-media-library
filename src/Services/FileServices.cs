@@ -19,6 +19,20 @@ public static class FileServices
     };
   }
 
+  public static void SafeRename(
+    FilePath path,
+    string name)
+  {
+    foreach (var item in Directory.EnumerateFiles(path.Directory, $"*{path.Name}.*"))
+    {
+      File.Move(
+        item, 
+        Path.Combine(
+          path.Directory, 
+          Path.GetFileName(item).Replace(path.Name, name.EscapeInvalidCharacters())));
+    }
+  }
+
   public static async Task<IndexItem> LoadAsync(
     DirectoryIndexFilePath path)
   {
