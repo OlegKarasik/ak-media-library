@@ -555,17 +555,21 @@ public class EnrichmentService
   {
     var hash = BitConverter.ToString(CacheHash.ComputeHash(Encoding.Unicode.GetBytes(uri)));
     var path = Path.Combine(CacheDirectory, hash);
-
+var opt = new JsonSerializerOptions()
+      {
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+      };
     if (File.Exists(path))
     {
-      return JsonSerializer.Deserialize<T>(File.ReadAllText(path));
+      
+      return JsonSerializer.Deserialize<GenericResponse<T>>(File.ReadAllText(path), opt).Data;
     }
 
-    var result = await this.httpClient.GetFromJsonAsync<GenericResponse<T>>(uri);
+    var s = await this.httpClient.GetStringAsync(uri);
+    File.WriteAllText(path, s);
 
-    File.WriteAllText(path, JsonSerializer.Serialize<T>(result.Data));
-
-    return result!.Data;
+    return JsonSerializer.Deserialize<GenericResponse<T>>(File.ReadAllText(path), opt).Data;
   }
 
   public async Task<SearchResult[]?> SearchAsync(
@@ -600,6 +604,17 @@ public class EnrichmentService
   {
     var series = await this.GetAsync<Series>(
       $"https://api4.thetvdb.com/v4/series/{id}/extended");
+    
+    series = series with {
+      Seasons = [.. series.Seasons.Select(
+        i => i with {
+          OverviewTranslations = [.. i.OverviewTranslations.SelectMany(i => i.Split(','))]
+        }
+      )],
+      Artworks = [.. series.Artworks.Where(
+        i => i.IncludesText == false || i.Language == language || i.Language is null
+      )]
+    };
 
     if (series.NameTranslations.Contains(language) || series.OverviewTranslations.Contains(language))
     {
@@ -608,12 +623,7 @@ public class EnrichmentService
 
       return series with {
         Name = translation.Name ?? series.Name,
-        Overview = translation.Overview ?? series.Overview,
-        Seasons = [.. series.Seasons.Select(
-          i => i with {
-            OverviewTranslations = [.. i.OverviewTranslations.SelectMany(i => i.Split(','))]
-          }
-        )]
+        Overview = translation.Overview ?? series.Overview
       };
     }
 
