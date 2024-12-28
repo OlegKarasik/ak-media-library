@@ -143,7 +143,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     EnrichCommandSettings settings)
   {
     var season = series.Seasons
-      .Where(i => i.Index == lookupIndex && i.SupportedTranslations.Contains(settings.Language))
+      .Where(i => i.Index == lookupIndex && i.OverviewTranslations.Contains(settings.Language))
       .FirstOrDefault();
     
     season ??= series.Seasons

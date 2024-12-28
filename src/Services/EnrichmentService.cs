@@ -79,8 +79,14 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("translations")]
+    public Dictionary<string, string> NameTranslations
+    {
+      get; init;
+    }
+
     [JsonPropertyName("overviews")]
-    public Dictionary<string, string> Overviews
+    public Dictionary<string, string> OverviewTranslations
     {
       get; init;
     }
@@ -89,14 +95,21 @@ public class EnrichmentService
     {
       this.Year = None;
       this.Overview = None;
-      this.Overviews = [];
+      this.OverviewTranslations = [];
+      this.NameTranslations = [];
     }
   }
 
   public record class Translation
   {
+    [JsonPropertyName("name")]
+    public string? Name
+    {
+      get; init;
+    }
+
     [JsonPropertyName("overview")]
-    public required string Overview
+    public string? Overview
     {
       get; init;
     }
@@ -172,14 +185,14 @@ public class EnrichmentService
       }
 
       [JsonPropertyName("overviewTranslations")]
-      public string[] SupportedTranslations
+      public string[] OverviewTranslations
       {
         get; init;
       }
 
       public Season()
       {
-        this.SupportedTranslations = [];
+        this.OverviewTranslations = [];
       }
     }
 
@@ -231,8 +244,14 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("nameTranslations")]
+    public string[] NameTranslations
+    {
+      get; init;
+    }
+
     [JsonPropertyName("overviewTranslations")]
-    public string[] SupportedTranslations
+    public string[] OverviewTranslations
     {
       get; init;
     }
@@ -245,7 +264,8 @@ public class EnrichmentService
       this.Seasons = [];
       this.Characters = [];
       this.Artworks = [];
-      this.SupportedTranslations = [];
+      this.NameTranslations = [];
+      this.OverviewTranslations = [];
     }
   }
 
@@ -324,8 +344,14 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("nameTranslations")]
+    public string[] NameTranslations
+    {
+      get; init;
+    }
+
     [JsonPropertyName("overviewTranslations")]
-    public string[] SupportedTranslations
+    public string[] OverviewTranslations
     {
       get; init;
     }
@@ -337,7 +363,8 @@ public class EnrichmentService
       this.Image = None;
       this.Episodes = [];
       this.Artworks = [];
-      this.SupportedTranslations = [];
+      this.NameTranslations = [];
+      this.OverviewTranslations = [];
     }
   }
 
@@ -385,8 +412,14 @@ public class EnrichmentService
       get; init;
     }
 
+    [JsonPropertyName("nameTranslations")]
+    public string[] NameTranslations
+    {
+      get; init;
+    }
+
     [JsonPropertyName("overviewTranslations")]
-    public string[] SupportedTranslations
+    public string[] OverviewTranslations
     {
       get; init;
     }
@@ -397,7 +430,8 @@ public class EnrichmentService
       this.Year = None;
       this.Overview = None;
       this.Characters = [];
-      this.SupportedTranslations = [];
+      this.NameTranslations = [];
+      this.OverviewTranslations = [];
     }
   }
   
@@ -520,9 +554,7 @@ public class EnrichmentService
   public async Task<SearchResult[]?> SearchAsync(
     string title,
     SearchTarget target,
-    string language = "eng",
-    int offset = 0,
-    int limit = 5)
+    string language = "eng")
   {
     if (string.IsNullOrWhiteSpace(title))
     {
@@ -535,19 +567,13 @@ public class EnrichmentService
       _ => throw new ArgumentOutOfRangeException(nameof(target))
     };
 
-    var query = HttpUtility.ParseQueryString("");
-    query.Add("query", title);
-    query.Add("type", type);
-    query.Add("language", language);
-    query.Add("offset", offset.ToString());
-    query.Add("limit", limit.ToString());
-
     var results = await this.GetAsync<SearchResult[]>(
-      $"https://api4.thetvdb.com/v4/search?{query}");
+      $"https://api4.thetvdb.com/v4/search?query={title}&type={type}&language={language}");
 
     return [.. results.Select(
       result => result with {
-        Overview = result.Overviews.TryGetValue(language, out var overview) ? overview : result.Overview
+        Name = result.NameTranslations.TryGetValue(language, out var name) ? name : result.Name,
+        Overview = result.OverviewTranslations.TryGetValue(language, out var overview) ? overview : result.Overview
       })];
   }
 
@@ -558,16 +584,17 @@ public class EnrichmentService
     var series = await this.GetAsync<Series>(
       $"https://api4.thetvdb.com/v4/series/{id}/extended");
 
-    if (series.SupportedTranslations.Contains(language))
+    if (series.NameTranslations.Contains(language) || series.OverviewTranslations.Contains(language))
     {
       var translation = await this.GetAsync<Translation>(
         $"https://api4.thetvdb.com/v4/series/{id}/translations/{language}");
 
       return series with {
+        Name = translation.Name ?? series.Name,
         Overview = translation.Overview ?? series.Overview,
         Seasons = [.. series.Seasons.Select(
           i => i with {
-            SupportedTranslations = [.. i.SupportedTranslations.SelectMany(i => i.Split(','))]
+            OverviewTranslations = [.. i.OverviewTranslations.SelectMany(i => i.Split(','))]
           }
         )]
       };
@@ -584,10 +611,11 @@ public class EnrichmentService
       $"https://api4.thetvdb.com/v4/seasons/{id}/extended");
 
     season = season with {
-      SupportedTranslations = [.. season.SupportedTranslations.SelectMany(i => i.Split(','))]
+      NameTranslations = [.. season.NameTranslations.SelectMany(i => i.Split(','))],
+      OverviewTranslations = [.. season.OverviewTranslations.SelectMany(i => i.Split(','))]
     };
 
-    if (season.SupportedTranslations.Contains(language))
+    if (season.NameTranslations.Contains(language) || season.OverviewTranslations.Contains(language))
     {
       var translation = await this.GetAsync<Translation>(
         $"https://api4.thetvdb.com/v4/seasons/{id}/translations/{language}");
@@ -607,12 +635,13 @@ public class EnrichmentService
     var episode = await this.GetAsync<Episode>(
       $"https://api4.thetvdb.com/v4/episodes/{id}/extended");
 
-    if (episode.SupportedTranslations.Contains(language))
+    if (episode.NameTranslations.Contains(language) || episode.OverviewTranslations.Contains(language))
     {
       var translation = await this.GetAsync<Translation>(
         $"https://api4.thetvdb.com/v4/episodes/{id}/translations/{language}");
 
       episode = episode with {
+        Name = translation.Name ?? episode.Name,
         Overview = translation.Overview ?? episode.Overview
       };
     }
