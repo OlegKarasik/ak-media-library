@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Text;
+
 namespace MediaLibrary.Extensions;
 
 public static class StringExtensions
@@ -22,6 +25,13 @@ public static class StringExtensions
     {
       return ref memory[x * this.cols + y];
     }
+  }
+
+  private static readonly SearchValues<char> invalidCharacters;
+
+  static StringExtensions()
+  {
+    invalidCharacters = SearchValues.Create(Path.GetInvalidFileNameChars());
   }
 
   public static int CalculateLevenshteinDistance(
@@ -75,5 +85,20 @@ public static class StringExtensions
       return memory.At(m, n) 
         = 1 + new int[] { Recursion(memory, x, y, m, n - 1), Recursion(memory, x, y, m - 1, n), Recursion(memory, x, y, m - 1, n - 1) }.Min();
     }
+  }
+
+  public static string EscapeInvalidCharacters(
+    this string @this)
+  {
+    if (@this.AsSpan().ContainsAny(invalidCharacters))
+    {
+      var xb = new StringBuilder(@this);
+      foreach (var c in Path.GetInvalidFileNameChars())
+      {
+        xb.Replace(c.ToString(), string.Empty);
+      }
+      return xb.ToString();
+    }
+    return @this;
   }
 }

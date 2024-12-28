@@ -117,10 +117,10 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
     for (;;)
     {
-      var value = AnsiConsoleService.Select(search, i => $"{i.Title} ({i.Year})");
+      var value = AnsiConsoleService.SelectOneOf(search, i => $"{i.Title} ({i.Year})");
       Print(value);
 
-      if (!AnsiConsoleService.Question("Continue?"))
+      if (!AnsiConsoleService.SelectYesOrNo())
       {
         continue;
       }
@@ -156,7 +156,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
     for (;;)
     {
-      var episode = AnsiConsoleService.Select(fuzzy, i => $"{i.Title} (Season {i.SeasonIndex}, {i.Date})");
+      var episode = AnsiConsoleService.SelectOneOf(fuzzy, i => $"{i.Title} (Season {i.SeasonIndex}, {i.Date})");
       Print(episode);
 
       switch (AnsiConsoleService.SelectContinueBackSkip())

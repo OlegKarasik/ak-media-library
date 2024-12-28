@@ -1,4 +1,3 @@
-using MediaLibrary.Extensions.Services.Enrichment.Models;
 using Spectre.Console;
 
 namespace MediaLibrary.Extensions.Services;
@@ -21,10 +20,7 @@ public class AnsiConsoleService
   public static void Rule(
     string value)
   {
-    if (string.IsNullOrEmpty(value))
-    {
-      throw new ArgumentException($"'{nameof(value)}' cannot be null or empty.", nameof(value));
-    }
+    ArgumentNullException.ThrowIfNull(value);
 
     AnsiConsole.Write(
       new Rows(
@@ -32,20 +28,14 @@ public class AnsiConsoleService
         new Rule($"[Yellow]{value}[/]").LeftJustified()));
   }
 
-  public static T Select<T>(
+  public static T SelectOneOf<T>(
     IEnumerable<T> items,
     Func<T, string> converter)
 
     where T: notnull
   {
-    if (items is null)
-    {
-      throw new ArgumentNullException(nameof(items));
-    }
-    if (converter is null)
-    {
-      throw new ArgumentNullException(nameof(converter));
-    }
+    ArgumentNullException.ThrowIfNull(items);
+    ArgumentNullException.ThrowIfNull(converter);
 
     var selection = AnsiConsole.Prompt(
       new SelectionPrompt<T>()
@@ -53,16 +43,11 @@ public class AnsiConsoleService
         .UseConverter(converter)
         .AddChoices(items));
 
-    AnsiConsole.MarkupLineInterpolated($"Proceed with [Green]{converter(selection)}[/]");
-
     return selection;
   }
 
-  public static bool Question(
-    string question)
+  public static bool SelectYesOrNo()
   {
-    AnsiConsole.MarkupLine(question);
-
     var convertion = new Func<bool, string>(i => i switch { true => "Yes", false => "No" });
     var prompt = new SelectionPrompt<bool>()
       .Title(string.Empty)
@@ -71,49 +56,9 @@ public class AnsiConsoleService
 
     var result = AnsiConsole.Prompt(prompt);
 
-    AnsiConsole.MarkupLineInterpolated($"[Blue]{convertion(result)}[/]");
+    AnsiConsole.MarkupLineInterpolated($"{convertion(result)}");
 
     return result;
-  }
-
-  public static bool SelectYesNo()
-  {
-    var prompt = new SelectionPrompt<string>()
-      .Title(string.Empty)
-      .AddChoices(["Yes", "No"]);
-
-    switch (AnsiConsole.Prompt(prompt))
-    {
-      case "Yes":
-        AnsiConsole.MarkupLine("Yes");
-        return true;
-      case "No":
-        AnsiConsole.MarkupLine("No");
-        return false;
-      default:
-        throw new NotSupportedException();
-    }
-  }
-
-  public static ContinueBack SelectContinueBack()
-  {
-    var prompt = new SelectionPrompt<ContinueBack>()
-      .Title(string.Empty)
-      .AddChoices(
-        ContinueBack.Continue, 
-        ContinueBack.Back);
-
-    switch (AnsiConsole.Prompt(prompt))
-    {
-      case ContinueBack.Continue:
-        AnsiConsole.MarkupLine("Continue");
-        return ContinueBack.Continue;
-      case ContinueBack.Back:
-        AnsiConsole.MarkupLine("Back");
-        return ContinueBack.Back;
-      default:
-        throw new NotSupportedException();
-    }
   }
 
   public static ContinueBackSkip SelectContinueBackSkip()
