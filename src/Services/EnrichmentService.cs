@@ -90,7 +90,7 @@ public class EnrichmentService
           Overview = i.Overview,
           Episodes = episodes
             .Where(j => j.Kind == Enrichment.Http.Models.EpisodeKind.Episode)
-            .Where(j => j.SeasonIndex == i.Index)
+            .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
               j => j.Name,
               j => new Episode
