@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
 using Microsoft.Extensions.Configuration;
@@ -536,6 +539,9 @@ public class EnrichmentService
 
   private readonly HttpClient httpClient;
 
+  private readonly string CacheDirectory = @"C:\Users\Administrator\TEST";
+  private readonly HashAlgorithm CacheHash = SHA256.Create();
+
   public EnrichmentService(
     HttpClient httpClient)
   {
@@ -547,7 +553,18 @@ public class EnrichmentService
 
     where T : class
   {
+    var hash = BitConverter.ToString(CacheHash.ComputeHash(Encoding.Unicode.GetBytes(uri)));
+    var path = Path.Combine(CacheDirectory, hash);
+
+    if (File.Exists(path))
+    {
+      return JsonSerializer.Deserialize<T>(File.ReadAllText(path));
+    }
+
     var result = await this.httpClient.GetFromJsonAsync<GenericResponse<T>>(uri);
+
+    File.WriteAllText(path, JsonSerializer.Serialize<T>(result.Data));
+
     return result!.Data;
   }
 
