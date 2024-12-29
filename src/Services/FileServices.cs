@@ -19,7 +19,7 @@ public static class FileServices
     };
   }
 
-  public static void SafeRename(
+  public static void RenameGroup(
     FilePath path,
     string name)
   {
@@ -29,7 +29,7 @@ public static class FileServices
         item, 
         Path.Combine(
           path.Directory, 
-          Path.GetFileName(item).Replace(path.Name, name.EscapeInvalidCharacters())));
+          Path.GetFileName(item).Replace(path.Name, name)));
     }
   }
 

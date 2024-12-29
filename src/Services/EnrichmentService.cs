@@ -5,34 +5,6 @@ namespace MediaLibrary.Extensions.Services;
 
 public class EnrichmentService
 {
-  private class EpisodeTitleEqualityComparer : IEqualityComparer<string>
-  {
-    public static readonly EpisodeTitleEqualityComparer Default = new();
-
-    public bool Equals(
-      string? x, 
-      string? y)
-    {
-      if (object.ReferenceEquals(x, y))
-      {
-        return true;
-      }
-      if (x is null || y is null)
-      {
-        return false;
-      }
-      return StringComparer.OrdinalIgnoreCase.Equals(
-        x.EscapeInvalidCharacters(), y.EscapeInvalidCharacters());
-    }
-
-    public int GetHashCode(
-      string obj)
-    {
-      return StringComparer.OrdinalIgnoreCase.GetHashCode(
-        obj.EscapeInvalidCharacters());
-    }
-  }
-
   private readonly EnrichmentHttpClient client;
 
   public EnrichmentService(
@@ -102,7 +74,7 @@ public class EnrichmentService
                 Directors = [.. j.Characters.Where(x => x.PersonType == "Director").Select(x => new Director { Name = x.PersonName })],
                 Writers = [.. j.Characters.Where(x => x.PersonType == "Writer").Select(x => new Writer { Name = x.PersonName })],
               },
-              EpisodeTitleEqualityComparer.Default)
+              SafeNameEqualityComparer.Default)
         })
     };
 

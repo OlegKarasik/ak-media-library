@@ -171,9 +171,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         default:
           break;
       }
-      break;
+      return episode;
     }
-    return null;
   }
 
   private async Task EnrichAsync(
@@ -250,6 +249,21 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         Writers = [.. remoteEpisode.Writers.Select(i => i.Name)],
       }, 
       new FilePropsFilePath(episode.Path.Value));
+
+    if (!SafeNameEqualityComparer.Default.Equals(episode.Title, remoteEpisode.Title))
+    {
+      var name = episode.Path.Name.Replace(
+        episode.Title, 
+        remoteEpisode.Title.EscapeInvalidCharacters());
+
+      AnsiConsole.MarkupLineInterpolated(
+        $"Do you want to rename [Green]{episode.Path.Name}[/] to [Red]{name}[/] to match remote?");
+
+      if (AnsiConsoleService.SelectYesOrNo())
+      {
+        FileServices.RenameGroup(episode.Path, name);
+      }
+    }
 
     AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{episode.Title}[/]");
   }
