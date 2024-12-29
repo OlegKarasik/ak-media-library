@@ -95,7 +95,14 @@ public static class StringExtensions
       var xb = new StringBuilder(@this);
       foreach (var c in Path.GetInvalidFileNameChars())
       {
-        xb.Replace(c.ToString(), string.Empty);
+        if (c == ':')
+        {
+          xb.Replace(c, '.');
+        }
+        else
+        {
+          xb.Replace(c.ToString(), string.Empty);
+        }
       }
       return xb.ToString();
     }
