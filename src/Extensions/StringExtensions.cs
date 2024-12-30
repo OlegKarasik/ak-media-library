@@ -31,7 +31,7 @@ public static class StringExtensions
 
   static StringExtensions()
   {
-    invalidCharacters = SearchValues.Create(Path.GetInvalidFileNameChars());
+    invalidCharacters = SearchValues.Create([.. Path.GetInvalidFileNameChars(), '…']);
   }
 
   public static int CalculateLevenshteinDistance(
@@ -92,7 +92,7 @@ public static class StringExtensions
   {
     if (@this.AsSpan().ContainsAny(invalidCharacters))
     {
-      var xb = new StringBuilder(@this);
+      var xb = new StringBuilder(@this.Trim('…'));
       foreach (var c in Path.GetInvalidFileNameChars())
       {
         if (c == ':')
