@@ -119,49 +119,6 @@ public partial class EnrichmentHttpClient
     this.cache = cache ?? throw new ArgumentNullException(nameof(cache));
   }
 
-  private async Task<T> GetAsync<T>(
-    string uri)
-
-    where T : class
-  {
-    var response = await this.cache.GetResponseAsync(uri);
-    if (string.IsNullOrEmpty(response))
-    {
-      response = await this.client.GetStringAsync(uri);
-      
-      await this.cache.SaveResponseAsync(uri, response);
-    }
-
-    var output = JsonSerializer.Deserialize<GenericResponse<T>>(response, JsonSerializerOptions.Web);
-    return output!.Data;
-  }
-
-  private async Task<Search[]?> SearchAsync(
-    string title,
-    string type,
-    string language = "eng")
-  {
-    if (string.IsNullOrWhiteSpace(title))
-    {
-      throw new ArgumentException($"'{nameof(title)}' cannot be null or whitespace.", nameof(title));
-    }
-
-    var results = await this.GetAsync<Search[]>(
-      $"https://api4.thetvdb.com/v4/search?query={title}&type={type}&language={language}");
-
-    results = [.. results.Select(
-      result => result with {
-        NameTranslations = result.NameTranslations ?? [],
-        OverviewTranslations = result.OverviewTranslations ?? []
-      })];
-
-    return [.. results.Select(
-      result => result with {
-        Name = result.NameTranslations.TryGetValue(language, out var name) ? name : result.Name,
-        Overview = result.OverviewTranslations.TryGetValue(language, out var overview) ? overview : result.Overview
-      })];
-  }
-
   public async Task<Search[]> SearchSeriesAsync(
     string title,
     string language)
@@ -173,7 +130,7 @@ public partial class EnrichmentHttpClient
     long id,
     string language = "eng")
   {
-    var series = await this.GetAsync<Series>(
+    var series = await this.GetJsonResponseAsync<Series>(
       $"https://api4.thetvdb.com/v4/series/{id}/extended?meta=episodes");
 
     series = series with {
@@ -202,7 +159,7 @@ public partial class EnrichmentHttpClient
 
     if (series.NameTranslations.Contains(language) || series.OverviewTranslations.Contains(language))
     {
-      var translation = await this.GetAsync<Translation>(
+      var translation = await this.GetJsonResponseAsync<Translation>(
         $"https://api4.thetvdb.com/v4/series/{id}/translations/{language}");
 
       return series with {
@@ -230,7 +187,7 @@ public partial class EnrichmentHttpClient
     long id,
     string language = "eng")
   {
-    var season = await this.GetAsync<Season>(
+    var season = await this.GetJsonResponseAsync<Season>(
       $"https://api4.thetvdb.com/v4/seasons/{id}/extended");
 
     season = season with {
@@ -246,7 +203,7 @@ public partial class EnrichmentHttpClient
 
     if (season.NameTranslations.Contains(language) || season.OverviewTranslations.Contains(language))
     {
-      var translation = await this.GetAsync<Translation>(
+      var translation = await this.GetJsonResponseAsync<Translation>(
         $"https://api4.thetvdb.com/v4/seasons/{id}/translations/{language}");
 
       season = season with {
@@ -261,7 +218,7 @@ public partial class EnrichmentHttpClient
     long id,
     string language = "eng")
   {
-    var episode = await this.GetAsync<Episode>(
+    var episode = await this.GetJsonResponseAsync<Episode>(
       $"https://api4.thetvdb.com/v4/episodes/{id}/extended");
 
     episode = episode with {
@@ -272,7 +229,7 @@ public partial class EnrichmentHttpClient
 
     if (episode.NameTranslations.Contains(language) || episode.OverviewTranslations.Contains(language))
     {
-      var translation = await this.GetAsync<Translation>(
+      var translation = await this.GetJsonResponseAsync<Translation>(
         $"https://api4.thetvdb.com/v4/episodes/{id}/translations/{language}");
 
       episode = episode with {
@@ -287,6 +244,63 @@ public partial class EnrichmentHttpClient
   public async Task<byte[]> GetArtworkAsync(
     Artwork artwork)
   {
-    return await this.client.GetByteArrayAsync(artwork.Image);
+    return await this.GetBytesResponseAsync(artwork.Image);
+  }
+
+  private async Task<Search[]?> SearchAsync(
+    string title,
+    string type,
+    string language = "eng")
+  {
+    if (string.IsNullOrWhiteSpace(title))
+    {
+      throw new ArgumentException($"'{nameof(title)}' cannot be null or whitespace.", nameof(title));
+    }
+
+    var results = await this.GetJsonResponseAsync<Search[]>(
+      $"https://api4.thetvdb.com/v4/search?query={title}&type={type}&language={language}");
+
+    results = [.. results.Select(
+      result => result with {
+        NameTranslations = result.NameTranslations ?? [],
+        OverviewTranslations = result.OverviewTranslations ?? []
+      })];
+
+    return [.. results.Select(
+      result => result with {
+        Name = result.NameTranslations.TryGetValue(language, out var name) ? name : result.Name,
+        Overview = result.OverviewTranslations.TryGetValue(language, out var overview) ? overview : result.Overview
+      })];
+  }
+  
+  private async Task<T> GetJsonResponseAsync<T>(
+    string uri)
+
+    where T : class
+  {
+    var response = await this.cache.GetResponseStringAsync(uri);
+    if (string.IsNullOrEmpty(response))
+    {
+      response = await this.client.GetStringAsync(uri);
+      
+      await this.cache.SaveResponseAsync(uri, response);
+    }
+
+    var output = JsonSerializer.Deserialize<GenericResponse<T>>(response, JsonSerializerOptions.Web);
+    return output!.Data;
+  }
+
+  private async Task<byte[]> GetBytesResponseAsync(
+    string uri)
+  {
+    var response = await this.cache.GetResponseBytesAsync(uri);
+    if (response is null || response.Length == 0)
+    {
+      response = await this.client.GetByteArrayAsync(uri);
+      
+      await this.cache.SaveResponseAsync(uri, response);
+    }
+
+    return response;
   }
 }
