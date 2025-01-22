@@ -44,7 +44,14 @@ public class EnrichmentService
 
     var episodes = await series.Episodes
       .ToAsyncEnumerable()
-      .SelectAwait(async i => await this.client.GetEpisodeAsync(i.Id, language))
+      .SelectAwait(
+        async i => 
+        {
+          var episode = await this.client.GetEpisodeAsync(i.Id, language);
+          return episode with {
+            SeasonIndex = episode.SeasonIndex ?? i.SeasonIndex
+          };
+        })
       .ToArrayAsync();
 
     var result =  new Series

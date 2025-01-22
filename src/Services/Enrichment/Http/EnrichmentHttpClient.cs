@@ -107,6 +107,15 @@ public partial class EnrichmentHttpClient
     }
   }
   
+  private class EpisodesResponse<T>
+  {
+    [JsonPropertyName("episodes")]
+    public required T[] Episodes
+    {
+      get; init;
+    }
+  }
+
   private readonly HttpClient client;
 
   private readonly EnrichmentHttpCache cache;
@@ -131,12 +140,11 @@ public partial class EnrichmentHttpClient
     string language = "eng")
   {
     var series = await this.GetJsonResponseAsync<Series>(
-      $"https://api4.thetvdb.com/v4/series/{id}/extended?meta=episodes");
+      $"https://api4.thetvdb.com/v4/series/{id}/extended");
 
     series = series with {
       Genres = series.Genres ?? [],
       Seasons = series.Seasons ?? [],
-      Episodes = series.Episodes ?? [],
       Characters = series.Characters ?? [],
       Artworks = series.Artworks ?? [],
       NameTranslations = series.NameTranslations ?? [],
@@ -153,8 +161,24 @@ public partial class EnrichmentHttpClient
         i => i.IncludesText == false || i.Language == language || i.Language is null
       )]
     };
+
     series = series with {
-      Seasons = [.. ProcessSeasons(series.Seasons, language)]
+      Episodes = await series.Seasons
+        .ToAsyncEnumerable()
+        .SelectManyAwait(
+          async season => 
+          {
+            var response = await this.GetJsonResponseAsync<EpisodesResponse<Series.Episode>>(
+              $"https://api4.thetvdb.com/v4/series/{series.Id}/episodes/{season.Type.Value}?page=0&season={season.Index}");
+            
+            return response.Episodes.ToAsyncEnumerable();
+          })
+        .ToArrayAsync()
+    };
+
+    series = series with {
+      Seasons = [.. ProcessSeasons(series.Seasons, language)],
+      Episodes = [.. ProcessEpisodes(series.Episodes, language)]
     };
 
     if (series.NameTranslations.Contains(language) || series.OverviewTranslations.Contains(language))
@@ -175,6 +199,18 @@ public partial class EnrichmentHttpClient
       string language)
     {
       foreach (var group in seasons.GroupBy(i => i.Index))
+      {
+        yield return group
+          .Where(i => i.OverviewTranslations.Contains(language))
+          .FirstOrDefault() ?? group.First();
+      }
+    }
+
+    static IEnumerable<Series.Episode> ProcessEpisodes(
+      IEnumerable<Series.Episode> episodes,
+      string language)
+    {
+      foreach (var group in episodes.GroupBy(i => i.Name))
       {
         yield return group
           .Where(i => i.OverviewTranslations.Contains(language))

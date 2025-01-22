@@ -12,6 +12,12 @@ public record class Series
       get; init;
     }
 
+    [JsonPropertyName("name")]
+    public required string Name
+    {
+      get; init;
+    }
+
     [JsonPropertyName("seasonNumber")]
     public required long SeasonIndex
     {
@@ -37,6 +43,15 @@ public record class Series
     }
   }
 
+  public record class SeasonType
+  {
+    [JsonPropertyName("type")]
+    public required string Value
+    {
+      get; init;
+    }
+  }
+
   public record class Season
   {
     [JsonPropertyName("id")]
@@ -47,6 +62,12 @@ public record class Series
 
     [JsonPropertyName("number")]
     public required long Index
+    {
+      get; init;
+    }
+
+    [JsonPropertyName("type")]
+    public required SeasonType Type
     {
       get; init;
     }

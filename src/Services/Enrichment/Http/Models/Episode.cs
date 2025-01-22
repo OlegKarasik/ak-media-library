@@ -23,7 +23,7 @@ public record class Episode
   }
 
   [JsonPropertyName("seasonNumber")]
-  public required long SeasonIndex
+  public long? SeasonIndex
   {
     get; init;
   }
