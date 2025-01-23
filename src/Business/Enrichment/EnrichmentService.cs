@@ -1,7 +1,8 @@
-using MediaLibrary.Extensions.Services.Enrichment.Http;
-using MediaLibrary.Extensions.Services.Enrichment.Models;
+using MediaLibrary.Business.Enrichment.Common;
+using MediaLibrary.Business.Enrichment.Http;
+using MediaLibrary.Business.Enrichment.Models;
 
-namespace MediaLibrary.Extensions.Services;
+namespace MediaLibrary.Business.Enrichment;
 
 public class EnrichmentService
 {
@@ -81,7 +82,7 @@ public class EnrichmentService
                 Directors = [.. j.Characters.Where(x => x.PersonType == "Director").Select(x => new Director { Name = x.PersonName })],
                 Writers = [.. j.Characters.Where(x => x.PersonType == "Writer").Select(x => new Writer { Name = x.PersonName })],
               },
-              SafeNameEqualityComparer.Default)
+              EpisodeTitleEqualityComparer.Default)
         })
     };
 

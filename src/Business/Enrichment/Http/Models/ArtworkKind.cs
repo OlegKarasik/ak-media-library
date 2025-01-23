@@ -1,4 +1,4 @@
-namespace MediaLibrary.Extensions.Services.Enrichment.Http.Models;
+namespace MediaLibrary.Business.Enrichment.Http.Models;
 
 public enum ArtworkKind
 {

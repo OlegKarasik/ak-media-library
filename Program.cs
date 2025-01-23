@@ -4,7 +4,8 @@ using MediaLibrary.Commands;
 using MediaLibrary.Extensions.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using MediaLibrary.Extensions.Services.Enrichment.Http;
+using MediaLibrary.Business.Enrichment;
+using MediaLibrary.Business.Enrichment.Http;
 
 var configuration = new ConfigurationBuilder()
   .AddJsonFile("appsettings.json")
@@ -32,7 +33,6 @@ app.Configure(
   o =>
   {
     o.AddCommand<ScanCommand>("scan");
-    o.AddCommand<InfoCommand>("info");
     o.AddCommand<EnrichCommand>("enrich");
   });
 

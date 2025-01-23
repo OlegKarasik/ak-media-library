@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MediaLibrary.Extensions.Services.Enrichment.Http.Models;
+namespace MediaLibrary.Business.Enrichment.Http.Models;
 
 public record class Season
 {

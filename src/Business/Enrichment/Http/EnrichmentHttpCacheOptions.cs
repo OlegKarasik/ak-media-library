@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MediaLibrary.Extensions.Services.Enrichment.Http;
+namespace MediaLibrary.Business.Enrichment.Http;
 
 public class EnrichmentHttpCacheOptions
 {

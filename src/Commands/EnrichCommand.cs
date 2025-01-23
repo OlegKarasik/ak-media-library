@@ -1,9 +1,11 @@
 using MediaLibrary.Business;
+using MediaLibrary.Business.Enrichment;
+using MediaLibrary.Business.Enrichment.Common;
+using MediaLibrary.Business.Enrichment.Models;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
 using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
-using MediaLibrary.Extensions.Services.Enrichment.Models;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -63,6 +65,33 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
                 }
               }
               await this.EnrichAsync(episode, remoteEpisode);
+
+              // Workout the automated renaming proposal
+              //
+              if (!EpisodeTitleEqualityComparer.Default.Equals(episode.Title, remoteEpisode.Title))
+              {
+                var name = episode.Path.Name.Replace(
+                  episode.Title, 
+                  remoteEpisode.Title.EscapeInvalidCharacters().Trim());
+
+                if (name.Contains(this.options.EpisodeSplitSymbol))
+                {
+                  // If name contains split symbol, we try to ensure, the split symbol is
+                  // surrounded by spaces
+                  //
+                  name = string.Join(
+                    $" {this.options.EpisodeSplitSymbol} ", 
+                    name.Split(this.options.EpisodeSplitSymbol, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+                }
+
+                AnsiConsole.MarkupLineInterpolated(
+                  $"Do you want to rename [Green]{episode.Path.Name}[/] to [Red]{name}[/] to match remote?");
+
+                if (AnsiConsoleService.SelectYesOrNo())
+                {
+                  FileServices.RenameGroup(episode.Path, name);
+                }
+              }
             }
           }
         }
@@ -249,21 +278,6 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         Writers = [.. remoteEpisode.Writers.Select(i => i.Name)],
       }, 
       new FilePropsFilePath(episode.Path.Value));
-
-    if (!SafeNameEqualityComparer.Default.Equals(episode.Title, remoteEpisode.Title))
-    {
-      var name = episode.Path.Name.Replace(
-        episode.Title, 
-        remoteEpisode.Title.EscapeInvalidCharacters());
-
-      AnsiConsole.MarkupLineInterpolated(
-        $"Do you want to rename [Green]{episode.Path.Name}[/] to [Red]{name}[/] to match remote?");
-
-      if (AnsiConsoleService.SelectYesOrNo())
-      {
-        FileServices.RenameGroup(episode.Path, name);
-      }
-    }
 
     AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{episode.Title}[/]");
   }

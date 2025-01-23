@@ -95,13 +95,17 @@ public static class StringExtensions
       var xb = new StringBuilder(@this.Trim('…'));
       foreach (var c in Path.GetInvalidFileNameChars())
       {
-        if (c == ':')
+        switch (c)
         {
-          xb.Replace(c, '.');
-        }
-        else
-        {
-          xb.Replace(c.ToString(), string.Empty);
+          case ':':
+            xb.Replace(c, '.');
+            break;
+          case '/':
+            xb.Replace(c.ToString(), "&&");
+            break;
+          default:
+            xb.Replace(c.ToString(), string.Empty);
+            break;
         }
       }
       return xb.ToString();

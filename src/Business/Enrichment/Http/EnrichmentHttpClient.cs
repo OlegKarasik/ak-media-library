@@ -3,12 +3,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MediaLibrary.Extensions.Services.Enrichment.Http.Models;
+using MediaLibrary.Business.Enrichment.Http.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
-namespace MediaLibrary.Extensions.Services.Enrichment.Http;
+namespace MediaLibrary.Business.Enrichment.Http;
 
 public partial class EnrichmentHttpClient
 {

@@ -1,4 +1,4 @@
-namespace MediaLibrary.Extensions.Services.Enrichment.Models;
+namespace MediaLibrary.Business.Enrichment.Models;
 
 public record class Episode
 {

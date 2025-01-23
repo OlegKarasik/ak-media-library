@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 
-namespace MediaLibrary.Extensions.Services.Enrichment.Http;
+namespace MediaLibrary.Business.Enrichment.Http;
 
 public class EnrichmentHttpCache
 {
