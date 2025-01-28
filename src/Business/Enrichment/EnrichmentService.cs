@@ -69,7 +69,7 @@ public class EnrichmentService
           Index = i.Index,
           Overview = i.Overview,
           Episodes = episodes
-            .Where(j => j.Kind == Enrichment.Http.Models.EpisodeKind.Episode)
+            .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
               j => j.Name,
@@ -87,15 +87,15 @@ public class EnrichmentService
     };
 
     result = result with {
-      Image = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeriesPoster, language),
-      ImageBackground = await GetArtwork(series.Artworks, Enrichment.Http.Models.ArtworkKind.SeriesBackground, language),
+      Image = await GetArtwork(series.Artworks, Http.Models.ArtworkKind.SeriesPoster, language),
+      ImageBackground = await GetArtwork(series.Artworks, Http.Models.ArtworkKind.SeriesBackground, language),
     };
     foreach (var (index, resultSeason) in result.Seasons)
     {
       var season = seasons.First(i => i.Index == index);
       result.Seasons[index] = resultSeason with {
-        Image = await GetArtwork(season.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonPoster, language),
-        ImageBackground = await GetArtwork(season.Artworks, Enrichment.Http.Models.ArtworkKind.SeasonBackground, language),
+        Image = await GetArtwork(season.Artworks, Http.Models.ArtworkKind.SeasonPoster, language),
+        ImageBackground = await GetArtwork(season.Artworks, Http.Models.ArtworkKind.SeasonBackground, language),
       };
     }
 
