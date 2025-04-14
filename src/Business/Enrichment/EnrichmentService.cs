@@ -26,8 +26,8 @@ public class EnrichmentService
     var result = await this.client.SearchSeriesAsync(title, language);
     return [.. result.Select(i => new Search{
       Id = i.Id,
-      Title = i.Name,
-      Overview = i.Overview,
+      Title = new MediaTitle(i.Name),
+      Overview = new MediaOverview(i.Overview),
       Year = i.Year
     })];
   }

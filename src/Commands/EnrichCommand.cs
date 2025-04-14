@@ -290,8 +290,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     AnsiConsole.Write(
       new Rows(
         new Text(string.Empty),
-        new Panel(new Text(remoteSearch.Overview ?? string.Empty))
-          .Header(remoteSearch.Title.ToUpper(), Justify.Left)));
+        new Panel(new Text(remoteSearch.Overview))
+          .Header(remoteSearch.Title.ToString(MediaStringPresentation.AllCaps), Justify.Left)));
   }
 
   public static void Print(

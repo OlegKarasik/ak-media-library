@@ -7,17 +7,17 @@ public record class Search
     get; init;
   }
 
-  public required string Title
+  public required MediaTitle Title
+  {
+    get; init;
+  }
+
+  public required MediaOverview Overview
   {
     get; init;
   }
 
   public string? Year
-  {
-    get; init;
-  }
-
-  public string? Overview
   {
     get; init;
   }
