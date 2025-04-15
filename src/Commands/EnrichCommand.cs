@@ -225,7 +225,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new ShowPropsItem
       {
-        Summary = [(string)remoteShow.Overview],
+        Summary = [remoteShow.Overview],
         Date = remoteShow.Date,
         Genres = remoteShow.Genres
       }, 
@@ -255,7 +255,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new SeasonPropsItem
       {
-        Summary = [(string)remoteSeason.Overview],
+        Summary = [remoteSeason.Overview],
       }, 
       new FilePathProps(season.Path));
 
@@ -273,7 +273,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       new EpisodePropsItem
       {
         Date = remoteEpisode.Date,
-        Summary = [remoteEpisode.Overview ?? string.Empty],
+        Summary = [remoteEpisode.Overview],
         Directors = [.. remoteEpisode.Directors.Select(i => i.Name)],
         Writers = [.. remoteEpisode.Writers.Select(i => i.Name)],
       }, 
@@ -290,8 +290,8 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     AnsiConsole.Write(
       new Rows(
         new Text(string.Empty),
-        new Panel(new Text((string)remoteSearch.Overview))
-          .Header(remoteSearch.Title.ToString(MediaStringPresentation.AllCaps), Justify.Left)));
+        new Panel(new Text(remoteSearch.Overview))
+          .Header(remoteSearch.Title.ToUpper(), Justify.Left)));
   }
 
   public static void Print(
@@ -302,7 +302,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     AnsiConsole.Write(
       new Rows(
         new Text(string.Empty),
-        new Panel(new Text(remoteEpisode.Overview ?? string.Empty))
+        new Panel(new Text(remoteEpisode.Overview))
           .Header(remoteEpisode.Title.ToUpper(), Justify.Left)));
   }
 }

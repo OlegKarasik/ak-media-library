@@ -7,12 +7,12 @@ public record class Search
     get; init;
   }
 
-  public required MediaTitle Title
+  public required string Title
   {
     get; init;
   }
 
-  public required MediaOverview Overview
+  public required string Overview
   {
     get; init;
   }

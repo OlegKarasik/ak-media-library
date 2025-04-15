@@ -7,7 +7,7 @@ public record class Season
     get; init;
   }
 
-  public required MediaOverview Overview
+  public required string Overview
   {
     get; init;
   }

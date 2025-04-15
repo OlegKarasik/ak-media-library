@@ -2,12 +2,12 @@ namespace MediaLibrary.Business.Enrichment.Models;
 
 public record class Series
 {
-  public required MediaTitle Title
+  public required string Title
   {
     get; init;
   }
 
-  public required MediaOverview Overview
+  public required string Overview
   {
     get; init;
   }
