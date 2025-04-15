@@ -2,17 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace MediaLibrary.Business;
 
-public class DirectoryIndexFilePath : FilePath
+public class FilePathIndex : FilePath
 {
   [JsonConstructor]
-  public DirectoryIndexFilePath(
+  protected FilePathIndex(
     string value)
 
-    : base(NormalizePath(value))
+    : base(value)
   {
   }
 
-  public DirectoryIndexFilePath(
+  public FilePathIndex(
     DirectoryPath path)
 
     : base(NormalizePath(path.Value))

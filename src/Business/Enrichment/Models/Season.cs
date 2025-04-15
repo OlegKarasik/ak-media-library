@@ -7,7 +7,7 @@ public record class Season
     get; init;
   }
 
-  public string? Overview
+  public required string Overview
   {
     get; init;
   }

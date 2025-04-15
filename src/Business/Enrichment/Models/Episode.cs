@@ -7,17 +7,17 @@ public record class Episode
     get; init;
   }
 
+  public required string Overview
+  {
+    get; init;
+  }
+
   public required long SeasonIndex
   {
     get; init;
   }
 
   public string? Date
-  {
-    get; init;
-  }
-
-  public string? Overview
   {
     get; init;
   }

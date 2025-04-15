@@ -12,12 +12,12 @@ public record class Search
     get; init;
   }
 
-  public string? Year
+  public required string Overview
   {
     get; init;
   }
 
-  public string? Overview
+  public string? Year
   {
     get; init;
   }

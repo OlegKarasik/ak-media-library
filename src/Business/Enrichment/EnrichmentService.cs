@@ -27,7 +27,7 @@ public class EnrichmentService
     return [.. result.Select(i => new Search{
       Id = i.Id,
       Title = i.Name,
-      Overview = i.Overview,
+      Overview = (i.Overview ?? string.Empty).Trim(),
       Year = i.Year
     })];
   }
@@ -58,7 +58,7 @@ public class EnrichmentService
     var result =  new Series
     {
       Title = series.Name,
-      Overview = series.Overview,
+      Overview = (series.Overview ?? string.Empty).Trim(),
       Date = series.Date,
       Year = series.Year,
       Genres = [.. series.Genres.Select(i => i.Name)],
@@ -67,7 +67,7 @@ public class EnrichmentService
         i => new Season
         {
           Index = i.Index,
-          Overview = i.Overview,
+          Overview = (i.Overview ?? string.Empty).Trim(),
           Episodes = episodes
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
@@ -76,9 +76,9 @@ public class EnrichmentService
               j => new Episode
               {
                 Title = j.Name,
+                Overview = (j.Overview ?? string.Empty).Trim(),
                 SeasonIndex = i.Index,
                 Date = j.Date,
-                Overview = j.Overview,
                 Directors = [.. j.Characters.Where(x => x.PersonType == "Director").Select(x => new Director { Name = x.PersonName })],
                 Writers = [.. j.Characters.Where(x => x.PersonType == "Writer").Select(x => new Writer { Name = x.PersonName })],
               },

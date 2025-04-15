@@ -34,7 +34,7 @@ public static class FileServices
   }
 
   public static async Task<IndexItem> LoadAsync(
-    DirectoryIndexFilePath path)
+    FilePathIndex path)
   {
     if (path is null)
     {
