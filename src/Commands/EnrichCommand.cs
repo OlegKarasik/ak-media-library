@@ -27,7 +27,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     CommandContext context, 
     EnrichCommandSettings settings)
   {
-    var index = await FileServices.LoadAsync(new DirectoryIndexFilePath(settings.Library.Value));
+    var index = await FileServices.LoadAsync(new FilePathDirectoryIndex(settings.Library.Value));
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case ShowItem show:
@@ -214,12 +214,12 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     if (remoteShow.Image is not null)
     {
       await FileServices.SaveAsync(
-        remoteShow.Image, new DirectoryImageFilePath(show.Path.Value));
+        remoteShow.Image, new FilePathDirectoryImage(show.Path.Value));
     }
     if (remoteShow.ImageBackground is not null)
     {
       await FileServices.SaveAsync(
-        remoteShow.ImageBackground, new DirectoryImageBackgroundFilePath(show.Path.Value));
+        remoteShow.ImageBackground, new FilePathDirectoryImageBackground(show.Path.Value));
     }
 
     await FileServices.SaveAsync(
@@ -229,7 +229,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         Date = remoteShow.Date,
         Genres = remoteShow.Genres
       }, 
-      new DirectoryPropsFilePath(show.Path.Value));
+      new FilePathProps(show.Path));
 
     AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{show.Title}[/]");
   }
@@ -244,12 +244,12 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     if (remoteSeason.Image is not null)
     {
       await FileServices.SaveAsync(
-        remoteSeason.Image, new DirectoryImageFilePath(season.Path.Value));
+        remoteSeason.Image, new FilePathDirectoryImage(season.Path.Value));
     }
     if (remoteSeason.ImageBackground is not null)
     {
       await FileServices.SaveAsync(
-        remoteSeason.ImageBackground, new DirectoryImageBackgroundFilePath(season.Path.Value));
+        remoteSeason.ImageBackground, new FilePathDirectoryImageBackground(season.Path.Value));
     }
 
     await FileServices.SaveAsync(
@@ -257,7 +257,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       {
         Summary = [remoteSeason.Overview ?? string.Empty],
       }, 
-      new DirectoryPropsFilePath(season.Path.Value));
+      new FilePathProps(season.Path));
 
     AnsiConsole.MarkupLineInterpolated($"Enriched [Green]Season {season.Position.GetPosition()}[/]");
   }
@@ -277,7 +277,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         Directors = [.. remoteEpisode.Directors.Select(i => i.Name)],
         Writers = [.. remoteEpisode.Writers.Select(i => i.Name)],
       }, 
-      new FilePropsFilePath(episode.Path.Value));
+      new FilePathProps(episode.Path));
 
     AnsiConsole.MarkupLineInterpolated($"Enriched [Green]{episode.Title}[/]");
   }

@@ -191,7 +191,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = shows.Collide(i => i.Title),
             Movies = [],
-            Path = new DirectoryIndexFilePath(path)
+            Path = new FilePathDirectoryIndex(path)
           };
       case ScanItemMask.Movies:
         // We need to construct the 'index' item from 'movies'
@@ -200,7 +200,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = [],
             Movies = movies.Collide(i => i.Title),
-            Path = new DirectoryIndexFilePath(path)
+            Path = new FilePathDirectoryIndex(path)
           };
       case ScanItemMask.Indices:
         // We need to construct the 'index' item from 'index'
@@ -209,7 +209,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           { 
             Shows = indices.CollideMany(i => i.Shows.Values, i => i.Title),
             Movies = indices.CollideMany(i => i.Movies.Values, i => i.Title),
-            Path = new DirectoryIndexFilePath(path)
+            Path = new FilePathDirectoryIndex(path)
           };
       default:
         throw new NotImplementedException($"The scanning of \"{mask}\" isn't supported yet");

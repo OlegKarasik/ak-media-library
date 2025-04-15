@@ -1,8 +1,8 @@
 namespace MediaLibrary.Business;
 
-public class DirectoryImageFilePath : FilePath
+public class FilePathDirectoryImageBackground : FilePath
 {
-  public DirectoryImageFilePath(
+  public FilePathDirectoryImageBackground(
     string value)
 
     : base(NormalizePath(value))
@@ -12,7 +12,7 @@ public class DirectoryImageFilePath : FilePath
   private static string NormalizePath(
     string value)
   {
-    const string IMAGE_FILE = "this.image.jpg";
+    const string IMAGE_FILE = "this.image-background.jpg";
 
     if (value.EndsWith(IMAGE_FILE))
     {

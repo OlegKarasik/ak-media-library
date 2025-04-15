@@ -1,8 +1,8 @@
 namespace MediaLibrary.Business;
 
-public class FileSubtitlesFilePath : FilePath
+public class FilePathSubtitles : FilePath
 {
-  public FileSubtitlesFilePath(
+  public FilePathSubtitles(
     string value)
 
     : base(value)

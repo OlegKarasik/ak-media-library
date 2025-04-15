@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace MediaLibrary.Business.Items;
 
 [DebuggerDisplay($"Index, Movies: {{{nameof(Movies)}.Count}}, Shows: {{{nameof(Shows)}.Count}}")]
-public class IndexItem : Item<DirectoryIndexFilePath>
+public class IndexItem : Item<FilePathDirectoryIndex>
 {
   public required Dictionary<string, MovieItem> Movies
   {
