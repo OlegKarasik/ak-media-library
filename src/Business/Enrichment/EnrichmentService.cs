@@ -67,7 +67,7 @@ public class EnrichmentService
         i => new Season
         {
           Index = i.Index,
-          Overview = i.Overview,
+          Overview = new MediaOverview(i.Overview),
           Episodes = episodes
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)

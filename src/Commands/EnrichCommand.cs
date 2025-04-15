@@ -255,7 +255,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new SeasonPropsItem
       {
-        Summary = [remoteSeason.Overview ?? string.Empty],
+        Summary = [(string)remoteSeason.Overview],
       }, 
       new FilePathProps(season.Path));
 
