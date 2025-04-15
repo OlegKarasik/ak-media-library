@@ -48,7 +48,7 @@ public abstract class MediaString : IEquatable<MediaString>
     return other is not null && this.value.Equals(other.value, StringComparison.Ordinal);
   }
 
-  public static implicit operator string(MediaString input) 
+  public static explicit operator string(MediaString input) 
   {
     return input.value;
   }

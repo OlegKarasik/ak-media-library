@@ -225,7 +225,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     await FileServices.SaveAsync(
       new ShowPropsItem
       {
-        Summary = [remoteShow.Overview ?? string.Empty],
+        Summary = [(string)remoteShow.Overview],
         Date = remoteShow.Date,
         Genres = remoteShow.Genres
       }, 
@@ -290,7 +290,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     AnsiConsole.Write(
       new Rows(
         new Text(string.Empty),
-        new Panel(new Text(remoteSearch.Overview))
+        new Panel(new Text((string)remoteSearch.Overview))
           .Header(remoteSearch.Title.ToString(MediaStringPresentation.AllCaps), Justify.Left)));
   }
 

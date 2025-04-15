@@ -57,8 +57,8 @@ public class EnrichmentService
 
     var result =  new Series
     {
-      Title = series.Name,
-      Overview = series.Overview,
+      Title = new MediaTitle(series.Name),
+      Overview = new MediaOverview(series.Overview),
       Date = series.Date,
       Year = series.Year,
       Genres = [.. series.Genres.Select(i => i.Name)],
