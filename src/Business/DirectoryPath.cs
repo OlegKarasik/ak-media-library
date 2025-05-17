@@ -26,7 +26,7 @@ public class DirectoryPath
       throw new ArgumentException($"'{nameof(value)}' cannot be null or whitespace.", nameof(value));
     }
 
-    this.Name = System.IO.Path.GetFileName(value) ?? value;
+    this.Name = Path.GetFileName(value) ?? value;
     this.Value = value;
   }
 
