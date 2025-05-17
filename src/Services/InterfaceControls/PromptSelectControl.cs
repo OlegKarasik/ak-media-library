@@ -7,9 +7,6 @@ public class PromptSelectControl<T>
 {
   public enum PromptMatches
   {
-    Items,
-    Commands,
-
     Item,
     Skip,
     Back,
@@ -59,8 +56,6 @@ public class PromptSelectControl<T>
 
   private Func<T, string>? itemToString;
   private Func<PromptCommands, string>? commandToString;
-  private string? itemGroupString;
-  private string? commandGroupString;
 
   public PromptSelectControl(
     string title,
@@ -102,14 +97,12 @@ public class PromptSelectControl<T>
 
     if (items.Any())
     {
-      this.prompt.AddChoiceGroup(
-        new PromptControlResult(PromptMatches.Items),
+      this.prompt.AddChoices(
         items.Select(i => new PromptItemResult(i)));
     }
     if (commands.Any())
     {
-      this.prompt.AddChoiceGroup(
-        new PromptControlResult(PromptMatches.Commands),
+      this.prompt.AddChoices(
         commands.Select(i => new PromptControlResult(this.Convert(i))));
     }
   }
@@ -126,17 +119,8 @@ public class PromptSelectControl<T>
     switch (result.Match)
     {
       case PromptMatches.Items:
-        if (this.itemGroupString is not null)
-        {
-          return this.itemGroupString;
-        }
-        break;
       case PromptMatches.Commands:
-        if (this.commandGroupString is not null)
-        {
-          return this.commandGroupString;
-        }
-        break;
+        return string.Empty;
     }
     return this.commandToString is not null ? this.commandToString(this.Convert(result.Match)) : $"{result.Match}";
   }
@@ -173,26 +157,6 @@ public class PromptSelectControl<T>
       PromptMatches.No => PromptCommands.No,
       _ => throw new NotImplementedException(),
     };
-  }
-
-  public PromptSelectControl<T> UseItemsGroupString(
-    string value)
-  {
-    ArgumentException.ThrowIfNullOrEmpty(value);
-
-    this.itemGroupString = value;
-
-    return this;
-  }
-
-  public PromptSelectControl<T> UseCommandsGroupString(
-    string value)
-  {
-    ArgumentException.ThrowIfNullOrEmpty(value);
-
-    this.commandGroupString = value;
-
-    return this;
   }
 
   public PromptSelectControl<T> UseItemString(

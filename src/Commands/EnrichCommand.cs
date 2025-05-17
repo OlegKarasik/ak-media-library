@@ -187,15 +187,12 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         matches,
         [PromptCommands.Skip]
       )
-      .UseItemsGroupString("Episodes:")
-      .UseCommandsGroupString("Actions:")
       .UseItemString(i => $"{i.Title} (Season {i.SeasonIndex}, {i.Date})");
-    
+
     var updatePrompt = new PromptSelectControl<bool>(
         "Update metadata?",
         [],
-        [PromptCommands.Yes, PromptCommands.No])
-      .UseCommandsGroupString("Actions:");
+        [PromptCommands.Yes, PromptCommands.No]);
 
     for (; ; )
     {
