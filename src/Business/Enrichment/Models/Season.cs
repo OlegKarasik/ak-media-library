@@ -22,7 +22,7 @@ public record class Season
     get; init;
   }
 
-  public Dictionary<string, Episode> Episodes
+  public Dictionary<Title, Episode> Episodes
   {
     get; init;
   }
