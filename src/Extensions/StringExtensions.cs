@@ -5,11 +5,11 @@ namespace MediaLibrary.Extensions;
 
 public static class StringExtensions
 {
-  private ref struct LevensteinDistanceMemory
+  private readonly ref struct LevensteinDistanceMemory
   {
-    private Span<int> memory;
-    private int rows;
-    private int cols;
+    private readonly Span<int> memory;
+    private readonly int rows;
+    private readonly int cols;
 
     public LevensteinDistanceMemory(
       Span<int> memory,
@@ -92,7 +92,9 @@ public static class StringExtensions
   {
     if (@this.AsSpan().ContainsAny(invalidCharacters))
     {
-      var xb = new StringBuilder(@this.Trim('…'));
+      var xb = new StringBuilder(@this);
+
+      xb.Replace("…", string.Empty);
       foreach (var c in Path.GetInvalidFileNameChars())
       {
         switch (c)
