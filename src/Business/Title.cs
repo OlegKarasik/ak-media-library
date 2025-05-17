@@ -10,6 +10,7 @@ public partial class Title
 {
   private static readonly Regex standard = MatchStandardParts();
   private static readonly Regex complex = MatchComplexParts();
+  private static readonly Regex normalise = MatchNormaliseParts();
 
   private readonly string value;
 
@@ -33,6 +34,25 @@ public partial class Title
       {
         return $"({match.Groups["Index"].Value})";
       });
+    
+    intermediate = complex.Replace(
+      intermediate,
+      match =>
+      {
+        return $"({match.Groups["Index"].Value})";
+      });
+    
+    intermediate = normalise.Replace(
+      intermediate,
+      match =>
+      {
+        return $" ({match.Groups["Index"].Value})";
+      });
+//Kreepaway Kamp - (1)
+    if (intermediate.Contains("&&"))
+    {
+      intermediate = string.Join(" && ", intermediate.Split(" && ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+    }
 
     this.value = intermediate;
   }
@@ -57,4 +77,7 @@ public partial class Title
 
   [GeneratedRegex(@"\(?(?<Index>\d+)(st|nd|th)\s*(Part|Chapter|Volume)\)?")]
   private static partial Regex MatchComplexParts();
+
+  [GeneratedRegex(@"\s*\((?<Index>\d+)\)")]
+  private static partial Regex MatchNormaliseParts();
 }
