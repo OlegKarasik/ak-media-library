@@ -157,13 +157,37 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
+            var _position = match.GetPosition<SeasonItem>();
+            var _episodes = episodes
+              .Select(
+                episode =>
+                {
+                  var group = episode.Position.GetGroup();
+                  if (episode.Position.HasGroup)
+                  {
+                    if (group != _position.GetPosition())
+                    {
+                      throw new NotSupportedException();
+                    }
+                    return episode;
+                  }
+                  else
+                  {
+                    return new EpisodeItem()
+                    {
+                      Title = episode.Title,
+                      Path = episode.Path,
+                      Position = new ItemPosition(_position, episode.Position)
+                    };
+                  }
+                });
             return new SeasonItem
-              { 
-                Title = match.GetTitle<SeasonItem>(),
-                Position = match.GetPosition<SeasonItem>(),
-                Episodes = episodes.Collide(i => i.Title),
-                Path = path
-              };
+            {
+              Title = match.GetTitle<SeasonItem>(),
+              Position = match.GetPosition<SeasonItem>(),
+              Episodes = _episodes.Collide(i => i.Title),
+              Path = path
+            };
           }
         }        
         throw new NotImplementedException();
