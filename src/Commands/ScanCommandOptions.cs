@@ -56,7 +56,8 @@ public class ScanCommandOptions
     this.EpisodeMatchPatterns =
       [
         @"^S(?<Season>\d+)E(?<EpisodeOpen>\d+)\s*-\s*E(?<EpisodeClose>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
-        @"^S(?<Season>\d+)E(?<Episode>\d+)\s*-?\s*(?<EpisodeTitle>.+)$"
+        @"^S(?<Season>\d+)E(?<Episode>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
+        @"^Episode\s+(?<Episode>\d+)\s*-\s*(?<EpisodeTitle>.+)$"
       ];
   }
 }
