@@ -72,17 +72,16 @@ public class EnrichmentService
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
-              j => j.Name,
+              j => new Title(j.Name),
               j => new Episode
               {
-                Title = j.Name,
+                Title = new Title(j.Name),
                 Overview = (j.Overview ?? string.Empty).Trim(),
                 SeasonIndex = i.Index,
                 Date = j.Date,
                 Directors = [.. j.Characters.Where(x => x.PersonType == "Director").Select(x => new Director { Name = x.PersonName })],
                 Writers = [.. j.Characters.Where(x => x.PersonType == "Writer").Select(x => new Writer { Name = x.PersonName })],
-              },
-              EpisodeTitleEqualityComparer.Default)
+              })
         })
     };
 

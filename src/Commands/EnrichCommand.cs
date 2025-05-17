@@ -57,9 +57,9 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
             foreach (var episode in season.Episodes.Values)
             {
-              if (!remoteSeason.Episodes.TryGetValue(episode.Title, out var remoteEpisode))
+              if (!remoteSeason.Episodes.TryGetValue(new Title(episode.Title), out var remoteEpisode))
               {
-                remoteEpisode = this.PickEpisode(episode.Title, remoteSeason.Episodes.Values, settings);
+                remoteEpisode = this.PickEpisode(new Title(episode.Title), remoteSeason.Episodes.Values, settings);
                 if (remoteEpisode is null)
                 {
                   continue;
@@ -69,11 +69,11 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
               // Workout the automated renaming proposal
               //
-              if (!EpisodeTitleEqualityComparer.Default.Equals(episode.Title, remoteEpisode.Title))
+              if (!episode.Title.Equals(remoteEpisode.Title.ToString()))
               {
                 var name = episode.Path.Name.Replace(
                   episode.Title, 
-                  remoteEpisode.Title.EscapeInvalidCharacters().Trim());
+                  remoteEpisode.Title.ToString());
 
                 if (name.Contains(this.options.EpisodeSplitSymbol))
                 {
@@ -160,7 +160,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
   }
 
   private Episode? PickEpisode(
-    string title,
+    Title title,
     IEnumerable<Episode> episodes,
     EnrichCommandSettings settings)
   {
@@ -171,7 +171,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     var matches = new List<Episode>();
     foreach (var episode in episodes)
     {
-      if (title.CalculateLevenshteinDistance(episode.Title) < settings.FuzzyMatch)
+      if (title.ToString().CalculateLevenshteinDistance(episode.Title.ToString()) < settings.FuzzyMatch)
       {
         matches.Add(episode);
       }
@@ -199,7 +199,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
       switch (AnsiConsole.Prompt(selectPrompt.GetPrompt()))
       {
         case PromptSelectControl<Episode>.PromptItemResult result:
-          AnsiConsole.Write(new VisualPanelControl(result.Item.Title, result.Item.Overview).GetRenderable());
+          AnsiConsole.Write(new VisualPanelControl(result.Item.Title.ToString(), result.Item.Overview).GetRenderable());
 
           switch (AnsiConsole.Prompt(updatePrompt.GetPrompt()).Match)
           {
@@ -311,17 +311,5 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
         new Text(string.Empty),
         new Panel(new Text(remoteSearch.Overview))
           .Header(remoteSearch.Title.ToUpper(), Justify.Left)));
-  }
-
-  public static void Print(
-    Episode remoteEpisode)
-  {
-    ArgumentNullException.ThrowIfNull(remoteEpisode);
-
-    AnsiConsole.Write(
-      new Rows(
-        new Text(string.Empty),
-        new Panel(new Text(remoteEpisode.Overview))
-          .Header(remoteEpisode.Title.ToUpper(), Justify.Left)));
   }
 }
