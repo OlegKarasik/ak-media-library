@@ -116,12 +116,6 @@ public class PromptSelectControl<T>
   private string ResultToString(
     PromptControlResult result)
   {
-    switch (result.Match)
-    {
-      case PromptMatches.Items:
-      case PromptMatches.Commands:
-        return string.Empty;
-    }
     return this.commandToString is not null ? this.commandToString(this.Convert(result.Match)) : $"{result.Match}";
   }
 
