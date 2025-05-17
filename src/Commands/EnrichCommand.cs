@@ -6,6 +6,7 @@ using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
 using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
+using MediaLibrary.Extensions.Services.InterfaceContrls;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -167,40 +168,61 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(episodes);
     ArgumentNullException.ThrowIfNull(settings);
 
-    var fuzzy = new List<Episode>();
+    var matches = new List<Episode>();
     foreach (var episode in episodes)
     {
       if (title.CalculateLevenshteinDistance(episode.Title) < settings.FuzzyMatch)
       {
-        fuzzy.Add(episode);
+        matches.Add(episode);
       }
     }
-    if (fuzzy.Count == 0)
+    if (matches.Count == 0)
     {
       AnsiConsole.MarkupLineInterpolated($"[Red]FAILED[/] to match remote episodes to [Green]{title}[/]");
       return null;
     }
 
-    AnsiConsole.MarkupLineInterpolated($"Found [Green]{fuzzy.Count}[/] episodes which more or less match [Red]{title}[/]");
+    var selectPrompt = new PromptSelectControl<Episode>(
+        $"Found [Underline]{matches.Count}[/] episode(s) matching [Bold]\"{title}\"[/]",
+        matches,
+        [PromptCommands.Skip]
+      )
+      .UseItemsGroupString("Episodes:")
+      .UseCommandsGroupString("Actions:")
+      .UseItemString(i => $"{i.Title} (Season {i.SeasonIndex}, {i.Date})");
+    
+    var updatePrompt = new PromptSelectControl<bool>(
+        "Update metadata?",
+        [],
+        [PromptCommands.Yes, PromptCommands.No])
+      .UseCommandsGroupString("Actions:");
 
-    for (;;)
+    for (; ; )
     {
-      var episode = AnsiConsoleService.SelectOneOf(fuzzy, i => $"{i.Title} (Season {i.SeasonIndex}, {i.Date})");
-      Print(episode);
-
-      switch (AnsiConsoleService.SelectContinueBackSkip())
+      switch (AnsiConsole.Prompt(selectPrompt.GetPrompt()))
       {
-        case AnsiConsoleService.ContinueBackSkip.Skip:
-          episode = null;
+        case PromptSelectControl<Episode>.PromptItemResult result:
+          AnsiConsole.Write(new VisualPanelControl(result.Item.Title, result.Item.Overview).GetRenderable());
 
-          AnsiConsole.MarkupLineInterpolated($"[YELLOW]SKIPPED[/] matching of [Green]{title}[/] episode");
-          break;
-        case AnsiConsoleService.ContinueBackSkip.Back:
-          continue;
-        default:
-          break;
+          switch (AnsiConsole.Prompt(updatePrompt.GetPrompt()).Match)
+          {
+            case PromptSelectControl<bool>.PromptMatches.Yes:
+              return result.Item;
+            case PromptSelectControl<bool>.PromptMatches.No:
+              continue;
+            default:
+              throw new NotImplementedException();
+          }
+        case PromptSelectControl<Episode>.PromptControlResult control:
+          switch (control.Match)
+          {
+            case PromptSelectControl<Episode>.PromptMatches.Skip:
+              AnsiConsole.MarkupLineInterpolated($"[YELLOW]SKIPPED[/] matching of [Green]{title}[/] episode");
+              return null;
+            default:
+              throw new NotImplementedException();
+          }
       }
-      return episode;
     }
   }
 
