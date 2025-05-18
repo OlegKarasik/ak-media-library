@@ -52,17 +52,32 @@ public class ItemPosition : IComparable<ItemPosition>
   }
 
   public static ItemPosition UpdateGroup(
-    ItemPosition position,
-    ItemPosition group)
+    ItemPosition input,
+    ulong group)
   {
-    if (position.HasSpan)
+    if (input.HasSpan)
     {
-      var (Open, Close) = position.GetSpanPosition();
-      return new ItemPosition(SetGroup(group.GetPosition()) | SetSpanPosition(Open, Close));
+      var (Open, Close) = input.GetSpanPosition();
+      return new ItemPosition(SetGroup(group) | SetSpanPosition(Open, Close));
     }
     else
     {
-      return new ItemPosition(SetGroup(group.GetPosition()) | SetPosition(position.GetPosition()));
+      return new ItemPosition(SetGroup(group) | SetPosition(input.GetPosition()));
+    }
+  }
+
+  public static ItemPosition UpdatePosition(
+    ItemPosition input,
+    ulong position)
+  {
+    if (input.HasSpan)
+    {
+      var (Open, Close) = input.GetSpanPosition();
+      return new ItemPosition(SetGroup(input.GetGroup()) | SetSpanPosition(position, position + (Close - Open)));
+    }
+    else
+    {
+      return new ItemPosition(SetGroup(input.GetGroup()) | SetPosition(position));
     }
   }
 
