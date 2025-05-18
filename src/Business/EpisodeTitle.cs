@@ -65,6 +65,10 @@ public partial class EpisodeTitle
     {
       intermediate = string.Join(" && ", intermediate.Split("&&", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
     }
+    if (intermediate.Contains(''))
+    {
+      intermediate = string.Join(" && ", intermediate.Split("", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+    }
 
     this.Value = intermediate;
   }
