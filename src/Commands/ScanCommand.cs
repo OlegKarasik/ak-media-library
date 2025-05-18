@@ -206,6 +206,10 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
                   }
                   else
                   {
+                    if (_position.HasSpan)
+                    {
+                      throw new NotSupportedException();
+                    }
                     return new EpisodeItem()
                     {
                       Title = episode.Title,
