@@ -6,30 +6,39 @@ namespace MediaLibrary.Business;
 [DebuggerDisplay($"{{{nameof(Name)},nq}}{{{nameof(Extension)},nq}}")]
 public class FilePath
 {
-  [JsonIgnore]
+  [JsonInclude]
   public string Name 
   { 
-    get; 
+    get; private set;
   }
 
-  [JsonIgnore]
+  [JsonInclude]
   public string Directory
   {
-    get;
+    get; private set;
   }
 
-  [JsonIgnore]
+  [JsonInclude]
   public string Extension 
   { 
-    get; 
+    get; private set; 
   }
 
+  [JsonInclude]
   public string Value 
   { 
-    get; 
+    get; private set;
   }
 
+#pragma warning disable CS8618
+
   [JsonConstructor]
+  protected FilePath()
+  {
+  }
+
+#pragma warning restore CS8618
+
   public FilePath(
     string value)
   {

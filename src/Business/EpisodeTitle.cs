@@ -12,12 +12,21 @@ public partial class EpisodeTitle
   private static readonly Regex complex   = MatchComplexParts();
   private static readonly Regex normalise = MatchNormaliseParts();
 
-  public string Value 
-  { 
-    get; 
+  [JsonInclude]
+  public string Value
+  {
+    get; private set;
   }
 
+#pragma warning disable CS8618
+
   [JsonConstructor]
+  protected EpisodeTitle()
+  {
+  }
+
+#pragma warning restore CS8618
+  
   public EpisodeTitle(
     string value)
   {
