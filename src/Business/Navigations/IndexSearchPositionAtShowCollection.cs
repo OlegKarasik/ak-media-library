@@ -4,14 +4,15 @@ namespace MediaLibrary.Business.Navigation;
 
 public class IndexSearchPositionAtShowCollection : IndexSearchPosition
 {
-  private readonly Dictionary<string, ShowItem> shows;
+  private readonly ShowItem[] shows;
 
   public override IndexSearchPosition this[string key]
   {
     get
     {
-      return this.shows.TryGetValue(key, out var show) 
-        ? new IndexSearchPositionAtShow(show) 
+      var show = Array.Find(this.shows, i => i.Title == key);
+      return show is not null
+        ? new IndexSearchPositionAtShow(show)
         : new IndexSearchPositionAtEmpty();
     }
   }

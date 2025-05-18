@@ -5,14 +5,17 @@ using MediaLibrary.Extensions;
 
 namespace MediaLibrary.Business;
 
-[DebuggerDisplay($"{{{nameof(value)},nq}}")]
+[DebuggerDisplay($"{{{nameof(Value)},nq}}")]
 public partial class EpisodeTitle
 {
-  private static readonly Regex standard = MatchStandardParts();
-  private static readonly Regex complex = MatchComplexParts();
+  private static readonly Regex standard  = MatchStandardParts();
+  private static readonly Regex complex   = MatchComplexParts();
   private static readonly Regex normalise = MatchNormaliseParts();
 
-  private readonly string value;
+  public string Value 
+  { 
+    get; 
+  }
 
   [JsonConstructor]
   public EpisodeTitle(
@@ -51,25 +54,25 @@ public partial class EpisodeTitle
 
     if (intermediate.Contains("&&"))
     {
-      intermediate = string.Join(" && ", intermediate.Split(" && ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+      intermediate = string.Join(" && ", intermediate.Split("&&", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
     }
 
-    this.value = intermediate;
+    this.Value = intermediate;
   }
 
   public override string ToString()
   {
-    return this.value;
+    return this.Value;
   }
 
   public override bool Equals(object? obj)
   {
-    return obj is string s && s.Equals(this.value, StringComparison.OrdinalIgnoreCase);
+    return obj is EpisodeTitle t && t.Value.Equals(this.Value, StringComparison.OrdinalIgnoreCase);
   }
 
   public override int GetHashCode()
   {
-    return this.value.GetHashCode(StringComparison.OrdinalIgnoreCase);
+    return this.Value.GetHashCode(StringComparison.OrdinalIgnoreCase);
   }
 
   [GeneratedRegex(@"\(?(Part|Chapter|Volume)\s*(?<Index>\d+)\)?")]

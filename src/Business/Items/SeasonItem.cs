@@ -15,7 +15,7 @@ public class SeasonItem : Item<DirectoryPath>, IComparable<SeasonItem>
     get; init;
   }
 
-  public required Dictionary<string, EpisodeItem> Episodes 
+  public required EpisodeItem[] Episodes 
   { 
     get; init;
   }

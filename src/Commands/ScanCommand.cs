@@ -56,7 +56,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       {
         return new EpisodeItem 
           { 
-            Title = match.GetTitle<EpisodeItem>(),
+            Title = new EpisodeTitle(match.GetTitle<EpisodeItem>()),
             Position = match.GetPosition<EpisodeItem>(),
             Path = path
           };
@@ -185,7 +185,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             {
               Title = match.GetTitle<SeasonItem>(),
               Position = _position,
-              Episodes = _episodes.Collide(i => i.Title),
+              Episodes = [.. _episodes],
               Path = path
             };
           }
@@ -202,7 +202,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             return new ShowItem
               {
                 Title = match.GetTitle<ShowItem>(),
-                Seasons = seasons.Collide(i => i.Title),
+                Seasons = [.. seasons],
                 Path = path
               };
           }
@@ -213,7 +213,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         //
         return new IndexItem
           { 
-            Shows = shows.Collide(i => i.Title),
+            Shows = [.. shows],
             Movies = [],
             Path = new FilePathIndex(path)
           };
@@ -223,7 +223,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new IndexItem
           { 
             Shows = [],
-            Movies = movies.Collide(i => i.Title),
+            Movies = [.. movies],
             Path = new FilePathIndex(path)
           };
       case ScanItemMask.Indices:
@@ -231,8 +231,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         //
         return new IndexItem
           { 
-            Shows = indices.CollideMany(i => i.Shows.Values, i => i.Title),
-            Movies = indices.CollideMany(i => i.Movies.Values, i => i.Title),
+            Shows = [.. indices.SelectMany(i => i.Shows)],
+            Movies = [.. indices.SelectMany(i => i.Movies)],
             Path = new FilePathIndex(path)
           };
       default:

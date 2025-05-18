@@ -45,7 +45,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
           AnsiConsoleService.Rule(show.Title);
 
-          foreach (var season in show.Seasons.Values)
+          foreach (var season in show.Seasons)
           {
             if (!remoteShow.Seasons.TryGetValue((long)season.Position.GetPosition(), out var remoteSeason))
             {
@@ -55,11 +55,11 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
             AnsiConsoleService.Rule($"Season {remoteSeason.Index}");
 
-            foreach (var episode in season.Episodes.Values)
+            foreach (var episode in season.Episodes)
             {
-              if (!remoteSeason.Episodes.TryGetValue(new EpisodeTitle(episode.Title), out var remoteEpisode))
+              if (!remoteSeason.Episodes.TryGetValue(episode.Title, out var remoteEpisode))
               {
-                remoteEpisode = this.PickEpisode(new EpisodeTitle(episode.Title), remoteSeason.Episodes.Values, settings);
+                remoteEpisode = this.PickEpisode(episode.Title, remoteSeason.Episodes.Values, settings);
                 if (remoteEpisode is null)
                 {
                   continue;

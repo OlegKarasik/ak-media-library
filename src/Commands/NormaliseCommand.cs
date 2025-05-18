@@ -50,30 +50,28 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
 
               var index = await FileServices.LoadAsync(new FilePathIndex(settings.Library));
 
-              foreach (var show in index.Shows.Values)
+              foreach (var show in index.Shows)
               {
-                foreach (var season in show.Seasons.Values)
+                foreach (var season in show.Seasons)
                 {
-                  foreach (var episode in season.Episodes.Values)
+                  foreach (var episode in season.Episodes)
                   {
-                    var title = new EpisodeTitle(episode.Title);
-
                     string result;
                     if (episode.Position.HasSpan)
                     {
                       var (Open, Close) = episode.Position.GetSpanPosition();
-                      result = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {title}";
+                      result = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {episode.Title}";
                     }
                     else
                     {
-                      result = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {title}";
+                      result = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {episode.Title}";
                     }
 
                     if (!episode.Path.Name.Equals(result))
                     {
                       this.statistics.WriteUpdated();
 
-                      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} -> {result}");
+                      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} [Yellow]->[/] {result}");
                       // var name1 = episode.Path.Name.Replace(
                       //   episode.Title,
                       //   t.ToString());
