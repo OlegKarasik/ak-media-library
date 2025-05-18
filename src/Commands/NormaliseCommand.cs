@@ -42,12 +42,25 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
                 {
                   foreach (var episode in season.Episodes.Values)
                   {
-                    var t = new Title(episode.Title);
-                    if (!episode.Title.Equals(t.ToString()))
+                    var title = new Title(episode.Title);
+
+                    string result;
+                    if (episode.Position.HasSpan)
                     {
-                      var name = episode.Path.Name.Replace(
-                        episode.Title,
-                        t.ToString());
+                      var (Open, Close) = episode.Position.GetSpanPosition();
+                      result = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {title}";
+                    }
+                    else
+                    {
+                      result = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {title}";
+                    }
+
+                    if (!episode.Path.Name.Equals(result))
+                    {
+                      AnsiConsole.MarkupLineInterpolated($"[Yellow]U[/]: {episode.Path.Name} -> {result}");
+                      // var name1 = episode.Path.Name.Replace(
+                      //   episode.Title,
+                      //   t.ToString());
 
                       //FileServices.RenameGroup(episode.Path, name);
                     }
