@@ -184,7 +184,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
             return new SeasonItem
             {
               Title = match.GetTitle<SeasonItem>(),
-              Position = match.GetPosition<SeasonItem>(),
+              Position = _position,
               Episodes = _episodes.Collide(i => i.Title),
               Path = path
             };

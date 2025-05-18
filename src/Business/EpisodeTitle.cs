@@ -6,7 +6,7 @@ using MediaLibrary.Extensions;
 namespace MediaLibrary.Business;
 
 [DebuggerDisplay($"{{{nameof(value)},nq}}")]
-public partial class Title
+public partial class EpisodeTitle
 {
   private static readonly Regex standard = MatchStandardParts();
   private static readonly Regex complex = MatchComplexParts();
@@ -15,7 +15,7 @@ public partial class Title
   private readonly string value;
 
   [JsonConstructor]
-  public Title(
+  public EpisodeTitle(
     string value)
   {
     ArgumentException.ThrowIfNullOrEmpty(value);
@@ -48,7 +48,7 @@ public partial class Title
       {
         return $" ({match.Groups["Index"].Value})";
       });
-//Kreepaway Kamp - (1)
+
     if (intermediate.Contains("&&"))
     {
       intermediate = string.Join(" && ", intermediate.Split(" && ", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
@@ -78,6 +78,6 @@ public partial class Title
   [GeneratedRegex(@"\(?(?<Index>\d+)(st|nd|th)\s*(Part|Chapter|Volume)\)?")]
   private static partial Regex MatchComplexParts();
 
-  [GeneratedRegex(@"\s*\((?<Index>\d+)\)")]
+  [GeneratedRegex(@"\s*-?\s*\((?<Index>\d+)\)")]
   private static partial Regex MatchNormaliseParts();
 }

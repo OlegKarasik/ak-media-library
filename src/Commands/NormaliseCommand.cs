@@ -12,10 +12,24 @@ namespace MediaLibrary.Commands;
 
 public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
 {
+  private class NormaliseStatistics
+  {
+    public bool HasUpdates => this.Updated != 0;
+
+    public long Updated { get; private set; }
+
+    public void WriteUpdated()
+    {
+      this.Updated += 1;
+    }
+  }
+
+  private readonly NormaliseStatistics statistics;
   private readonly NormaliseCommandOptions options;
 
   public NormaliseCommand()
   {
+    this.statistics = new NormaliseStatistics();
     this.options = new NormaliseCommandOptions();
   }
 
@@ -29,7 +43,6 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
         "Initialising...", 
         async ctx =>
         {
-          var updated = 0;
           var measurement = await TimeServices.MeasureAsync(
             async () =>
             {
@@ -43,7 +56,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
                 {
                   foreach (var episode in season.Episodes.Values)
                   {
-                    var title = new Title(episode.Title);
+                    var title = new EpisodeTitle(episode.Title);
 
                     string result;
                     if (episode.Position.HasSpan)
@@ -58,7 +71,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
 
                     if (!episode.Path.Name.Equals(result))
                     {
-                      updated++;
+                      this.statistics.WriteUpdated();
 
                       AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} -> {result}");
                       // var name1 = episode.Path.Name.Replace(
@@ -72,10 +85,10 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
               }
             });
 
-          if (updated != 0)
+          if (this.statistics.HasUpdates)
           {
             AnsiConsole.Write(new Rule());
-            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{this.statistics.Updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
             AnsiConsole.MarkupLineInterpolated($"[[[Red]W[/]]]: The index is [Underline]out of date[/]. Execute [Bold]scan[/] command.");
           }
           else
