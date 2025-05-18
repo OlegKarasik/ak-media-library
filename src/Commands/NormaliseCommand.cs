@@ -67,11 +67,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
                       this.statistics.WriteUpdated();
 
                       AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} [Yellow]->[/] {result}");
-                      // var name1 = episode.Path.Name.Replace(
-                      //   episode.Title,
-                      //   t.ToString());
-
-                      //FileServices.RenameGroup(episode.Path, name);
+                      FileServices.RenameGroup(episode.Path, result);
                     }
                   }
                 }

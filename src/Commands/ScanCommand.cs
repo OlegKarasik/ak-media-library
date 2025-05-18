@@ -191,8 +191,9 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           {
             var _position = match.GetPosition<SeasonItem>();
             var _episodes = episodes
+              .OrderBy(i => i.Position.Value)
               .Select(
-                episode =>
+                (episode, index) =>
                 {
                   var group = episode.Position.GetGroup();
                   if (episode.Position.HasGroup)
@@ -209,7 +210,9 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
                     {
                       Title = episode.Title,
                       Path = episode.Path,
-                      Position = ItemPosition.UpdateGroup(episode.Position, _position)
+                      Position = ItemPosition.UpdatePosition(
+                        ItemPosition.UpdateGroup(episode.Position, _position.GetPosition()),
+                        (ulong)(index + 1))
                     };
                   }
                 });
