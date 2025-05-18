@@ -51,6 +51,36 @@ public class ItemPosition : IComparable<ItemPosition>
     this.Value = SetGroup(group) | SetSpanPosition(open, close);
   }
 
+  public static ItemPosition UpdateGroup(
+    ItemPosition input,
+    ulong group)
+  {
+    if (input.HasSpan)
+    {
+      var (Open, Close) = input.GetSpanPosition();
+      return new ItemPosition(SetGroup(group) | SetSpanPosition(Open, Close));
+    }
+    else
+    {
+      return new ItemPosition(SetGroup(group) | SetPosition(input.GetPosition()));
+    }
+  }
+
+  public static ItemPosition UpdatePosition(
+    ItemPosition input,
+    ulong position)
+  {
+    if (input.HasSpan)
+    {
+      var (Open, Close) = input.GetSpanPosition();
+      return new ItemPosition(SetGroup(input.GetGroup()) | SetSpanPosition(position, position + (Close - Open)));
+    }
+    else
+    {
+      return new ItemPosition(SetGroup(input.GetGroup()) | SetPosition(position));
+    }
+  }
+
   private static ulong SetPosition(
     ulong value)
   {

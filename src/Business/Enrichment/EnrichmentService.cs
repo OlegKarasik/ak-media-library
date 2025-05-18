@@ -72,10 +72,10 @@ public class EnrichmentService
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
-              j => new Title(j.Name),
+              j => new EpisodeTitle(j.Name),
               j => new Episode
               {
-                Title = new Title(j.Name),
+                Title = new EpisodeTitle(j.Name),
                 Overview = (j.Overview ?? string.Empty).Trim(),
                 SeasonIndex = i.Index,
                 Date = j.Date,

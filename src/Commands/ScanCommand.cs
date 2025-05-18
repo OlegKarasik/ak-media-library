@@ -13,7 +13,7 @@ namespace MediaLibrary.Commands;
 public class ScanCommand : AsyncCommand<ScanCommandSettings>
 {
   [Flags]
-  public enum ScanItemMask
+  private enum ScanItemMask
   {
     None      = 0b00000000,
     Episodes  = 0b00000001,
@@ -23,10 +23,40 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
     Indices   = 0b00010000
   }
 
+  private class ScanCommandStatistics
+  {
+    public bool HasFound => this.Found != 0;
+
+    public long Found => this.MovieFound + this.ShowFound + this.SeasonFound + this.EpisodeFound;
+    public long MovieFound { get; private set; }
+    public long ShowFound { get; private set; }
+    public long SeasonFound { get; private set; }
+    public long EpisodeFound { get; private set; }
+
+    public void WriteMovieFound()
+    {
+      this.MovieFound++;
+    }
+    public void WriteShowFound()
+    {
+      this.ShowFound++;
+    }
+    public void WriteSeasonFound()
+    {
+      this.SeasonFound++;
+    }
+    public void WriteEpisodeFound()
+    {
+      this.EpisodeFound++;
+    }
+  }
+
+  private readonly ScanCommandStatistics statistics;
   private readonly ScanCommandOptions options;
 
   public ScanCommand()
   {
+    this.statistics = new ScanCommandStatistics();
     this.options = new ScanCommandOptions();
   }
 
@@ -54,12 +84,13 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
-        return new EpisodeItem 
-          { 
-            Title = match.GetTitle<EpisodeItem>(),
-            Position = match.GetPosition<EpisodeItem>(),
-            Path = path
-          };
+        this.statistics.WriteEpisodeFound();
+        return new EpisodeItem
+        {
+          Title = new EpisodeTitle(match.GetTitle<EpisodeItem>()),
+          Position = match.GetPosition<EpisodeItem>(),
+          Path = path
+        };
       }
     }
 
@@ -70,11 +101,12 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
       var match = Regex.Match(path.Name, pattern);
       if (match.Success)
       {
+        this.statistics.WriteMovieFound();
         return new MovieItem
-          {
-            Title = match.GetTitle<MovieItem>(),
-            Path = path
-          };
+        {
+          Title = match.GetTitle<MovieItem>(),
+          Path = path
+        };
       }
     }
     throw new NotImplementedException();
@@ -157,13 +189,42 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
+            var _position = match.GetPosition<SeasonItem>();
+            var _episodes = episodes
+              .OrderBy(i => i.Position.Value)
+              .Select(
+                (episode, index) =>
+                {
+                  var group = episode.Position.GetGroup();
+                  if (episode.Position.HasGroup)
+                  {
+                    if (group != _position.GetPosition())
+                    {
+                      throw new NotSupportedException();
+                    }
+                    return episode;
+                  }
+                  else
+                  {
+                    return new EpisodeItem()
+                    {
+                      Title = episode.Title,
+                      Path = episode.Path,
+                      Position = ItemPosition.UpdatePosition(
+                        ItemPosition.UpdateGroup(episode.Position, _position.GetPosition()),
+                        (ulong)(index + 1))
+                    };
+                  }
+                });
+
+            this.statistics.WriteSeasonFound();
             return new SeasonItem
-              { 
-                Title = match.GetTitle<SeasonItem>(),
-                Position = match.GetPosition<SeasonItem>(),
-                Episodes = episodes.Collide(i => i.Title),
-                Path = path
-              };
+            {
+              Title = match.GetTitle<SeasonItem>(),
+              Position = _position,
+              Episodes = [.. _episodes],
+              Path = path
+            };
           }
         }        
         throw new NotImplementedException();
@@ -175,12 +236,13 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
           var match = Regex.Match(path.Name, pattern);
           if (match.Success)
           {
+            this.statistics.WriteShowFound();
             return new ShowItem
-              {
-                Title = match.GetTitle<ShowItem>(),
-                Seasons = seasons.Collide(i => i.Title),
-                Path = path
-              };
+            {
+              Title = match.GetTitle<ShowItem>(),
+              Seasons = [.. seasons],
+              Path = path
+            };
           }
         }
         throw new NotImplementedException();
@@ -189,7 +251,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         //
         return new IndexItem
           { 
-            Shows = shows.Collide(i => i.Title),
+            Shows = [.. shows],
             Movies = [],
             Path = new FilePathIndex(path)
           };
@@ -199,7 +261,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         return new IndexItem
           { 
             Shows = [],
-            Movies = movies.Collide(i => i.Title),
+            Movies = [.. movies],
             Path = new FilePathIndex(path)
           };
       case ScanItemMask.Indices:
@@ -207,8 +269,8 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
         //
         return new IndexItem
           { 
-            Shows = indices.CollideMany(i => i.Shows.Values, i => i.Title),
-            Movies = indices.CollideMany(i => i.Movies.Values, i => i.Title),
+            Shows = [.. indices.SelectMany(i => i.Shows)],
+            Movies = [.. indices.SelectMany(i => i.Movies)],
             Path = new FilePathIndex(path)
           };
       default:
@@ -250,7 +312,26 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
               await FileServices.SaveAsync(index, index.Path);
             });
 
-            AnsiConsole.MarkupLineInterpolated($"Scanning completed [Green]Elapsed: {measurement.Elapsed}[/]");
+          if (this.statistics.HasFound)
+          {
+            AnsiConsole.Write(
+              new BarChart()
+              .AddItems(
+                [
+                  new BarChartItem("Movies", this.statistics.MovieFound, Color.DarkCyan),
+                  new BarChartItem("Shows", this.statistics.ShowFound, Color.DarkGoldenrod),
+                  new BarChartItem("Seasons", this.statistics.SeasonFound, Color.Aqua),
+                  new BarChartItem("Episodes", this.statistics.EpisodeFound, Color.DarkMagenta)
+                ]));
+
+            AnsiConsole.Write(new Rule());
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Found - [Underline]{this.statistics.Found}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: The index is [Underline]updated[/].");
+          }
+          else
+          {
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Found - [Underline]None[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+          }
         });
 
     return 0;

@@ -3,12 +3,9 @@ using System.Text.Json.Serialization;
 namespace MediaLibrary.Business;
 
 public class FilePathProps : FilePath
-{
+{ 
   [JsonConstructor]
-  protected FilePathProps(
-    string value)
-
-    : base(value)
+  protected FilePathProps()
   {
   }
   

@@ -5,7 +5,7 @@ namespace MediaLibrary.Business.Items;
 [DebuggerDisplay($"{{{nameof(Title)}}}")]
 public class EpisodeItem : Item<FilePath>, IComparable<EpisodeItem>
 {
-  public required string Title
+  public required EpisodeTitle Title
   { 
     get; init;
   }

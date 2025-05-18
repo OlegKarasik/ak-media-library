@@ -45,7 +45,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
           AnsiConsoleService.Rule(show.Title);
 
-          foreach (var season in show.Seasons.Values)
+          foreach (var season in show.Seasons)
           {
             if (!remoteShow.Seasons.TryGetValue((long)season.Position.GetPosition(), out var remoteSeason))
             {
@@ -55,44 +55,17 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
             AnsiConsoleService.Rule($"Season {remoteSeason.Index}");
 
-            foreach (var episode in season.Episodes.Values)
+            foreach (var episode in season.Episodes)
             {
-              if (!remoteSeason.Episodes.TryGetValue(new Title(episode.Title), out var remoteEpisode))
+              if (!remoteSeason.Episodes.TryGetValue(episode.Title, out var remoteEpisode))
               {
-                remoteEpisode = this.PickEpisode(new Title(episode.Title), remoteSeason.Episodes.Values, settings);
+                remoteEpisode = this.PickEpisode(episode.Title, remoteSeason.Episodes.Values, settings);
                 if (remoteEpisode is null)
                 {
                   continue;
                 }
               }
               await this.EnrichAsync(episode, remoteEpisode);
-
-              // Workout the automated renaming proposal
-              //
-              if (!episode.Title.Equals(remoteEpisode.Title.ToString()))
-              {
-                var name = episode.Path.Name.Replace(
-                  episode.Title, 
-                  remoteEpisode.Title.ToString());
-
-                if (name.Contains(this.options.EpisodeSplitSymbol))
-                {
-                  // If name contains split symbol, we try to ensure, the split symbol is
-                  // surrounded by spaces
-                  //
-                  name = string.Join(
-                    $" {this.options.EpisodeSplitSymbol} ", 
-                    name.Split(this.options.EpisodeSplitSymbol, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
-                }
-
-                AnsiConsole.MarkupLineInterpolated(
-                  $"Do you want to rename [Green]{episode.Path.Name}[/] to [Red]{name}[/] to match remote?");
-
-                if (AnsiConsoleService.SelectYesOrNo())
-                {
-                  FileServices.RenameGroup(episode.Path, name);
-                }
-              }
             }
           }
         }
@@ -160,7 +133,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
   }
 
   private Episode? PickEpisode(
-    Title title,
+    EpisodeTitle title,
     IEnumerable<Episode> episodes,
     EnrichCommandSettings settings)
   {

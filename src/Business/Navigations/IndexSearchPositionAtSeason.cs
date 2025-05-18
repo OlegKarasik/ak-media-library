@@ -10,7 +10,8 @@ public class IndexSearchPositionAtSeason : IndexSearchPosition
   {
     get
     {
-      return this.season.Episodes.TryGetValue(key, out var episode) 
+      var episode = Array.Find(this.season.Episodes, i => i.Title.ToString() == key);
+      return episode is not null
         ? new IndexSearchPositionAtItem(episode) 
         : new IndexSearchPositionAtEmpty();
     }

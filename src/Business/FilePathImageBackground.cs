@@ -5,13 +5,10 @@ namespace MediaLibrary.Business;
 public class FilePathImageBackground : FilePath
 {
   [JsonConstructor]
-  protected FilePathImageBackground(
-    string value)
-
-    : base(value)
+  protected FilePathImageBackground()
   {
   }
-
+  
   public FilePathImageBackground(
     DirectoryPath path)
 

@@ -10,7 +10,7 @@ public class ShowItem : Item<DirectoryPath>, IComparable<ShowItem>
     get; init;
   }
 
-  public required Dictionary<string, SeasonItem> Seasons 
+  public required SeasonItem[] Seasons 
   { 
     get; init;
   }

@@ -2,7 +2,7 @@ namespace MediaLibrary.Business.Enrichment.Models;
 
 public record class Episode
 {
-  public required Title Title
+  public required EpisodeTitle Title
   {
     get; init;
   }

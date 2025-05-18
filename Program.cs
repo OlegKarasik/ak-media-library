@@ -34,6 +34,7 @@ app.Configure(
   {
     o.AddCommand<ScanCommand>("scan");
     o.AddCommand<EnrichCommand>("enrich");
+    o.AddCommand<NormaliseCommand>("normalise");
   });
 
 return await app.RunAsync(args);

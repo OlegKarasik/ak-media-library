@@ -5,10 +5,7 @@ namespace MediaLibrary.Business;
 public class FilePathIndex : FilePath
 {
   [JsonConstructor]
-  protected FilePathIndex(
-    string value)
-
-    : base(value)
+  protected FilePathIndex()
   {
   }
 

@@ -94,7 +94,7 @@ public static class StringExtensions
     {
       var xb = new StringBuilder(@this);
 
-      xb.Replace("…", string.Empty);
+      xb.Replace("…", "...");
       foreach (var c in Path.GetInvalidFileNameChars())
       {
         switch (c)
