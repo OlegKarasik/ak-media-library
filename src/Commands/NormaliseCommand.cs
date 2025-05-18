@@ -1,10 +1,5 @@
 using MediaLibrary.Business;
-using MediaLibrary.Business.Enrichment.Models;
-using MediaLibrary.Business.Items;
-using MediaLibrary.Business.Navigation;
-using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
-using MediaLibrary.Extensions.Services.InterfaceContrls;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -12,7 +7,7 @@ namespace MediaLibrary.Commands;
 
 public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
 {
-  private class NormaliseStatistics
+  private class NormaliseCommandStatistics
   {
     public bool HasUpdates => this.Updated != 0;
 
@@ -24,12 +19,12 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
     }
   }
 
-  private readonly NormaliseStatistics statistics;
+  private readonly NormaliseCommandStatistics statistics;
   private readonly NormaliseCommandOptions options;
 
   public NormaliseCommand()
   {
-    this.statistics = new NormaliseStatistics();
+    this.statistics = new NormaliseCommandStatistics();
     this.options = new NormaliseCommandOptions();
   }
 
@@ -87,7 +82,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
           {
             AnsiConsole.Write(new Rule());
             AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{this.statistics.Updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
-            AnsiConsole.MarkupLineInterpolated($"[[[Red]W[/]]]: The index is [Underline]out of date[/]. Execute [Bold]scan[/] command.");
+            AnsiConsole.MarkupLineInterpolated($"[[[Red]W[/]]]: The index is [Underline]out of date[/].");
           }
           else
           {
