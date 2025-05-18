@@ -177,7 +177,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
                     {
                       Title = episode.Title,
                       Path = episode.Path,
-                      Position = new ItemPosition(_position, episode.Position)
+                      Position = ItemPosition.UpdateGroup(episode.Position, _position)
                     };
                   }
                 });
