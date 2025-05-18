@@ -27,8 +27,9 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
       .Status()
       .StartAsync(
         "Initialising...", 
-        async ctx => 
+        async ctx =>
         {
+          var updated = 0;
           var measurement = await TimeServices.MeasureAsync(
             async () =>
             {
@@ -57,7 +58,9 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
 
                     if (!episode.Path.Name.Equals(result))
                     {
-                      AnsiConsole.MarkupLineInterpolated($"[Yellow]U[/]: {episode.Path.Name} -> {result}");
+                      updated++;
+
+                      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} -> {result}");
                       // var name1 = episode.Path.Name.Replace(
                       //   episode.Title,
                       //   t.ToString());
@@ -69,7 +72,16 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
               }
             });
 
-            AnsiConsole.MarkupLineInterpolated($"Normalisation completed [Green]Elapsed: {measurement.Elapsed}[/]. Please execute \"[Yellow]scan[/]\" command to update the index.");
+          if (updated != 0)
+          {
+            AnsiConsole.Write(new Rule());
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+            AnsiConsole.MarkupLineInterpolated($"[[[Red]W[/]]]: The index is [Underline]out of date[/]. Execute [Bold]scan[/] command.");
+          }
+          else
+          {
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]None[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+          }
         });
 
     return 0;
