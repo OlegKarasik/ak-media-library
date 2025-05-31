@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>ak_media_library</RootNamespace>
+    <RootNamespace>MediaLibrary</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>4f220f9b-4647-4700-8751-de53efe7cad4</UserSecretsId>
