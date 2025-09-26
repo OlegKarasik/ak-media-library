@@ -69,6 +69,7 @@ public partial class EpisodeTitle
     {
       intermediate = string.Join(" && ", intermediate.Split("", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
     }
+    intermediate = intermediate.Trim();
 
     this.Value = intermediate;
   }
