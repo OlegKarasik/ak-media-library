@@ -58,7 +58,7 @@ public class ScanCommandOptions
         @"^S(?<Season>\d+)E(?<EpisodeOpen>\d+)\s*-\s*E(?<EpisodeClose>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
         @"^S(?<Season>\d+)E(?<Episode>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
         @"^Episode\s+(?<Episode>\d+)\s*-\s*(?<EpisodeTitle>.+)$",
-        @".+(?<Season>\d+)x(?<Episode>\d+)\s\(\d+\)\s(?<EpisodeTitle>[^\[\]]+)"
+        @"^\[.+\]\s.+(?<Season>\d+)x(?<Episode>\d+)\s\(\d+\)\s(?<EpisodeTitle>[^\[\]]+)\s\[.+\]$"
       ];
   }
 }
