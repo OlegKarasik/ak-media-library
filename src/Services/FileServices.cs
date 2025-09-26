@@ -19,20 +19,6 @@ public static class FileServices
     };
   }
 
-  public static void RenameGroup(
-    FilePath path,
-    string name)
-  {
-    foreach (var item in Directory.EnumerateFiles(path.Directory, $"*{path.Name}.*"))
-    {
-      File.Move(
-        item, 
-        Path.Combine(
-          path.Directory, 
-          Path.GetFileName(item).Replace(path.Name, name)));
-    }
-  }
-
   public static async Task<IndexItem> LoadAsync(
     FilePathIndex path)
   {

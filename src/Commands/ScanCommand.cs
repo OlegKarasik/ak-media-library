@@ -230,7 +230,35 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
               Path = path
             };
           }
-        }        
+        }
+        // We ended here because all episodes are in the same directory (no season directories). 
+        // Therefore, what we need to do is to re-create the season objects from the episodes and
+        // compose a show item.
+        //        
+        foreach (var pattern in this.options.ShowMatchPatterns)
+        {
+          var match = Regex.Match(path.Name, pattern);
+          if (match.Success)
+          {
+            this.statistics.WriteShowFound();
+
+            return new ShowItem
+            {
+              Title = match.GetTitle<ShowItem>(),
+              Seasons = [.. episodes
+                .GroupBy(episode => episode.Position.GetGroup())
+                .Select(group => new SeasonItem
+                {
+                  Title = $"Season {group.Key}",
+                  Position = new ItemPosition(group.Key),
+                  Path = path,
+                  Episodes = [.. group]
+                })
+              ],
+              Path = path
+            };
+          }
+        }
         throw new NotImplementedException();
       case ScanItemMask.Seasons:
         // We need to construct the 'shows' item from 'seasons'

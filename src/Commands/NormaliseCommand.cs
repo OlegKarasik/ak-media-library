@@ -1,4 +1,5 @@
 using MediaLibrary.Business;
+using MediaLibrary.Business.Items;
 using MediaLibrary.Extensions.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -28,14 +29,32 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
     this.options = new NormaliseCommandOptions();
   }
 
+  private static void RenameItem(
+    Item<FilePath> item,
+    string directory,
+    string name)
+  {
+    ArgumentNullException.ThrowIfNull(item);
+    ArgumentException.ThrowIfNullOrEmpty(name);
+
+    foreach (var file in Directory.EnumerateFiles(item.Path.Directory, $"*{item.Path.Name}.*"))
+    {
+      File.Move(
+        file,
+        Path.Combine(
+          directory,
+          Path.GetFileName(file).Replace(item.Path.Name, name)));
+    }
+  }
+
   public override async Task<int> ExecuteAsync(
-    CommandContext context, 
+    CommandContext context,
     NormaliseCommandSettings settings)
   {
     await AnsiConsole
       .Status()
       .StartAsync(
-        "Initialising...", 
+        "Initialising...",
         async ctx =>
         {
           var measurement = await TimeServices.MeasureAsync(
@@ -49,25 +68,56 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
               {
                 foreach (var season in show.Seasons)
                 {
+                  // Here we need to understand, whether the show has "seasonal" 
+                  // structure (i.e. every season is located within a unique, correctly named directory
+                  // and all episodes are in these "seasonal" directories.
+                  //
+                  var normaliseDirectory = false;
+
+                  var directory = season.Path.Value;
+                  if (!season.Path.Name.Equals(season.Title))
+                  {
+                    directory = Path.Combine(show.Path.Value, season.Title);
+
+                    // Here, we create a directory were all episodes
+                    // would be moved
+                    //
+                    Directory.CreateDirectory(directory);
+
+                    normaliseDirectory = true;
+                  }
+
                   foreach (var episode in season.Episodes)
                   {
-                    string result;
+                    string name;
                     if (episode.Position.HasSpan)
                     {
                       var (Open, Close) = episode.Position.GetSpanPosition();
-                      result = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {episode.Title}";
+                      name = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {episode.Title}";
                     }
                     else
                     {
-                      result = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {episode.Title}";
+                      name = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {episode.Title}";
                     }
 
-                    if (!episode.Path.Name.Equals(result))
+                    var normaliseName = !episode.Path.Name.Equals(name);
+                    
+                    if (normaliseName || normaliseDirectory)
                     {
                       this.statistics.WriteUpdated();
 
-                      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]U[/]]]: {episode.Path.Name} [Yellow]->[/] {result}");
-                      FileServices.RenameGroup(episode.Path, result);
+                      if (normaliseName)
+                      {
+                        AnsiConsole.MarkupLineInterpolated(
+                          $"[[[Yellow]U[/]]]: {episode.Path.Name} [Yellow]->[/] {name}");
+                      }
+                      if (normaliseDirectory)
+                      {
+                        AnsiConsole.MarkupLineInterpolated(
+                          $"[[[Yellow]U[/]]]: {episode.Path.Name} [Yellow]->[/] {directory}");
+                      }
+
+                      RenameItem(episode, directory, name);
                     }
                   }
                 }
