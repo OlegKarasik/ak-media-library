@@ -47,7 +47,8 @@ public class ScanCommandOptions
     this.SeasonMatchPatterns =
       [
         @"^(?<SeasonTitle>.+?\s*(?<Season>\d+))$",
-        @"^(?<SeasonTitle>Specials)$"
+        @"^(?<SeasonTitle>Specials)$",
+        @"^(?<SeasonTitle>S)(?<Season>\d+)$",
       ];
     this.MovieMatchPatterns =
       [
@@ -58,7 +59,8 @@ public class ScanCommandOptions
         @"^S(?<Season>\d+)E(?<EpisodeOpen>\d+)\s*-\s*E(?<EpisodeClose>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
         @"^S(?<Season>\d+)E(?<Episode>\d+)\s*-?\s*(?<EpisodeTitle>.+)$",
         @"^Episode\s+(?<Episode>\d+)\s*-\s*(?<EpisodeTitle>.+)$",
-        @"^\[.+\]\s.+(?<Season>\d+)x(?<Episode>\d+)\s\(\d+\)\s(?<EpisodeTitle>[^\[\]]+)\s\[.+\]$"
+        @"^\[.+\]\s.+(?<Season>\d+)x(?<Episode>\d+)\s\(\d+\)\s(?<EpisodeTitle>[^\[\]]+)\s\[.+\]$",
+        @"^[a-zA-Z]+\sS(?<Season>\d+)E(?<Episode>\d+)\s[\.!,ёЁа-яА-Я\-\s\d]+\s-\s(?<EpisodeTitle>.+)$"
       ];
   }
 }
