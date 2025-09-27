@@ -7,14 +7,14 @@ namespace MediaLibrary.Business;
 public class DirectoryPath
 {
   [JsonInclude]
-  public string Name 
-  { 
+  public string Name
+  {
     get; private set;
   }
 
   [JsonInclude]
-  public string Value 
-  { 
+  public string Value
+  {
     get; private set;
   }
 
@@ -42,5 +42,18 @@ public class DirectoryPath
   public override string ToString()
   {
     return this.Value;
+  }
+
+  public DirectoryPath WithName(string name)
+  {
+    ArgumentException.ThrowIfNullOrEmpty(name);
+
+    var parent = Path.GetDirectoryName(this.Value);
+    if (parent is null)
+    {
+      throw new InvalidOperationException("The path is already rooted, and therefore can't be renamed");
+    }
+    
+    return new DirectoryPath(Path.Combine(parent, name));
   }
 }
