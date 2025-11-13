@@ -89,10 +89,10 @@ public partial class EpisodeTitle
     return this.Value.GetHashCode(StringComparison.OrdinalIgnoreCase);
   }
 
-  [GeneratedRegex(@"\(?(Part|Chapter|Volume)\s*(?<Index>\d+)\)?")]
+  [GeneratedRegex(@"\(?(Part|Chapter|Volume)(\s*|-)(?<Index>\d+)\)?")]
   private static partial Regex MatchStandardParts();
 
-  [GeneratedRegex(@"\(?(?<Index>\d+)(st|nd|th)\s*(Part|Chapter|Volume)\)?")]
+  [GeneratedRegex(@"\(?(?<Index>\d+)(st|nd|rd|th)\s*(Part|Chapter|Volume)\)?")]
   private static partial Regex MatchComplexParts();
 
   [GeneratedRegex(@"\s*-?\s*\((?<Index>\d+)\)")]
