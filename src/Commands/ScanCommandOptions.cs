@@ -46,7 +46,8 @@ public class ScanCommandOptions
       ];
     this.SeasonMatchPatterns =
       [
-        @"^(?<SeasonTitle>.+?\s*(?<Season>\d+))$",
+        @"^(?<SeasonTitle>(?<Season>\d+))$",
+        @"^(?<SeasonTitle>Season)\s*(?<Season>\d+)$",
         @"^(?<SeasonTitle>Specials)$",
         @"^(?<SeasonTitle>S)(?<Season>\d+)$",
       ];
