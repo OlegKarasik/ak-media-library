@@ -21,7 +21,7 @@ public abstract class MediaCommand<TSettings> : AsyncCommand<TSettings>
     };
   }
 
-  public static async Task<IndexItem> GetAsync(
+  protected static async Task<IndexItem> GetAsync(
     FilePathIndex path)
   {
     ArgumentNullException.ThrowIfNull(path);
@@ -31,7 +31,7 @@ public abstract class MediaCommand<TSettings> : AsyncCommand<TSettings>
       ?? throw new InvalidOperationException($"Unable to load index from {path.Value}");
   }
 
-  public static async Task SaveAsync<T>(
+  protected static async Task SaveAsync<T>(
     byte[] bytes,
     T path)
 
@@ -43,7 +43,7 @@ public abstract class MediaCommand<TSettings> : AsyncCommand<TSettings>
     await File.WriteAllBytesAsync(path.Value, bytes);
   }
 
-  public static async Task SaveAsync<T, K>(
+  protected static async Task SaveAsync<T, K>(
     T value,
     K path)
 
