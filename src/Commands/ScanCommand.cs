@@ -7,10 +7,11 @@ using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
+using MediaLibrary.Commands.Base;
 
 namespace MediaLibrary.Commands;
 
-public class ScanCommand : AsyncCommand<ScanCommandSettings>
+public class ScanCommand : MediaCommand<ScanCommandSettings>
 {
   [Flags]
   private enum ScanItemMask
@@ -341,7 +342,7 @@ public class ScanCommand : AsyncCommand<ScanCommandSettings>
               ctx.Status("Saving...");
               // Save index file
               //
-              await FileServices.SaveAsync(index, index.Path);
+              await SaveAsync(index, index.Path);
             });
 
           if (this.statistics.HasFound)

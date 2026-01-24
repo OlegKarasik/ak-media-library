@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
+using MediaLibrary.Commands.Base;
 using MediaLibrary.Extensions.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
+public partial class NormaliseCommand : MediaCommand<NormaliseCommandSettings>
 {
   private class NormaliseCommandStatistics
   {
@@ -245,7 +246,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
             {
               ctx.Status("Normalising...");
 
-              var index = await FileServices.LoadAsync(new FilePathIndex(settings.Library));
+              var index = await GetAsync(new FilePathIndex(settings.Library));
               index = new IndexItem
               {
                 Path = index.Path,
@@ -253,7 +254,7 @@ public partial class NormaliseCommand : AsyncCommand<NormaliseCommandSettings>
                 Shows = [.. Process(index.Shows)]
               };
 
-              await FileServices.SaveAsync(index, index.Path);
+              await SaveAsync(index, index.Path);
             });
 
           if (this.statistics.HasUpdates)

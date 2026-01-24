@@ -1,9 +1,9 @@
 using MediaLibrary.Business;
 using MediaLibrary.Business.Enrichment;
-using MediaLibrary.Business.Enrichment.Common;
 using MediaLibrary.Business.Enrichment.Models;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Business.Navigation;
+using MediaLibrary.Commands.Base;
 using MediaLibrary.Extensions;
 using MediaLibrary.Extensions.Services;
 using MediaLibrary.Extensions.Services.InterfaceContrls;
@@ -12,7 +12,7 @@ using Spectre.Console.Cli;
 
 namespace MediaLibrary.Commands;
 
-public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
+public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 {
   private readonly EnrichCommandOptions options;
   private readonly EnrichmentService enrichment;
@@ -28,7 +28,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     CommandContext context, 
     EnrichCommandSettings settings)
   {
-    var index = await FileServices.LoadAsync(new FilePathIndex(settings.Library));
+    var index = await GetAsync(new FilePathIndex(settings.Library));
     switch (IndexSearch.GetItem(index, settings.SearchRequest)) 
     {
       case ShowItem show:
@@ -205,16 +205,16 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
     if (remoteShow.Image is not null)
     {
-      await FileServices.SaveAsync(
+      await SaveAsync(
         remoteShow.Image, new FilePathImage(show.Path));
     }
     if (remoteShow.ImageBackground is not null)
     {
-      await FileServices.SaveAsync(
+      await SaveAsync(
         remoteShow.ImageBackground, new FilePathImageBackground(show.Path));
     }
 
-    await FileServices.SaveAsync(
+    await SaveAsync(
       new ShowPropsItem
       {
         Summary = [remoteShow.Overview],
@@ -235,16 +235,16 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
 
     if (remoteSeason.Image is not null)
     {
-      await FileServices.SaveAsync(
+      await SaveAsync(
         remoteSeason.Image, new FilePathImage(season.Path));
     }
     if (remoteSeason.ImageBackground is not null)
     {
-      await FileServices.SaveAsync(
+      await SaveAsync(
         remoteSeason.ImageBackground, new FilePathImageBackground(season.Path));
     }
 
-    await FileServices.SaveAsync(
+    await SaveAsync(
       new SeasonPropsItem
       {
         Summary = [remoteSeason.Overview],
@@ -261,7 +261,7 @@ public partial class EnrichCommand : AsyncCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(episode);
     ArgumentNullException.ThrowIfNull(remoteEpisode);
 
-    await FileServices.SaveAsync(
+    await SaveAsync(
       new EpisodePropsItem
       {
         Date = remoteEpisode.Date,
