@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Enrichment;
 using MediaLibrary.Business.Enrichment.Models;
@@ -24,6 +25,56 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     this.enrichment = enrichment ?? throw new ArgumentNullException(nameof(enrichment));
   }
 
+  public async Task<Search?> PickMatch(
+    ShowItem show,
+    EnrichCommandSettings settings)
+  {
+    var measure = await TimeServices.MeasureAsync(
+      async () => 
+        await AnsiConsole
+          .Status()
+          .StartAsync("Searching", async ctx => await this.enrichment.SearchSeriesAsync(show.Title, settings.Language)));
+
+    for (;;)
+    {
+      var (pickResult, _) = AnsiConsole.Prompt(
+        new SelectionPrompt<(int, string display)>()
+          .Title("Pick the show to view details")
+          .UseConverter(item => item.display)
+          .AddChoices(
+            [.. 
+              measure.Data.Select((item, i) => (index: i, value: $"{item.Title} ({item.Year})")), 
+              (-1, "Cancel")
+            ]
+          ));
+
+      if (pickResult == -1)
+      {
+        return null;  
+      }
+
+      var match = measure.Data[pickResult];
+
+      AnsiConsole.Write(
+        new Panel(new Text(match.Overview)).Header($"{match.Title}:U", Justify.Left));
+
+      var (confirmationResult, _) = AnsiConsole.Prompt(
+        new SelectionPrompt<(bool, string display)>()
+          .Title("Do you want to proceed with the show?")
+          .UseConverter(item => item.display)
+          .AddChoices(
+            [
+              (true, "Yes"), (false, "No")
+            ]
+          ));
+
+      if (confirmationResult)
+      {
+        return match;
+      }
+    }
+  }
+
   public override async Task<int> ExecuteAsync(
     CommandContext context, 
     EnrichCommandSettings settings)
@@ -33,7 +84,8 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     {
       case ShowItem show:
         {
-          var remoteSearch = await this.GetSearchAsync(show.Title, settings);
+          var result = await this.PickMatch(show, settings);
+          var remoteSearch = await this.SearchShowsAsync(show.Title, settings);
           if (remoteSearch.Length == 0)
           {
             return -1;
@@ -77,7 +129,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     return 0;
   }
 
-  private async Task<Search[]> GetSearchAsync(
+  private async Task<Search[]> SearchShowsAsync(
     string title,
     EnrichCommandSettings settings)
   {
