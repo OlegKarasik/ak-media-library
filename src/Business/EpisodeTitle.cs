@@ -74,6 +74,15 @@ public partial class EpisodeTitle
     this.Value = intermediate;
   }
 
+  public bool FuzzyMatch(
+    EpisodeTitle episode, 
+    int fuzzyDistance)
+  {
+    ArgumentNullException.ThrowIfNull(episode);
+
+    return this.Value.CalculateLevenshteinDistance(episode.Value) < fuzzyDistance;
+  }
+
   public override string ToString()
   {
     return this.Value;
