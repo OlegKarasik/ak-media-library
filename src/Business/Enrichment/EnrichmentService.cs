@@ -70,6 +70,7 @@ public class EnrichmentService
           Overview = (i.Overview ?? string.Empty).Trim(),
           Episodes = episodes
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
+            .Where(j => j.Name != null) // Sometimes, there is an incomplete information, so we skip
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
               j => new EpisodeTitle(j.Name),

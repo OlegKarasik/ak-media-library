@@ -13,8 +13,8 @@ public class IndexSearch
 
     IndexSearchPosition position = request.Root switch
     {
-      IndexSearchRoot.Movies => new IndexSearchPositionAtMovieCollection(index),
-      IndexSearchRoot.Shows => new IndexSearchPositionAtShowCollection(index),
+      IndexSearchRoot.Movies => new IndexSearchPositionAtMovieCollection(new MovieCollectionItem{ Movies = index.Movies }),
+      IndexSearchRoot.Shows => new IndexSearchPositionAtShowCollection(new ShowCollectionItem { Shows = index.Shows }),
       _ => throw new NotImplementedException()
     };
     

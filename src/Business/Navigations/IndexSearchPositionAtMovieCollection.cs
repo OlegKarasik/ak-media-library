@@ -18,15 +18,15 @@ public class IndexSearchPositionAtMovieCollection : IndexSearchPosition
   }
 
   public IndexSearchPositionAtMovieCollection(
-    IndexItem movies)
+    MovieCollectionItem collectionItem)
 
-    : base(movies)
+    : base(collectionItem)
   {
-    if (movies is null)
+    if (collectionItem is null)
     {
-      throw new ArgumentNullException(nameof(movies));
+      throw new ArgumentNullException(nameof(collectionItem));
     }
 
-    this.movies = movies.Movies;
+    this.movies = collectionItem.Movies;
   }
 }
