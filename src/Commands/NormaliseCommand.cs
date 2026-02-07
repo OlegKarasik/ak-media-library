@@ -233,7 +233,8 @@ public partial class NormaliseCommand : MediaCommand<NormaliseCommandSettings>
 
   public override async Task<int> ExecuteAsync(
     CommandContext context,
-    NormaliseCommandSettings settings)
+    NormaliseCommandSettings settings,
+    CancellationToken cancellationToken)
   {
     await AnsiConsole
       .Status()

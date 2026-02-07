@@ -12,6 +12,58 @@ namespace MediaLibrary.Commands;
 
 public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 {
+  private class EnrichmentPath
+  {
+    private readonly EnrichmentPath? parent;
+
+    public readonly string Value;
+
+    public EnrichmentPath(
+      string value)
+
+      : this(null, value)
+    {
+    }
+
+    public EnrichmentPath(
+      EnrichmentPath? parent, 
+      string value)
+    {
+      ArgumentNullException.ThrowIfNull(value);
+      
+      this.Value = value;
+
+      this.parent = parent;
+    }
+
+    public override string ToString()
+    {
+      return $"{parent} / {this.Value}";
+    }
+  }
+
+  private class SelectItem
+  {
+    private const string NotAvailable = "N/A";
+
+    public readonly string Title;
+
+    public readonly string Details;
+
+    public SelectItem(Search search)
+    {
+      ArgumentNullException.ThrowIfNull(search);
+
+      this.Title = $"{search.Title} ({search.Year})";
+      this.Details = $"{search.Overview}";
+
+      if (string.IsNullOrEmpty(this.Details))
+      {
+        this.Details = NotAvailable;
+      }
+    }
+  }
+
   private class EnrichCommandStatistics
   {
     public bool HasEnriched => this.Enriched != 0;
@@ -49,7 +101,8 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
   public override async Task<int> ExecuteAsync(
     CommandContext context,
-    EnrichCommandSettings settings)
+    EnrichCommandSettings settings,
+    CancellationToken cancellationToken)
   {
     var measurement = await TimeServices.MeasureAsync(
       async () =>
@@ -141,39 +194,49 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     if (remoteSearch.Length == 0)
     {
-      AnsiConsole.MarkupLineInterpolated($"[Red]M[/]: Unable to match [Bold]{show.Title}[/]");
+      AnsiConsole.MarkupLineInterpolated($"[Red]E[/]: Can't find data related to [Bold]{show.Title}[/] show");
       return null;
     }
 
-    for (; ; )
+    var selections = remoteSearch
+      .Take(settings.MaxRemoteResults)
+      .Select(
+        (item, i) => {
+          var overview = item.Overview;
+          if (string.IsNullOrEmpty(overview))
+          {
+            overview = "N/A";
+          }
+          return (index: i, value: $"[Bold]{item.Title} ({item.Year})[/]\n  {overview}");
+        })
+      .ToArray();
+
+    selections[^1].value += "\n";
+
+    var (selection, _) = AnsiConsole.Prompt(
+      new SelectionPrompt<(int, string display)>()
+        .Title($"\"[Bold]{show.Title}[/]\" matches (?)")
+        .UseConverter(item => item.display)
+        .AddChoices(
+          [..
+            selections,
+            (-1, "[Bold Yellow]Skip[/]")
+          ]
+        ));
+
+    // Cancel
+    //
+    if (selection == -1)
     {
-      var (pickResult, _) = AnsiConsole.Prompt(
-        new SelectionPrompt<(int, string display)>()
-          .Title($"[Bold]{show.Title}[/] >>> (?)")
-          .UseConverter(item => item.display)
-          .AddChoices(
-            [..
-              remoteSearch.Select((item, i) => (index: i, value: $"{item.Title} ({item.Year})")),
-              (-1, "[Yellow]Cancel[/]")
-            ]
-          ));
-
-      // Cancel
-      //
-      if (pickResult == -1)
-      {
-        return null;
-      }
-
-      var match = remoteSearch[pickResult];
-
-      var remoteSeries =
-        await AnsiConsole
-          .Status()
-          .StartAsync($"Downloading...", async ctx => await this.enrichment.GetSeriesAsync(match.Id, settings.Language));
-
-      return remoteSeries;
+      AnsiConsole.MarkupLineInterpolated($"[Yellow]W[/]: Skipping [Bold]{show.Title}[/]");
+      return null;
     }
+
+    var match = remoteSearch[selection];
+
+    return await AnsiConsole
+      .Status()
+      .StartAsync($"Downloading...", async ctx => await this.enrichment.GetSeriesAsync(match.Id, settings.Language));
   }
 
   private Task<Season?> PickMatchingRemoteSeason(
@@ -210,7 +273,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
 
     var matches = remoteSeason.Episodes.Values
-      .Where(i => episode.Title.FuzzyMatch(i.Title, settings.FuzzyMatch))
+      .Where(i => episode.Title.FuzzyMatch(i.Title, settings.MaxFuzzyCharacters))
       .ToArray();
 
     if (matches.Length == 0)
