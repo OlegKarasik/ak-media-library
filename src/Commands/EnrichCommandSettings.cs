@@ -10,7 +10,7 @@ public class EnrichCommandSettings : CommandSettings
 {
   private const string DEFAULT_LANGUAGE = "eng";
   private const int DEFAULT_MAX_FUZZY_CHARACTERS = 10;
-  private const int DEFAULT_MAX_REMOTE_RESULTS = 4;
+  private const int DEFAULT_MAX_REMOTE_RESULTS = 10;
 
   [CommandOption("-l|--library")]
   public required DirectoryPath Library

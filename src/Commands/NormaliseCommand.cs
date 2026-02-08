@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Items;
 using MediaLibrary.Commands.Base;
@@ -31,98 +30,59 @@ public partial class NormaliseCommand : MediaCommand<NormaliseCommandSettings>
     this.options = new NormaliseCommandOptions();
   }
 
-  private static void RenameItem(
-    Item<DirectoryPath> item,
-    string name)
+  public override async Task<int> ExecuteAsync(
+    CommandContext context,
+    NormaliseCommandSettings settings,
+    CancellationToken cancellationToken)
   {
-    ArgumentNullException.ThrowIfNull(item);
-    ArgumentException.ThrowIfNullOrEmpty(name);
+    await AnsiConsole
+      .Status()
+      .StartAsync(
+        "Initialising...",
+        async ctx =>
+        {
+          var measurement = await TimeServices.MeasureAsync(
+            async () =>
+            {
+              ctx.Status("Normalising...");
 
-    Directory.Move(item.Path.Value, item.Path.WithName(name).Value);
+              var index = await GetAsync(new FilePathIndex(settings.Library));
+              index = new IndexItem
+              {
+                Path = index.Path,
+                Movies = index.Movies,
+                Shows = [.. index.Shows.Select(show => this.ProcessShow(show))]
+              };
+
+              await SaveAsync(index, index.Path);
+            });
+
+          if (this.statistics.HasUpdates)
+          {
+            AnsiConsole.Write(new Rule());
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{this.statistics.Updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: The index is [Underline]updated[/].");
+          }
+          else
+          {
+            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]None[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
+          }
+        });
+
+    return 0;
   }
 
-  private static void RenameItem(
-    Item<FilePath> item,
-    string name)
-  {
-    ArgumentNullException.ThrowIfNull(item);
-    ArgumentException.ThrowIfNullOrEmpty(name);
-
-    foreach (var file in Directory.EnumerateFiles(item.Path.Directory, $"*{item.Path.Name}.*"))
-    {
-      File.Move(
-        file,
-        Path.Combine(
-          item.Path.Directory,
-          Path.GetFileName(file).Replace(item.Path.Name, name)));
-    }
-  }
-
-  private static void MoveItem(
-    Item<DirectoryPath> item,
-    string directory)
-  {
-    ArgumentNullException.ThrowIfNull(item);
-    ArgumentException.ThrowIfNullOrEmpty(directory);
-
-    Directory.Move(item.Path.Value, directory);
-  }
-
-  private static void MoveItem(
-    Item<FilePath> item,
-    string directory)
-  {
-    ArgumentNullException.ThrowIfNull(item);
-    ArgumentException.ThrowIfNullOrEmpty(directory);
-
-    foreach (var file in Directory.EnumerateFiles(item.Path.Directory, $"*{item.Path.Name}.*"))
-    {
-      File.Move(
-        file,
-        Path.Combine(
-          directory,
-          Path.GetFileName(file)));
-    }
-  }
-
-  private EpisodeItem ProcessEpisode(
-    ShowItem show,
-    SeasonItem season,
-    EpisodeItem episode)
+  private ShowItem ProcessShow(
+    ShowItem show)
   {
     ArgumentNullException.ThrowIfNull(show);
-    ArgumentNullException.ThrowIfNull(season);
-    ArgumentNullException.ThrowIfNull(episode);
 
-    string name;
-    if (episode.Position.HasSpan)
+    return new ShowItem
     {
-      var (Open, Close) = episode.Position.GetSpanPosition();
-      name = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {episode.Title}";
-    }
-    else
-    {
-      name = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {episode.Title}";
-    }
-
-    if (!episode.Path.Name.Equals(name))
-    {
-      this.statistics.WriteUpdated();
-
-      AnsiConsole.MarkupLineInterpolated(
-        $"[[[Yellow]U[/]]]: Renamed {episode.Path.Name} [Yellow]->[/] {name}");
-
-      RenameItem(episode, name);
-
-      return new EpisodeItem
-      {
-        Title = episode.Title,
-        Position = episode.Position,
-        Path = new FilePath(Path.Combine(episode.Path.Directory, $"{name}{episode.Path.Extension}"))
-      };
-    }
-
-    return episode;
+      Title = show.Title,
+      Path = show.Path,
+      Seasons = [.. show.Seasons.Select(season => this.ProcessSeason(show, season))]
+    };
   }
 
   private SeasonItem ProcessSeason(
@@ -198,86 +158,101 @@ public partial class NormaliseCommand : MediaCommand<NormaliseCommandSettings>
       Title = season.Title,
       Position = season.Position,
       Path = season.Path,
-      Episodes = [..Process(show, season)]
+      Episodes = [.. season.Episodes.Select(episode => this.ProcessEpisode(show, season, episode))]
     };
-
-    IEnumerable<EpisodeItem> Process(ShowItem show, SeasonItem season)
-    {
-      foreach (var episode in season.Episodes)
-      {
-        yield return this.ProcessEpisode(show, season, episode);
-      }
-    }
   }
 
-  private ShowItem ProcessShow(
-    ShowItem show)
+  private EpisodeItem ProcessEpisode(
+    ShowItem show,
+    SeasonItem season,
+    EpisodeItem episode)
   {
     ArgumentNullException.ThrowIfNull(show);
-    
-    return new ShowItem
-    {
-      Title = show.Title,
-      Path = show.Path,
-      Seasons = [.. Process(show)]
-    };
+    ArgumentNullException.ThrowIfNull(season);
+    ArgumentNullException.ThrowIfNull(episode);
 
-    IEnumerable<SeasonItem> Process(ShowItem show)
+    string name;
+    if (episode.Position.HasSpan)
     {
-      foreach (var season in show.Seasons)
+      var (Open, Close) = episode.Position.GetSpanPosition();
+      name = $"S{episode.Position.GetGroup():D2}E{Open:D2}-E{Close:D2} - {episode.Title}";
+    }
+    else
+    {
+      name = $"S{episode.Position.GetGroup():D2}E{episode.Position.GetPosition():D2} - {episode.Title}";
+    }
+
+    if (!episode.Path.Name.Equals(name))
+    {
+      this.statistics.WriteUpdated();
+
+      AnsiConsole.MarkupLineInterpolated(
+        $"[[[Yellow]U[/]]]: Renamed {episode.Path.Name} [Yellow]->[/] {name}");
+
+      RenameItem(episode, name);
+
+      return new EpisodeItem
       {
-        yield return this.ProcessSeason(show, season);
-      }
+        Title = episode.Title,
+        Position = episode.Position,
+        Path = new FilePath(Path.Combine(episode.Path.Directory, $"{name}{episode.Path.Extension}"))
+      };
+    }
+
+    return episode;
+  }
+
+  private static void RenameItem(
+    Item<DirectoryPath> item,
+    string name)
+  {
+    ArgumentNullException.ThrowIfNull(item);
+    ArgumentException.ThrowIfNullOrEmpty(name);
+
+    Directory.Move(item.Path.Value, item.Path.WithName(name).Value);
+  }
+
+  private static void RenameItem(
+    Item<FilePath> item,
+    string name)
+  {
+    ArgumentNullException.ThrowIfNull(item);
+    ArgumentException.ThrowIfNullOrEmpty(name);
+
+    foreach (var file in Directory.EnumerateFiles(item.Path.Directory, $"*{item.Path.Name}.*"))
+    {
+      File.Move(
+        file,
+        Path.Combine(
+          item.Path.Directory,
+          Path.GetFileName(file).Replace(item.Path.Name, name)));
     }
   }
 
-  public override async Task<int> ExecuteAsync(
-    CommandContext context,
-    NormaliseCommandSettings settings,
-    CancellationToken cancellationToken)
+  private static void MoveItem(
+    Item<DirectoryPath> item,
+    string directory)
   {
-    await AnsiConsole
-      .Status()
-      .StartAsync(
-        "Initialising...",
-        async ctx =>
-        {
-          var measurement = await TimeServices.MeasureAsync(
-            async () =>
-            {
-              ctx.Status("Normalising...");
+    ArgumentNullException.ThrowIfNull(item);
+    ArgumentException.ThrowIfNullOrEmpty(directory);
 
-              var index = await GetAsync(new FilePathIndex(settings.Library));
-              index = new IndexItem
-              {
-                Path = index.Path,
-                Movies = index.Movies,
-                Shows = [.. Process(index.Shows)]
-              };
+    Directory.Move(item.Path.Value, directory);
+  }
 
-              await SaveAsync(index, index.Path);
-            });
+  private static void MoveItem(
+    Item<FilePath> item,
+    string directory)
+  {
+    ArgumentNullException.ThrowIfNull(item);
+    ArgumentException.ThrowIfNullOrEmpty(directory);
 
-          if (this.statistics.HasUpdates)
-          {
-            AnsiConsole.Write(new Rule());
-            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]{this.statistics.Updated}[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
-            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: The index is [Underline]updated[/].");
-          }
-          else
-          {
-            AnsiConsole.MarkupLineInterpolated($"[[[Green]S[/]]]: Updated - [Underline]None[/], Elapsed - [Underline]{measurement.Elapsed}[/].");
-          }
-        });
-
-    IEnumerable<ShowItem> Process(IEnumerable<ShowItem> shows)
+    foreach (var file in Directory.EnumerateFiles(item.Path.Directory, $"*{item.Path.Name}.*"))
     {
-      foreach (var show in shows)
-      {
-        yield return this.ProcessShow(show);
-      }
+      File.Move(
+        file,
+        Path.Combine(
+          directory,
+          Path.GetFileName(file)));
     }
-
-    return 0;
   }
 }

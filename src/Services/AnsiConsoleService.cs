@@ -1,6 +1,108 @@
+using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace MediaLibrary.Extensions.Services;
+
+public static class AnsiConsoleExtensions
+{
+  private class EscapeAnsiConsoleInput : IAnsiConsoleInput
+  {
+    private readonly IAnsiConsoleInput original;
+
+    public EscapeAnsiConsoleInput(
+      IAnsiConsoleInput original)
+    {
+      ArgumentNullException.ThrowIfNull(original);
+
+      this.original = original;
+    }
+
+    public bool IsKeyAvailable()
+    {
+      return this.original.IsKeyAvailable();
+    }
+
+    public ConsoleKeyInfo? ReadKey(
+      bool intercept)
+    {
+      var key = this.original.ReadKey(intercept);
+      if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
+      {
+        throw new OperationCanceledException();
+      }
+      return key;
+    }
+
+    public async Task<ConsoleKeyInfo?> ReadKeyAsync(
+      bool intercept, 
+      CancellationToken cancellationToken)
+    {
+      var key = await this.original.ReadKeyAsync(intercept, cancellationToken);
+      if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
+      {
+        throw new OperationCanceledException();
+      }
+      return key;
+    }
+  }
+
+  private class EscapeAnsiConsole : IAnsiConsole
+  {
+    private readonly IAnsiConsole original;
+    private readonly IAnsiConsoleInput input;
+
+    public Profile Profile => this.original.Profile;
+
+    public IAnsiConsoleCursor Cursor => this.original.Cursor;
+
+    public IAnsiConsoleInput Input => this.input;
+
+    public IExclusivityMode ExclusivityMode => this.original.ExclusivityMode;
+
+    public RenderPipeline Pipeline => this.original.Pipeline;
+
+    public EscapeAnsiConsole(
+      IAnsiConsole original)
+    {
+      ArgumentNullException.ThrowIfNull(original);
+      
+      this.original = original;
+      this.input = new EscapeAnsiConsoleInput(original.Input);
+    }
+
+    public void Clear(
+      bool home)
+    {
+      this.original.Clear(home);
+    }
+
+    public void Write(
+      IRenderable renderable)
+    {
+      this.original.Write(renderable);
+    }
+  }
+
+  extension(AnsiConsole)
+  {
+    public static bool TryPrompt<T>(
+      IPrompt<T> prompt,
+      [NotNullWhen(true)] out T? result)
+    {
+      try
+      {
+        result = new EscapeAnsiConsole(AnsiConsole.Console).Prompt(prompt);
+      }
+      catch (OperationCanceledException)
+      {
+        result = default;
+      }
+      return result is not null;
+    }    
+  }
+}
+
 
 public class AnsiConsoleService
 {
