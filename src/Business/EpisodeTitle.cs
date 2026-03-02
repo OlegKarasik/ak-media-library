@@ -30,10 +30,6 @@ public partial class EpisodeTitle
   public EpisodeTitle(
     string value)
   {
-    if (value == null)
-    {
-      throw new Exception();
-    }
     ArgumentException.ThrowIfNullOrEmpty(value);
 
     var intermediate = value.EscapeInvalidCharacters();
