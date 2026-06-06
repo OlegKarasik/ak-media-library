@@ -131,66 +131,53 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
   }
 
   private async Task ProcessShow(
-    ShowItem show,
+    ShowItem showItem,
     EnrichCommandSettings settings)
   {
-    ArgumentNullException.ThrowIfNull(show);
+    ArgumentNullException.ThrowIfNull(showItem);
     ArgumentNullException.ThrowIfNull(settings);
 
     var search =
       await AnsiConsole
         .Status()
-        .StartAsync("Searching...", async ctx => await this.enrichment.SearchSeriesAsync(show.Title, settings.Language));
+        .StartAsync($"[Bold][[{showItem.Title}]][/]: Searching matches...", async ctx => await this.enrichment.SearchSeriesAsync(showItem.Title, settings.Language));
 
     if (search.Length == 0)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Red]F[/]]]: No results found matching the [Bold]{show.Title}[/] show");
+      AnsiConsole.MarkupLineInterpolated($"[[[Red]{showItem.Title}[/]]]: No matches found");
       return;
     }
 
-    var prompt = new SelectionPrompt<Search>()
-      .Title(
-        $"""
-        Found [Green]{search.Length}[/] potential sources to enrich [Green Bold][[{show.Title}]][/], please select one to use
-        [Gray](Hit [Underline]ESCAPE[/] to cancel the prompt and [Underline]SKIP[/] the show)[/]
-        """)
-      .UseConverter(search => 
-        $"""
-          [Bold]{search.Title} ({search.Year})[/]
-            {(string.IsNullOrEmpty(search.Overview) ? "N/A" : search.Overview)}
-          """)
-      .PageSize(5)
-      .AddChoices(search);
-
-    if (!AnsiConsole.TryPrompt(prompt, out var selection))
+    var selection = this.PickMatchingRemoteSeries(showItem, search);
+    if (selection is null)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipping enrichment of [Bold]{show.Title}[/] show");
+      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]{showItem.Title}[/]]]: Skipped");
       return;
     }
 
     var series = await AnsiConsole
       .Status()
-      .StartAsync($"Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
+      .StartAsync($"[Bold][[{showItem.Title}]][/]: Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
 
     if (series is not null)
     {
-      await this.SaveInformation(show, series);
+      await this.SaveInformation(showItem, series);
 
       this.statistics.WriteShowEnriched();
 
-      foreach (var season in show.Seasons)
+      foreach (var seasonItem in showItem.Seasons)
       {
-        var remoteSeason = await this.PickMatchingRemoteSeason(series, season, settings);
-        if (remoteSeason is not null)
+        var season = await this.PickMatchingRemoteSeason(seasonItem, series, settings);
+        if (season is not null)
         {
-          await this.EnrichSeasonItemAsync(season, remoteSeason);
+          await this.EnrichSeasonItemAsync(seasonItem, season);
 
-          foreach (var episode in season.Episodes)
+          foreach (var episodeItem in seasonItem.Episodes)
           {
-            var remoteEpisode = await this.PickMatchingRemoteEpisode(remoteSeason, episode, settings);
-            if (remoteEpisode is not null)
+            var episode = await this.PickMatchingRemoteEpisode(episodeItem, season, settings);
+            if (episode is not null)
             {
-              await this.EnrichEpisodeItemAsync(episode, remoteEpisode);
+              await this.EnrichEpisodeItemAsync(episodeItem, episode);
             }
           }
         }
@@ -198,17 +185,66 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
   }
 
+  private Search? PickMatchingRemoteSeries(
+      ShowItem show,
+      Search[] search)
+  {
+    ArgumentNullException.ThrowIfNull(show);
+    ArgumentNullException.ThrowIfNull(search);
+
+    for (; ;)
+    {
+      var promptSelection = new SelectionPrompt<Search>()
+        .Title(
+          $"""
+          [Bold][[{show.Title}]][/]: Found [Green]{search.Length}[/] potential matches
+
+          [Cyan]Select a show to preview[/]
+          [Gray](Hit [Underline]ESCAPE[/] to cancel the prompt and [Underline]SKIP[/] the show)[/]
+          """)
+        .UseConverter(search => 
+          $"""
+          [Bold]{search.Title} ({search.Year})[/]
+          """)
+        .PageSize(5)
+        .AddChoices(search);
+
+      if (!AnsiConsole.TryPrompt(promptSelection, out var selection))
+      {
+        return null;
+      }
+
+      var promptMatch = new SelectionPrompt<bool>()
+        .Title(
+          $"""
+          [Bold]{selection.Title} ({selection.Year})[/]
+          {(string.IsNullOrEmpty(selection.Overview) ? "N/A (no overview available)" : selection.Overview)}
+
+          [Cyan]Continue?[/]
+          """)
+        .UseConverter(value => value switch { true => "Yes", false => "No" })
+        .AddChoices([true, false]);
+
+      if (!AnsiConsole.TryPrompt(promptMatch, out var confirmation) || !confirmation)
+      {
+        continue;
+      }
+
+      return selection;
+    }
+  }
+
   private Task<Season?> PickMatchingRemoteSeason(
-    Series remoteSeries,
-    SeasonItem season,
+    SeasonItem seasonItem,
+    Series series,
     EnrichCommandSettings settings)
   {
-    ArgumentNullException.ThrowIfNull(remoteSeries);
-    ArgumentNullException.ThrowIfNull(season);
+    ArgumentNullException.ThrowIfNull(seasonItem);
+    ArgumentNullException.ThrowIfNull(series);
     ArgumentNullException.ThrowIfNull(settings);
 
-    var position = (long)season.Position.GetPosition();
-    if (remoteSeries.Seasons.TryGetValue((long)season.Position.GetPosition(), out var remoteSeason))
+    var position = (long)seasonItem.Position.GetPosition();
+    if (series.Seasons.TryGetValue((long)seasonItem.Position.GetPosition(), out var remoteSeason))
     {
       return Task.FromResult<Season?>(remoteSeason);
     }
@@ -218,26 +254,26 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
   }
 
   private Task<Episode?> PickMatchingRemoteEpisode(
-    Season remoteSeason,
-    EpisodeItem episode,
+    EpisodeItem episodeItem,
+    Season season,
     EnrichCommandSettings settings)
   {
-    ArgumentNullException.ThrowIfNull(remoteSeason);
-    ArgumentNullException.ThrowIfNull(episode);
+    ArgumentNullException.ThrowIfNull(episodeItem);
+    ArgumentNullException.ThrowIfNull(season);
     ArgumentNullException.ThrowIfNull(settings);
 
-    if (remoteSeason.Episodes.TryGetValue(episode.Title, out var remoteEpisode))
+    if (season.Episodes.TryGetValue(episodeItem.Title, out var remoteEpisode))
     {
       return Task.FromResult<Episode?>(remoteEpisode);
     }
 
-    var matches = remoteSeason.Episodes.Values
-      .Where(i => episode.Title.FuzzyMatch(i.Title, settings.MaxFuzzyCharacters))
+    var matches = season.Episodes.Values
+      .Where(i => episodeItem.Title.FuzzyMatch(i.Title, settings.MaxFuzzyCharacters))
       .ToArray();
 
     if (matches.Length == 0)
     {
-      AnsiConsole.MarkupLineInterpolated($"[Red]E[/]: Unable to match [Bold]{episode.Title}[/]");
+      AnsiConsole.MarkupLineInterpolated($"[Red]E[/]: Unable to match [Bold]{episodeItem.Title}[/]");
       return Task.FromResult<Episode?>(null);
     }
 
@@ -245,7 +281,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     {
       var (result, _) = AnsiConsole.Prompt(
         new SelectionPrompt<(int, string display)>()
-          .Title($"[Bold]{episode.Title}[/] >>> (?)")
+          .Title($"[Bold]{episodeItem.Title}[/] >>> (?)")
           .UseConverter(item => item.display)
           .AddChoices(
             [..
@@ -258,7 +294,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       //
       if (result == -1)
       {
-        AnsiConsole.MarkupLineInterpolated($"[Yellow]S[/]: Skip [Bold]{episode.Title}[/]");
+        AnsiConsole.MarkupLineInterpolated($"[Yellow]S[/]: Skip [Bold]{episodeItem.Title}[/]");
         return Task.FromResult<Episode?>(null);
       }
 
