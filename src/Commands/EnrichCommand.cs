@@ -157,7 +157,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     var series = await AnsiConsole
       .Status()
-      .StartAsync($"[Bold][[{showItem.Title}]][/]: Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
+      .StartAsync($"[Bold][[{selection.Title}]][/]: Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
 
     if (series is not null)
     {
@@ -167,29 +167,39 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
       foreach (var seasonItem in showItem.Seasons)
       {
-        var season = await this.PickMatchingRemoteSeason(seasonItem, series, settings);
-        if (season is not null)
+        var season = this.PickMatchingRemoteSeason(seasonItem, series, settings);
+        if (season is null)
         {
-          await this.EnrichSeasonItemAsync(seasonItem, season);
+          AnsiConsole.MarkupLineInterpolated($"[[[Red]]{seasonItem.Title}[/]]]: No matches found");
+          continue;
+        }
 
-          foreach (var episodeItem in seasonItem.Episodes)
+        await this.SaveInformation(seasonItem, season);
+
+        this.statistics.WriteSeasonEnriched();
+
+        foreach (var episodeItem in seasonItem.Episodes)
+        {
+          var episode = this.PickMatchingRemoteEpisode(episodeItem, season, settings);
+          if (episode is null)
           {
-            var episode = await this.PickMatchingRemoteEpisode(episodeItem, season, settings);
-            if (episode is not null)
-            {
-              await this.EnrichEpisodeItemAsync(episodeItem, episode);
-            }
+            AnsiConsole.MarkupLineInterpolated($"[[[Red]]{episodeItem.Title}[/]]]: No matches found");
+            continue;
           }
+
+          await this.SaveInformation(episodeItem, episode);
+
+          this.statistics.WriteEpisodeEnriched();
         }
       }
     }
   }
 
   private Search? PickMatchingRemoteSeries(
-      ShowItem show,
+      ShowItem showItem,
       Search[] search)
   {
-    ArgumentNullException.ThrowIfNull(show);
+    ArgumentNullException.ThrowIfNull(showItem);
     ArgumentNullException.ThrowIfNull(search);
 
     for (; ;)
@@ -197,9 +207,9 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       var promptSelection = new SelectionPrompt<Search>()
         .Title(
           $"""
-          [Bold][[{show.Title}]][/]: Found [Green]{search.Length}[/] potential matches
+          [Bold][[{showItem.Title}]][/]: Found [Green]{search.Length}[/] potential matches
 
-          [Cyan]Select a show to preview[/]
+          [Cyan]Select to see details[/]
           [Gray](Hit [Underline]ESCAPE[/] to cancel the prompt and [Underline]SKIP[/] the show)[/]
           """)
         .UseConverter(search => 
@@ -220,7 +230,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
           [Bold]{selection.Title} ({selection.Year})[/]
           {(string.IsNullOrEmpty(selection.Overview) ? "N/A (no overview available)" : selection.Overview)}
 
-          [Cyan]Continue?[/]
+          [Cyan]Confirm?[/]
           """)
         .UseConverter(value => value switch { true => "Yes", false => "No" })
         .AddChoices([true, false]);
@@ -234,7 +244,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
   }
 
-  private Task<Season?> PickMatchingRemoteSeason(
+  private Season? PickMatchingRemoteSeason(
     SeasonItem seasonItem,
     Series series,
     EnrichCommandSettings settings)
@@ -244,16 +254,15 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(settings);
 
     var position = (long)seasonItem.Position.GetPosition();
-    if (series.Seasons.TryGetValue((long)seasonItem.Position.GetPosition(), out var remoteSeason))
+    if (series.Seasons.TryGetValue(position, out var season))
     {
-      return Task.FromResult<Season?>(remoteSeason);
+      return season;
     }
 
-    AnsiConsole.MarkupLineInterpolated($"[Red]E[/]: Unable to match [Bold]Season {position}[/]");
-    return Task.FromResult<Season?>(null);
+    return null;
   }
 
-  private Task<Episode?> PickMatchingRemoteEpisode(
+  private Episode? PickMatchingRemoteEpisode(
     EpisodeItem episodeItem,
     Season season,
     EnrichCommandSettings settings)
@@ -262,9 +271,9 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(season);
     ArgumentNullException.ThrowIfNull(settings);
 
-    if (season.Episodes.TryGetValue(episodeItem.Title, out var remoteEpisode))
+    if (season.Episodes.TryGetValue(episodeItem.Title, out var episode))
     {
-      return Task.FromResult<Episode?>(remoteEpisode);
+      return episode;
     }
 
     var matches = season.Episodes.Values
@@ -273,107 +282,123 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     if (matches.Length == 0)
     {
-      AnsiConsole.MarkupLineInterpolated($"[Red]E[/]: Unable to match [Bold]{episodeItem.Title}[/]");
-      return Task.FromResult<Episode?>(null);
+      return null;
     }
 
     for (; ; )
     {
-      var (result, _) = AnsiConsole.Prompt(
-        new SelectionPrompt<(int, string display)>()
-          .Title($"[Bold]{episodeItem.Title}[/] >>> (?)")
-          .UseConverter(item => item.display)
-          .AddChoices(
-            [..
-              matches.Select((item, index) => (index, $"{item.Title} (Season {item.SeasonIndex}, {item.Date})")),
-              (-1, "[Yellow]Skip[/]")
-            ]
-          ));
+      var promptSelection = new SelectionPrompt<Episode>()
+          .Title(
+            $"""
+             [Bold][[{episodeItem.Title}]][/]: Found [Green]{matches.Length}[/] potential matches
 
-      // Skip
-      //
-      if (result == -1)
+             [Cyan]Select to see details[/]
+             [Gray](Hit [Underline]ESCAPE[/] to cancel the prompt and [Underline]SKIP[/] the episode)[/]
+             """)
+          .UseConverter(episode =>
+            $"""
+             [Bold]{episode.Title}[/]
+             """)
+          .PageSize(5)
+          .AddChoices(matches);
+
+      if (!AnsiConsole.TryPrompt(promptSelection, out var selection))
       {
-        AnsiConsole.MarkupLineInterpolated($"[Yellow]S[/]: Skip [Bold]{episodeItem.Title}[/]");
-        return Task.FromResult<Episode?>(null);
+        return null;
       }
 
-      return Task.FromResult<Episode?>(matches[result]);
+      var promptMatch = new SelectionPrompt<bool>()
+        .Title(
+          $"""
+          [Bold]{selection.Title}[/]
+          {(string.IsNullOrEmpty(selection.Overview) ? "N/A (no overview available)" : selection.Overview)}
+
+          [Cyan]Confirm?[/]
+          """)
+        .UseConverter(value => value switch { true => "Yes", false => "No" })
+        .AddChoices([true, false]);
+
+      if (!AnsiConsole.TryPrompt(promptMatch, out var confirmation) || !confirmation)
+      {
+        continue;
+      }
+
+      return selection;
     }
   }
 
   private async Task SaveInformation(
-    ShowItem show,
-    Series remoteShow)
+    ShowItem showItem,
+    Series series)
   {
-    ArgumentNullException.ThrowIfNull(show);
-    ArgumentNullException.ThrowIfNull(remoteShow);
+    ArgumentNullException.ThrowIfNull(showItem);
+    ArgumentNullException.ThrowIfNull(series);
 
-    if (remoteShow.Image is not null)
+    if (series.Image is not null)
     {
       await SaveAsync(
-        remoteShow.Image, new FilePathImage(show.Path));
+        series.Image, new FilePathImage(showItem.Path));
     }
-    if (remoteShow.ImageBackground is not null)
+    if (series.ImageBackground is not null)
     {
       await SaveAsync(
-        remoteShow.ImageBackground, new FilePathImageBackground(show.Path));
+        series.ImageBackground, new FilePathImageBackground(showItem.Path));
     }
 
     await SaveAsync(
       new ShowPropsItem
       {
-        Summary = [remoteShow.Overview],
-        Date = remoteShow.Date,
-        Genres = remoteShow.Genres
+        Summary = [series.Overview],
+        Date = series.Date,
+        Genres = series.Genres
       },
-      new FilePathProps(show.Path));
+      new FilePathProps(showItem.Path));
   }
 
-  private async Task EnrichSeasonItemAsync(
-    SeasonItem season,
-    Season remoteSeason)
+  private async Task SaveInformation(
+    SeasonItem seasonItem,
+    Season season)
   {
+    ArgumentNullException.ThrowIfNull(seasonItem);
     ArgumentNullException.ThrowIfNull(season);
-    ArgumentNullException.ThrowIfNull(remoteSeason);
 
-    if (remoteSeason.Image is not null)
+    if (season.Image is not null)
     {
       await SaveAsync(
-        remoteSeason.Image, new FilePathImage(season.Path));
+        season.Image, new FilePathImage(seasonItem.Path));
     }
-    if (remoteSeason.ImageBackground is not null)
+    if (season.ImageBackground is not null)
     {
       await SaveAsync(
-        remoteSeason.ImageBackground, new FilePathImageBackground(season.Path));
+        season.ImageBackground, new FilePathImageBackground(seasonItem.Path));
     }
 
     await SaveAsync(
       new SeasonPropsItem
       {
-        Summary = [remoteSeason.Overview],
+        Summary = [season.Overview],
       },
-      new FilePathProps(season.Path));
+      new FilePathProps(seasonItem.Path));
 
     this.statistics.WriteSeasonEnriched();
   }
 
-  private async Task EnrichEpisodeItemAsync(
-    EpisodeItem episode,
-    Episode remoteEpisode)
+  private async Task SaveInformation(
+    EpisodeItem episodeItem,
+    Episode episode)
   {
+    ArgumentNullException.ThrowIfNull(episodeItem);
     ArgumentNullException.ThrowIfNull(episode);
-    ArgumentNullException.ThrowIfNull(remoteEpisode);
 
     await SaveAsync(
       new EpisodePropsItem
       {
-        Date = remoteEpisode.Date,
-        Summary = [remoteEpisode.Overview],
-        Directors = [.. remoteEpisode.Directors.Select(i => i.Name)],
-        Writers = [.. remoteEpisode.Writers.Select(i => i.Name)],
+        Date = episode.Date,
+        Summary = [episode.Overview],
+        Directors = [.. episode.Directors.Select(i => i.Name)],
+        Writers = [.. episode.Writers.Select(i => i.Name)],
       },
-      new FilePathProps(episode.Path));
+      new FilePathProps(episodeItem.Path));
 
     this.statistics.WriteEpisodeEnriched();
   }
