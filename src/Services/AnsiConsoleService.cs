@@ -9,13 +9,16 @@ public static class AnsiConsoleExtensions
   private class EscapeAnsiConsoleInput : IAnsiConsoleInput
   {
     private readonly IAnsiConsoleInput original;
+    private readonly CancellationTokenSource cts;
 
     public EscapeAnsiConsoleInput(
-      IAnsiConsoleInput original)
+      IAnsiConsoleInput original,
+      CancellationTokenSource cts)
     {
       ArgumentNullException.ThrowIfNull(original);
 
       this.original = original;
+      this.cts = cts;
     }
 
     public bool IsKeyAvailable()
@@ -29,7 +32,7 @@ public static class AnsiConsoleExtensions
       var key = this.original.ReadKey(intercept);
       if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
       {
-        throw new OperationCanceledException();
+        cts.Cancel();
       }
       return key;
     }
@@ -41,7 +44,7 @@ public static class AnsiConsoleExtensions
       var key = await this.original.ReadKeyAsync(intercept, cancellationToken);
       if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
       {
-        throw new OperationCanceledException();
+        await cts.CancelAsync();
       }
       return key;
     }
@@ -63,12 +66,13 @@ public static class AnsiConsoleExtensions
     public RenderPipeline Pipeline => this.original.Pipeline;
 
     public EscapeAnsiConsole(
-      IAnsiConsole original)
+      IAnsiConsole original,
+      CancellationTokenSource cts)
     {
       ArgumentNullException.ThrowIfNull(original);
       
       this.original = original;
-      this.input = new EscapeAnsiConsoleInput(original.Input);
+      this.input = new EscapeAnsiConsoleInput(original.Input, cts);
     }
 
     public void Clear(
@@ -90,12 +94,27 @@ public static class AnsiConsoleExtensions
       IPrompt<T> prompt,
       [NotNullWhen(true)] out T? result)
     {
+      var promptTop = Console.CursorTop;
       try
       {
-        result = new EscapeAnsiConsole(AnsiConsole.Console).Prompt(prompt);
+        var cts = new CancellationTokenSource();
+        result = new EscapeAnsiConsole(AnsiConsole.Console, cts).PromptAsync(prompt, cts.Token).GetAwaiter().GetResult();
       }
       catch (OperationCanceledException)
       {
+        // Here we erase the prompt rendered by Spectre console to
+        // ensure the same user experience regardless of whether the prompt
+        // has been cancelled or not.
+        //
+        var promptBottom = Console.CursorTop;
+        var promptErasure = new string(' ', Console.BufferWidth);
+        for (int i = promptTop; i <= promptBottom; i++)
+        {
+          Console.SetCursorPosition(0, i);
+          Console.Write(promptErasure);
+        }
+        Console.SetCursorPosition(0, promptTop);
+
         result = default;
       }
       return result is not null;

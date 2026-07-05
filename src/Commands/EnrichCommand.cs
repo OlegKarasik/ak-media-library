@@ -170,7 +170,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
         var season = this.PickMatchingRemoteSeason(seasonItem, series, settings);
         if (season is null)
         {
-          AnsiConsole.MarkupLineInterpolated($"[[[Red]]{seasonItem.Title}[/]]]: No matches found");
+          AnsiConsole.MarkupLineInterpolated($"[Red]{seasonItem.Title}[/]: No matches found");
           continue;
         }
 
@@ -183,7 +183,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
           var episode = this.PickMatchingRemoteEpisode(episodeItem, season, settings);
           if (episode is null)
           {
-            AnsiConsole.MarkupLineInterpolated($"[[[Red]]{episodeItem.Title}[/]]]: No matches found");
+            AnsiConsole.MarkupLineInterpolated($"[Red]{episodeItem.Title}[/]: No matches found");
             continue;
           }
 
