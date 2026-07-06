@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using MediaLibrary.Business;
 using MediaLibrary.Business.Enrichment;
 using MediaLibrary.Business.Enrichment.Models;
@@ -144,14 +143,14 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     if (search.Length == 0)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Red]{showItem.Title}[/]]]: No matches found");
+      AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{showItem.Title}\"[/]");
       return;
     }
 
     var selection = this.PickMatchingRemoteSeries(showItem, search);
     if (selection is null)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]{showItem.Title}[/]]]: Skipped");
+      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipped [Bold]\"{showItem.Title}\"[/]");
       return;
     }
 
@@ -168,26 +167,40 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       foreach (var seasonItem in showItem.Seasons)
       {
         var season = this.PickMatchingRemoteSeason(seasonItem, series, settings);
-        if (season is null)
+        if (season.val is null)
         {
-          AnsiConsole.MarkupLineInterpolated($"[Red]{seasonItem.Title}[/]: No matches found");
+          if (season.skip)
+          {
+            AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipped [Bold]\"{seasonItem.Title}\"[/]");
+          }
+          else
+          {
+            AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{seasonItem.Title}\"[/]");
+          }
           continue;
         }
 
-        await this.SaveInformation(seasonItem, season);
+        await this.SaveInformation(seasonItem, season.val);
 
         this.statistics.WriteSeasonEnriched();
 
         foreach (var episodeItem in seasonItem.Episodes)
         {
-          var episode = this.PickMatchingRemoteEpisode(episodeItem, season, settings);
-          if (episode is null)
+          var episode = this.PickMatchingRemoteEpisode(episodeItem, season.val, settings);
+          if (episode.val is null)
           {
-            AnsiConsole.MarkupLineInterpolated($"[Red]{episodeItem.Title}[/]: No matches found");
+            if (episode.skip)
+            {
+              AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipped [Bold]\"{episodeItem.Title}\"[/]");
+            }
+            else
+            {
+              AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{episodeItem.Title}\"[/]");
+            }
             continue;
           }
 
-          await this.SaveInformation(episodeItem, episode);
+          await this.SaveInformation(episodeItem, episode.val);
 
           this.statistics.WriteEpisodeEnriched();
         }
@@ -244,7 +257,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
   }
 
-  private Season? PickMatchingRemoteSeason(
+  private (Season? val, bool skip) PickMatchingRemoteSeason(
     SeasonItem seasonItem,
     Series series,
     EnrichCommandSettings settings)
@@ -256,13 +269,13 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     var position = (long)seasonItem.Position.GetPosition();
     if (series.Seasons.TryGetValue(position, out var season))
     {
-      return season;
+      return (season, false);
     }
 
-    return null;
+    return (null, false);
   }
 
-  private Episode? PickMatchingRemoteEpisode(
+  private (Episode? val, bool skip) PickMatchingRemoteEpisode(
     EpisodeItem episodeItem,
     Season season,
     EnrichCommandSettings settings)
@@ -273,7 +286,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     if (season.Episodes.TryGetValue(episodeItem.Title, out var episode))
     {
-      return episode;
+      return (episode, false);
     }
 
     var matches = season.Episodes.Values
@@ -282,7 +295,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
     if (matches.Length == 0)
     {
-      return null;
+      return (null, false);
     }
 
     for (; ; )
@@ -304,7 +317,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
       if (!AnsiConsole.TryPrompt(promptSelection, out var selection))
       {
-        return null;
+        return (null, true);
       }
 
       var promptMatch = new SelectionPrompt<bool>()
@@ -323,7 +336,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
         continue;
       }
 
-      return selection;
+      return (selection, false);
     }
   }
 
