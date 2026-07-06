@@ -63,7 +63,7 @@ public class IndexSearchRequest
     var values = value
       .Split(DELIMITER, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    if (values.Length == 0 || values.Length == 1)
+    if (values.Length == 0)
     {
       throw new ArgumentException("The navigation query must include a root and path (for instance, 'Shows/Boston Legal')");
     }

@@ -323,7 +323,8 @@ public class ScanCommand : MediaCommand<ScanCommandSettings>
 
   public override async Task<int> ExecuteAsync(
     CommandContext context, 
-    ScanCommandSettings settings)
+    ScanCommandSettings settings,
+    CancellationToken cancellationToken)
   {
     await AnsiConsole
       .Status()

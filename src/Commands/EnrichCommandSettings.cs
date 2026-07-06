@@ -9,7 +9,8 @@ namespace MediaLibrary.Commands;
 public class EnrichCommandSettings : CommandSettings
 {
   private const string DEFAULT_LANGUAGE = "eng";
-  private const int DEFAULT_FUZZY_MATCH = 10;
+  private const int DEFAULT_MAX_FUZZY_CHARACTERS = 10;
+  private const int DEFAULT_MAX_REMOTE_RESULTS = 10;
 
   [CommandOption("-l|--library")]
   public required DirectoryPath Library
@@ -30,9 +31,16 @@ public class EnrichCommandSettings : CommandSettings
     get; set;
   }
 
-  [CommandOption("-f|--fuzzy-match")]
-  [DefaultValue(DEFAULT_FUZZY_MATCH)]
-  public required int FuzzyMatch
+  [CommandOption("-m|--max-remote-results")]
+  [DefaultValue(DEFAULT_MAX_REMOTE_RESULTS)]
+  public required int MaxRemoteResults
+  {
+    get; set;
+  }
+
+  [CommandOption("-f|--max-fuzzy-characters")]
+  [DefaultValue(DEFAULT_MAX_FUZZY_CHARACTERS)]
+  public required int MaxFuzzyCharacters
   {
     get; set;
   }

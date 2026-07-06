@@ -8,19 +8,13 @@ public class IndexSearch
     IndexItem index,
     IndexSearchRequest request)
   {
-    if (index is null)
-    {
-      throw new ArgumentNullException(nameof(index));
-    }
-    if (request is null)
-    {
-      throw new ArgumentNullException(nameof(request));
-    }
+    ArgumentNullException.ThrowIfNull(index);
+    ArgumentNullException.ThrowIfNull(request);
 
     IndexSearchPosition position = request.Root switch
     {
-      IndexSearchRoot.Movies => new IndexSearchPositionAtMovieCollection(index),
-      IndexSearchRoot.Shows => new IndexSearchPositionAtShowCollection(index),
+      IndexSearchRoot.Movies => new IndexSearchPositionAtMovieCollection(new MovieCollectionItem{ Movies = index.Movies }),
+      IndexSearchRoot.Shows => new IndexSearchPositionAtShowCollection(new ShowCollectionItem { Shows = index.Shows }),
       _ => throw new NotImplementedException()
     };
     

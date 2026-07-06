@@ -1,6 +1,127 @@
+using System.Diagnostics.CodeAnalysis;
 using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace MediaLibrary.Extensions.Services;
+
+public static class AnsiConsoleExtensions
+{
+  private class EscapeAnsiConsoleInput : IAnsiConsoleInput
+  {
+    private readonly IAnsiConsoleInput original;
+    private readonly CancellationTokenSource cts;
+
+    public EscapeAnsiConsoleInput(
+      IAnsiConsoleInput original,
+      CancellationTokenSource cts)
+    {
+      ArgumentNullException.ThrowIfNull(original);
+
+      this.original = original;
+      this.cts = cts;
+    }
+
+    public bool IsKeyAvailable()
+    {
+      return this.original.IsKeyAvailable();
+    }
+
+    public ConsoleKeyInfo? ReadKey(
+      bool intercept)
+    {
+      var key = this.original.ReadKey(intercept);
+      if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
+      {
+        cts.Cancel();
+      }
+      return key;
+    }
+
+    public async Task<ConsoleKeyInfo?> ReadKeyAsync(
+      bool intercept, 
+      CancellationToken cancellationToken)
+    {
+      var key = await this.original.ReadKeyAsync(intercept, cancellationToken);
+      if (key.HasValue && key.Value.Key == ConsoleKey.Escape)
+      {
+        await cts.CancelAsync();
+      }
+      return key;
+    }
+  }
+
+  private class EscapeAnsiConsole : IAnsiConsole
+  {
+    private readonly IAnsiConsole original;
+    private readonly IAnsiConsoleInput input;
+
+    public Profile Profile => this.original.Profile;
+
+    public IAnsiConsoleCursor Cursor => this.original.Cursor;
+
+    public IAnsiConsoleInput Input => this.input;
+
+    public IExclusivityMode ExclusivityMode => this.original.ExclusivityMode;
+
+    public RenderPipeline Pipeline => this.original.Pipeline;
+
+    public EscapeAnsiConsole(
+      IAnsiConsole original,
+      CancellationTokenSource cts)
+    {
+      ArgumentNullException.ThrowIfNull(original);
+      
+      this.original = original;
+      this.input = new EscapeAnsiConsoleInput(original.Input, cts);
+    }
+
+    public void Clear(
+      bool home)
+    {
+      this.original.Clear(home);
+    }
+
+    public void Write(
+      IRenderable renderable)
+    {
+      this.original.Write(renderable);
+    }
+  }
+
+  extension(AnsiConsole)
+  {
+    public static bool TryPrompt<T>(
+      IPrompt<T> prompt,
+      [NotNullWhen(true)] out T? result)
+    {
+      var promptTop = Console.CursorTop;
+      try
+      {
+        var cts = new CancellationTokenSource();
+        result = new EscapeAnsiConsole(AnsiConsole.Console, cts).PromptAsync(prompt, cts.Token).GetAwaiter().GetResult();
+      }
+      catch (OperationCanceledException)
+      {
+        // Here we erase the prompt rendered by Spectre console to
+        // ensure the same user experience regardless of whether the prompt
+        // has been cancelled or not.
+        //
+        var promptBottom = Console.CursorTop;
+        var promptErasure = new string(' ', Console.BufferWidth);
+        for (int i = promptTop; i <= promptBottom; i++)
+        {
+          Console.SetCursorPosition(0, i);
+          Console.Write(promptErasure);
+        }
+        Console.SetCursorPosition(0, promptTop);
+
+        result = default;
+      }
+      return result is not null;
+    }    
+  }
+}
+
 
 public class AnsiConsoleService
 {

@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
+
+
 namespace MediaLibrary.Business.Enrichment.Http;
 
 public partial class EnrichmentHttpClient
@@ -165,13 +167,13 @@ public partial class EnrichmentHttpClient
     series = series with {
       Episodes = await series.Seasons
         .ToAsyncEnumerable()
-        .SelectManyAwait(
-          async season => 
+        .SelectMany<Series.Season, Series.Episode>(
+          async (Series.Season season, CancellationToken ct) => 
           {
             var response = await this.GetJsonResponseAsync<EpisodesResponse<Series.Episode>>(
               $"https://api4.thetvdb.com/v4/series/{series.Id}/episodes/{season.Type.Value}?page=0&season={season.Index}");
             
-            return response.Episodes.ToAsyncEnumerable();
+            return response.Episodes;
           })
         .ToArrayAsync()
     };
@@ -200,9 +202,7 @@ public partial class EnrichmentHttpClient
     {
       foreach (var group in seasons.GroupBy(i => i.Index))
       {
-        yield return group
-          .Where(i => i.OverviewTranslations.Contains(language))
-          .FirstOrDefault() ?? group.First();
+        yield return group.FirstOrDefault(i => i.OverviewTranslations.Contains(language)) ?? group.First();
       }
     }
 
@@ -212,9 +212,7 @@ public partial class EnrichmentHttpClient
     {
       foreach (var group in episodes.GroupBy(i => i.Name))
       {
-        yield return group
-          .Where(i => i.OverviewTranslations.Contains(language))
-          .FirstOrDefault() ?? group.First();
+        yield return group.FirstOrDefault(i => i.OverviewTranslations.Contains(language)) ?? group.First();
       }
     }
   }

@@ -18,16 +18,12 @@ public class IndexSearchPositionAtShowCollection : IndexSearchPosition
   }
 
   public IndexSearchPositionAtShowCollection(
-    IndexItem shows)
+    ShowCollectionItem collectionItem)
 
-    : base(shows)
+    : base(collectionItem)
   {
-    if (shows is null)
-    {
-      throw new ArgumentNullException(nameof(shows));
-    }
+    ArgumentNullException.ThrowIfNull(collectionItem);
 
-    this.shows = shows.Shows;
+    this.shows = collectionItem.Shows;
   }
-
 }

@@ -1,4 +1,3 @@
-using MediaLibrary.Business.Enrichment.Common;
 using MediaLibrary.Business.Enrichment.Http;
 using MediaLibrary.Business.Enrichment.Models;
 
@@ -40,13 +39,13 @@ public class EnrichmentService
 
     var seasons = await series.Seasons
       .ToAsyncEnumerable()
-      .SelectAwait(async i => await this.client.GetSeasonAsync(i.Id, language))
+      .Select(async (Http.Models.Series.Season i, CancellationToken ct) => await this.client.GetSeasonAsync(i.Id, language))
       .ToArrayAsync();
 
     var episodes = await series.Episodes
       .ToAsyncEnumerable()
-      .SelectAwait(
-        async i => 
+      .Select(
+        async (Http.Models.Series.Episode i, CancellationToken ct) => 
         {
           var episode = await this.client.GetEpisodeAsync(i.Id, language);
           return episode with {
@@ -70,6 +69,7 @@ public class EnrichmentService
           Overview = (i.Overview ?? string.Empty).Trim(),
           Episodes = episodes
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
+            .Where(j => j.Name != null) // Sometimes, there is an incomplete information, so we skip
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
             .ToDictionary(
               j => new EpisodeTitle(j.Name),
@@ -101,8 +101,8 @@ public class EnrichmentService
     return result;
 
     async Task<byte[]?> GetArtwork(
-      IEnumerable<Enrichment.Http.Models.Artwork> artworks,
-      Enrichment.Http.Models.ArtworkKind kind,
+      IEnumerable<Http.Models.Artwork> artworks,
+      Http.Models.ArtworkKind kind,
       string language)
     {
       var artwork = artworks
