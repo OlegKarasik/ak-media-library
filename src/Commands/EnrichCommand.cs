@@ -350,7 +350,6 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     Series? series)
   {
     ArgumentNullException.ThrowIfNull(showItem);
-    ArgumentNullException.ThrowIfNull(series);
 
     var props = new ShowPropsItem
       {
@@ -389,12 +388,10 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     Season? season)
   {
     ArgumentNullException.ThrowIfNull(seasonItem);
-    ArgumentNullException.ThrowIfNull(season);
 
     var props = new SeasonPropsItem
       {
         Title = seasonItem.Title.ToString(),
-        Summary = [season.Overview],
       };
 
     if (season is not null)
@@ -429,7 +426,6 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     Episode? episode)
   {
     ArgumentNullException.ThrowIfNull(episodeItem);
-    ArgumentNullException.ThrowIfNull(episode);
 
     var props = new EpisodePropsItem
       {
