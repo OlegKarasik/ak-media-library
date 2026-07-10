@@ -2,7 +2,12 @@ namespace MediaLibrary.Business.Items;
 
 public class ShowPropsItem
 {
-  public required string[] Summary
+  public string? Title
+  {
+    get; init;
+  }
+
+  public string[]? Summary
   {
     get; init;
   }

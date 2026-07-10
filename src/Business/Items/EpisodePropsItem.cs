@@ -2,6 +2,11 @@ namespace MediaLibrary.Business.Items;
 
 public class EpisodePropsItem
 {
+  public string? Title
+  {
+    get; init;
+  }
+
   public string[]? Summary
   {
     get; init;
