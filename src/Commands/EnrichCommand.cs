@@ -294,6 +294,11 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       return (episode, false);
     }
 
+    if (settings.DisableFuzzy)
+    {
+      return (null, false);
+    }
+
     var matches = season.Episodes.Values
       .Where(i => episodeItem.Title.FuzzyMatch(i.Title, settings.MaxFuzzyCharacters))
       .ToArray();
