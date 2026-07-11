@@ -9,6 +9,7 @@ namespace MediaLibrary.Commands;
 public class EnrichCommandSettings : CommandSettings
 {
   private const string DEFAULT_LANGUAGE = "eng";
+  private const bool DEFAULT_DISABLE_FUZZY = false;
   private const int DEFAULT_MAX_FUZZY_CHARACTERS = 10;
   private const int DEFAULT_MAX_REMOTE_RESULTS = 10;
 
@@ -31,14 +32,21 @@ public class EnrichCommandSettings : CommandSettings
     get; set;
   }
 
-  [CommandOption("-m|--max-remote-results")]
+  [CommandOption("--no-fuzzy")]
+  [DefaultValue(DEFAULT_DISABLE_FUZZY)]
+  public required bool DisableFuzzy
+  {
+    get; set;
+  }
+
+  [CommandOption("--max-remote-results")]
   [DefaultValue(DEFAULT_MAX_REMOTE_RESULTS)]
   public required int MaxRemoteResults
   {
     get; set;
   }
 
-  [CommandOption("-f|--max-fuzzy-characters")]
+  [CommandOption("--max-fuzzy-characters")]
   [DefaultValue(DEFAULT_MAX_FUZZY_CHARACTERS)]
   public required int MaxFuzzyCharacters
   {
