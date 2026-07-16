@@ -164,7 +164,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       return;
     }
 
-    await this.SaveInformation(showItem, series);
+    await this.UpdateEpisodeProps(showItem, series);
 
     this.statistics.WriteShowEnriched();
 
@@ -172,7 +172,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     {
       var season = this.PickMatchingRemoteSeason(seasonItem, series, settings);
 
-      await this.SaveInformation(seasonItem, season.val);
+      await this.UpdateEpisodeProps(seasonItem, season.val);
 
       if (season.val is null)
       {
@@ -191,11 +191,19 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
       foreach (var episodeItem in seasonItem.Episodes)
       {
-        var episode = this.PickMatchingRemoteEpisode(episodeItem, season.val, settings);
+        var episodePropsItem = await GetAsync<EpisodePropsItem>(new FilePathProps(episodeItem.Path)) ?? new EpisodePropsItem();
 
-        await this.SaveInformation(episodeItem, episode.val);
+        await this.UpdateEpisodeProps(episodePropsItem, episodeItem);
+        
+        var episode = this.PickMatchingRemoteEpisode(episodePropsItem, episodeItem, season.val, settings);
 
-        if (episode.val is null)
+        if (episode.val is not null)
+        {
+          await this.UpdateEpisodeProps(episodePropsItem, episode.val);
+
+          this.statistics.WriteEpisodeEnriched();
+        }
+        else
         {
           if (episode.skip)
           {
@@ -205,10 +213,9 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
           {
             AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{episodeItem.Title}\"[/]");
           }
-          continue;
         }
 
-        this.statistics.WriteEpisodeEnriched();
+        await SaveAsync(episodePropsItem, new FilePathProps(episodeItem.Path));
       }
     }
   }
@@ -281,10 +288,12 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
   }
 
   private (Episode? val, bool skip) PickMatchingRemoteEpisode(
+    EpisodePropsItem episodePropsItem,
     EpisodeItem episodeItem,
     Season season,
     EnrichCommandSettings settings)
   {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
     ArgumentNullException.ThrowIfNull(episodeItem);
     ArgumentNullException.ThrowIfNull(season);
     ArgumentNullException.ThrowIfNull(settings);
@@ -292,6 +301,13 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     if (season.Episodes.TryGetValue(episodeItem.Title, out var episode))
     {
       return (episode, false);
+    }
+    if (episodePropsItem.MemoryTitle is not null)
+    {
+      if (season.Episodes.TryGetValue(episodePropsItem.MemoryTitle, out episode))
+      {
+        return (episode, false);
+      }
     }
 
     if (settings.DisableFuzzy)
@@ -350,7 +366,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
   }
 
-  private async Task SaveInformation(
+  private async Task UpdateEpisodeProps(
     ShowItem showItem,
     Series? series)
   {
@@ -388,7 +404,7 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       new FilePathProps(showItem.Path));
   }
 
-  private async Task SaveInformation(
+  private async Task UpdateEpisodeProps(
     SeasonItem seasonItem,
     Season? season)
   {
@@ -426,33 +442,27 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     this.statistics.WriteSeasonEnriched();
   }
 
-  private async Task SaveInformation(
-    EpisodeItem episodeItem,
-    Episode? episode)
+  private async Task UpdateEpisodeProps(
+    EpisodePropsItem episodePropsItem,
+    EpisodeItem episodeItem)
   {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
     ArgumentNullException.ThrowIfNull(episodeItem);
 
-    var props = new EpisodePropsItem
-      {
-        Title = episodeItem.Title.ToString(),
-      };
-    
-    if (episode is not null)
-    {
-      props = new EpisodePropsItem
-        {
-          Title = props.Title,
-          Date = episode.Date,
-          Summary = [episode.Overview],
-          Directors = [.. episode.Directors.Select(i => i.Name)],
-          Writers = [.. episode.Writers.Select(i => i.Name)],
-        };
-    }
+    episodePropsItem.Title = episodeItem.Title.ToString();
+  }
 
-    await SaveAsync(
-      props,
-      new FilePathProps(episodeItem.Path));
+  private async Task UpdateEpisodeProps(
+    EpisodePropsItem episodePropsItem,
+    Episode episode)
+  {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
+    ArgumentNullException.ThrowIfNull(episode);
 
-    this.statistics.WriteEpisodeEnriched();
+    episodePropsItem.Date        = episode.Date;
+    episodePropsItem.Summary     = [episode.Overview];
+    episodePropsItem.Directors   = [.. episode.Directors.Select(i => i.Name)];
+    episodePropsItem.Writers     = [.. episode.Writers.Select(i => i.Name)];
+    episodePropsItem.MemoryTitle = episode.Title;
   }
 }
