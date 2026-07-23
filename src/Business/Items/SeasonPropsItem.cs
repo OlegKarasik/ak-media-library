@@ -4,11 +4,16 @@ public class SeasonPropsItem
 {
   public string? Title
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Summary
   {
-    get; init;
+    get; set;
+  }
+
+  public ItemPosition? MemoryPosition
+  {
+    get; set;
   }
 }
