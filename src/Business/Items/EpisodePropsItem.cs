@@ -4,26 +4,31 @@ public class EpisodePropsItem
 {
   public string? Title
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Summary
   {
-    get; init;
+    get; set;
   }
 
   public string? Date
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Directors
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Writers
   {
-    get; init;
+    get; set;
+  }
+
+  public EpisodeTitle? MemoryTitle 
+  { 
+    get; set; 
   }
 }

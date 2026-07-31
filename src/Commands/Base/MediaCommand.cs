@@ -31,11 +31,28 @@ public abstract class MediaCommand<TSettings> : AsyncCommand<TSettings>
       ?? throw new InvalidOperationException($"Unable to load index from {path.Value}");
   }
 
-  protected static async Task SaveAsync<T>(
-    byte[] bytes,
-    T path)
+  protected static async Task<TProps?> GetAsync<TProps>(
+    FilePathProps path)
 
-    where T: FilePath
+    where TProps: class
+  {
+    ArgumentNullException.ThrowIfNull(path);
+
+    if (!File.Exists(path.Value))
+    {
+      return null;
+    }
+
+    using var fs = File.OpenRead(path.Value);
+    return await JsonSerializer.DeserializeAsync<TProps>(fs, jsonOptions)
+      ?? throw new InvalidOperationException($"Unable to load properties file from {path.Value}");
+  }
+
+  protected static async Task SaveAsync<TPath>(
+    byte[] bytes,
+    TPath path)
+
+    where TPath: FilePath
   {
     ArgumentNullException.ThrowIfNull(bytes);
     ArgumentNullException.ThrowIfNull(path);
@@ -43,12 +60,12 @@ public abstract class MediaCommand<TSettings> : AsyncCommand<TSettings>
     await File.WriteAllBytesAsync(path.Value, bytes);
   }
 
-  protected static async Task SaveAsync<T, K>(
+  protected static async Task SaveAsync<T, TPath>(
     T value,
-    K path)
+    TPath path)
 
     where T: class
-    where K: FilePath
+    where TPath: FilePath
   {
     ArgumentNullException.ThrowIfNull(value);
     ArgumentNullException.ThrowIfNull(path);

@@ -4,21 +4,31 @@ public class ShowPropsItem
 {
   public string? Title
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Summary
   {
-    get; init;
+    get; set;
   }
 
   public string? Date
   {
-    get; init;
+    get; set;
   }
 
   public string[]? Genres
   {
-    get; init;
+    get; set;
+  }
+
+  public string? MemoryTitle
+  {
+    get; set;
+  }
+
+  public string? MemoryYear
+  {
+    get; set;
   }
 }

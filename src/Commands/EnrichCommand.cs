@@ -136,45 +136,69 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(showItem);
     ArgumentNullException.ThrowIfNull(settings);
 
-    var search =
-      await AnsiConsole
-        .Status()
-        .StartAsync($"[Bold][[{showItem.Title}]][/]: Searching matches...", async ctx => await this.enrichment.SearchSeriesAsync(showItem.Title, settings.Language));
+    var showPropsItem = await GetAsync<ShowPropsItem>(new FilePathProps(showItem.Path)) ?? new ShowPropsItem();
 
-    if (search.Length == 0)
+    await this.UpdateShowProps(showPropsItem, showItem);
+
+    var series = await this.PickMatchingRemoteSeries(showPropsItem, showItem, settings);
+    if (series.val is not null)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{showItem.Title}\"[/]");
-      return;
+      await this.UpdateShowProps(showPropsItem, series.val);
+
+      if (series.val.Image is not null)
+      {
+        await SaveAsync(series.val.Image, new FilePathImage(showItem.Path));
+      }
+      if (series.val.ImageBackground is not null)
+      {
+        await SaveAsync(series.val.ImageBackground, new FilePathImageBackground(showItem.Path));
+      }
+
+      this.statistics.WriteShowEnriched();
+    }
+    else
+    {
+      if (series.skip)
+      {
+        AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipped [Bold]\"{showItem.Title}\"[/]");
+      }
+      else
+      {
+        AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{showItem.Title}\"[/]");
+      }
     }
 
-    var selection = this.PickMatchingRemoteSeries(showItem, search);
-    if (selection is null)
+    await SaveAsync(showPropsItem, new FilePathProps(showItem.Path));
+
+    if (series.val is null)
     {
-      AnsiConsole.MarkupLineInterpolated($"[[[Yellow]W[/]]]: Skipped [Bold]\"{showItem.Title}\"[/]");
       return;
     }
-
-    var series = await AnsiConsole
-      .Status()
-      .StartAsync($"[Bold][[{selection.Title}]][/]: Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
-
-    if (series is null)
-    {
-      AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unable to download [Bold]\"{showItem.Title}\"[/]. Please retry");
-      return;
-    }
-
-    await this.SaveInformation(showItem, series);
-
-    this.statistics.WriteShowEnriched();
 
     foreach (var seasonItem in showItem.Seasons)
     {
-      var season = this.PickMatchingRemoteSeason(seasonItem, series, settings);
+      var seasonPropsItem = await GetAsync<SeasonPropsItem>(new FilePathProps(seasonItem.Path)) ?? new SeasonPropsItem();
 
-      await this.SaveInformation(seasonItem, season.val);
+      await this.UpdateSeasonProps(seasonPropsItem, seasonItem);
 
-      if (season.val is null)
+      var season = this.PickMatchingRemoteSeason(seasonPropsItem, seasonItem, series.val, settings);
+
+      if (season.val is not null)
+      {
+        await this.UpdateSeasonProps(seasonPropsItem, season.val);
+
+        if (season.val.Image is not null)
+        {
+          await SaveAsync(season.val.Image, new FilePathImage(seasonItem.Path));
+        }
+        if (season.val.ImageBackground is not null)
+        {
+          await SaveAsync(season.val.ImageBackground, new FilePathImageBackground(seasonItem.Path));
+        }
+
+        this.statistics.WriteSeasonEnriched();
+      }
+      else
       {
         if (season.skip)
         {
@@ -184,18 +208,30 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
         {
           AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{seasonItem.Title}\"[/]");
         }
+      }
+
+      await SaveAsync(seasonPropsItem, new FilePathProps(seasonItem.Path));
+
+      if (season.val is null)
+      {
         continue;
       }
 
-      this.statistics.WriteSeasonEnriched();
-
       foreach (var episodeItem in seasonItem.Episodes)
       {
-        var episode = this.PickMatchingRemoteEpisode(episodeItem, season.val, settings);
+        var episodePropsItem = await GetAsync<EpisodePropsItem>(new FilePathProps(episodeItem.Path)) ?? new EpisodePropsItem();
 
-        await this.SaveInformation(episodeItem, episode.val);
+        await this.UpdateEpisodeProps(episodePropsItem, episodeItem);
+        
+        var episode = this.PickMatchingRemoteEpisode(episodePropsItem, episodeItem, season.val, settings);
 
-        if (episode.val is null)
+        if (episode.val is not null)
+        {
+          await this.UpdateEpisodeProps(episodePropsItem, episode.val);
+
+          this.statistics.WriteEpisodeEnriched();
+        }
+        else
         {
           if (episode.skip)
           {
@@ -205,22 +241,47 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
           {
             AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unmatched [Bold]\"{episodeItem.Title}\"[/]");
           }
-          continue;
         }
 
-        this.statistics.WriteEpisodeEnriched();
+        await SaveAsync(episodePropsItem, new FilePathProps(episodeItem.Path));
+
+        if (episode.val is null)
+        {
+          continue;
+        }
       }
     }
   }
 
-  private Search? PickMatchingRemoteSeries(
-      ShowItem showItem,
-      Search[] search)
+  private async Task<(Series? val, bool skip)> PickMatchingRemoteSeries(
+    ShowPropsItem showPropsItem,
+    ShowItem showItem,
+    EnrichCommandSettings settings)
   {
+    ArgumentNullException.ThrowIfNull(showPropsItem);
     ArgumentNullException.ThrowIfNull(showItem);
-    ArgumentNullException.ThrowIfNull(search);
+    ArgumentNullException.ThrowIfNull(settings);
 
-    for (; ;)
+    var search =
+      await AnsiConsole
+        .Status()
+        .StartAsync($"[Bold][[{showItem.Title}]][/]: Searching matches...", async ctx => await this.enrichment.SearchSeriesAsync(showItem.Title, settings.Language));
+
+    if (search.Length == 0)
+    {
+      return (null, false);
+    }
+    
+    Search? selection = null;
+    if (!settings.DisableMemory)
+    {
+      if (showPropsItem.MemoryTitle is not null && showPropsItem.MemoryYear is not null)
+      {
+        selection = search.FirstOrDefault(i => i.Title == showPropsItem.MemoryTitle && i.Year == showPropsItem.MemoryYear);
+      }
+    }
+
+    for (; selection is null;)
     {
       var promptSelection = new SelectionPrompt<Search>()
         .Title(
@@ -237,9 +298,9 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
         .PageSize(5)
         .AddChoices(search);
 
-      if (!AnsiConsole.TryPrompt(promptSelection, out var selection))
+      if (!AnsiConsole.TryPrompt(promptSelection, out selection))
       {
-        return null;
+        return (null, true);
       }
 
       var promptMatch = new SelectionPrompt<bool>()
@@ -255,18 +316,29 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
 
       if (!AnsiConsole.TryPrompt(promptMatch, out var confirmation) || !confirmation)
       {
+        selection = null;
         continue;
       }
-
-      return selection;
     }
+
+    var series = await AnsiConsole
+      .Status()
+      .StartAsync($"[Bold][[{selection.Title}]][/]: Downloading...", async ctx => await this.enrichment.GetSeriesAsync(selection.Id, settings.Language));
+
+    if (series is null)
+    {
+      AnsiConsole.MarkupLineInterpolated($"[[[Red]E[/]]]: Unable to download [Bold]\"{showItem.Title}\"[/]. Please retry");
+    }
+    return (series, false);
   }
 
   private (Season? val, bool skip) PickMatchingRemoteSeason(
+    SeasonPropsItem seasonPropsItem,
     SeasonItem seasonItem,
     Series series,
     EnrichCommandSettings settings)
   {
+    ArgumentNullException.ThrowIfNull(seasonPropsItem);
     ArgumentNullException.ThrowIfNull(seasonItem);
     ArgumentNullException.ThrowIfNull(series);
     ArgumentNullException.ThrowIfNull(settings);
@@ -277,14 +349,27 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
       return (season, false);
     }
 
+    if (!settings.DisableMemory)
+    {
+      if (seasonPropsItem.MemoryPosition is not null)
+      {
+        if (series.Seasons.TryGetValue((long)seasonPropsItem.MemoryPosition.GetPosition(), out season))
+        {
+          return (season, false);
+        }
+      }
+    }
+
     return (null, false);
   }
 
   private (Episode? val, bool skip) PickMatchingRemoteEpisode(
+    EpisodePropsItem episodePropsItem,
     EpisodeItem episodeItem,
     Season season,
     EnrichCommandSettings settings)
   {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
     ArgumentNullException.ThrowIfNull(episodeItem);
     ArgumentNullException.ThrowIfNull(season);
     ArgumentNullException.ThrowIfNull(settings);
@@ -292,6 +377,17 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     if (season.Episodes.TryGetValue(episodeItem.Title, out var episode))
     {
       return (episode, false);
+    }
+
+    if (!settings.DisableMemory)
+    {
+      if (episodePropsItem.MemoryTitle is not null)
+      {
+        if (season.Episodes.TryGetValue(episodePropsItem.MemoryTitle, out episode))
+        {
+          return (episode, false);
+        }
+      }
     }
 
     if (settings.DisableFuzzy)
@@ -350,109 +446,80 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
   }
 
-  private async Task SaveInformation(
-    ShowItem showItem,
-    Series? series)
+  private async Task UpdateShowProps(
+    ShowPropsItem showPropsItem,
+    ShowItem showItem)
   {
+    ArgumentNullException.ThrowIfNull(showPropsItem);
     ArgumentNullException.ThrowIfNull(showItem);
 
-    var props = new ShowPropsItem
-      {
-        Title = showItem.Title.ToString()
-      };
-
-    if (series is not null)
-    {
-      props = new ShowPropsItem
-        {
-          Title = props.Title,
-          Summary = [series.Overview],
-          Date = series.Date,
-          Genres = series.Genres
-        };
-      
-      if (series.Image is not null)
-      {
-        await SaveAsync(
-          series.Image, new FilePathImage(showItem.Path));
-      }
-      if (series.ImageBackground is not null)
-      {
-        await SaveAsync(
-          series.ImageBackground, new FilePathImageBackground(showItem.Path));
-      }
-    }
-
-    await SaveAsync(
-      props,
-      new FilePathProps(showItem.Path));
+    showPropsItem.Title = showItem.Title.ToString();
   }
 
-  private async Task SaveInformation(
-    SeasonItem seasonItem,
-    Season? season)
+  private async Task UpdateShowProps(
+    ShowPropsItem showPropsItem,
+    Series series)
   {
+    ArgumentNullException.ThrowIfNull(showPropsItem);
+    ArgumentNullException.ThrowIfNull(series);
+
+    showPropsItem.Summary = [series.Overview];
+    showPropsItem.Date = series.Date;
+    showPropsItem.Genres = series.Genres;
+    showPropsItem.MemoryTitle = series.Title;
+    showPropsItem.MemoryYear = series.Year;
+  }
+
+  private async Task UpdateSeasonProps(
+    SeasonPropsItem seasonPropsItem,
+    SeasonItem seasonItem)
+  {
+    ArgumentNullException.ThrowIfNull(seasonPropsItem);
     ArgumentNullException.ThrowIfNull(seasonItem);
 
-    var props = new SeasonPropsItem
-      {
-        Title = seasonItem.Title.ToString(),
-      };
-
-    if (season is not null)
-    {
-      props = new SeasonPropsItem
-        {
-          Title = props.Title,
-          Summary = [season.Overview],
-        };
-
-      if (season.Image is not null)
-      {
-        await SaveAsync(
-          season.Image, new FilePathImage(seasonItem.Path));
-      }
-      if (season.ImageBackground is not null)
-      {
-        await SaveAsync(
-          season.ImageBackground, new FilePathImageBackground(seasonItem.Path));
-      }
-    }
-
-    await SaveAsync(
-      props,
-      new FilePathProps(seasonItem.Path));
-
-    this.statistics.WriteSeasonEnriched();
+    seasonPropsItem.Title = seasonItem.Title.ToString();
   }
 
-  private async Task SaveInformation(
-    EpisodeItem episodeItem,
-    Episode? episode)
+  private async Task UpdateSeasonProps(
+    SeasonPropsItem seasonPropsItem,
+    Season season)
   {
+    ArgumentNullException.ThrowIfNull(seasonPropsItem);
+    ArgumentNullException.ThrowIfNull(season);
+
+    seasonPropsItem.Summary = [season.Overview];
+    seasonPropsItem.MemoryPosition = new ItemPosition((ulong)season.Index);
+  }
+
+  private async Task UpdateEpisodeProps(
+    EpisodePropsItem episodePropsItem,
+    EpisodeItem episodeItem)
+  {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
     ArgumentNullException.ThrowIfNull(episodeItem);
 
-    var props = new EpisodePropsItem
-      {
-        Title = episodeItem.Title.ToString(),
-      };
-    
-    if (episode is not null)
-    {
-      props = new EpisodePropsItem
-        {
-          Title = props.Title,
-          Date = episode.Date,
-          Summary = [episode.Overview],
-          Directors = [.. episode.Directors.Select(i => i.Name)],
-          Writers = [.. episode.Writers.Select(i => i.Name)],
-        };
-    }
+    episodePropsItem.Title = episodeItem.Title.ToString();
+  }
 
-    await SaveAsync(
-      props,
-      new FilePathProps(episodeItem.Path));
+  private async Task UpdateEpisodeProps(
+    EpisodePropsItem episodePropsItem,
+    Episode episode)
+  {
+    ArgumentNullException.ThrowIfNull(episodePropsItem);
+    ArgumentNullException.ThrowIfNull(episode);
 
-    this.statistics.WriteEpisodeEnriched();
+    episodePropsItem.Date        = episode.Date;
+    episodePropsItem.Summary     = [episode.Overview];
+    episodePropsItem.Directors   = [.. episode.Directors.Select(i => i.Name)];
+    episodePropsItem.Writers     = [.. episode.Writers.Select(i => i.Name)];
+    episodePropsItem.MemoryTitle = episode.Title;
+  }
+
+  private async Task SaveEpisodeArtefacts(
+    EpisodeItem episodeItem,
+    Episode episode)
+  {
+    ArgumentNullException.ThrowIfNull(episodeItem);
+    ArgumentNullException.ThrowIfNull(episode);
   }
 }

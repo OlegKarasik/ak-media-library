@@ -30,7 +30,7 @@ public class FilePathProps : FilePath
 
     var value = path.Value;
 
-    if (value.EndsWith(PROPS_POSTFIX))
+    if (value.EndsWith(PROPS_POSTFIX, StringComparison.OrdinalIgnoreCase))
     {
       return value;
     }
@@ -44,7 +44,7 @@ public class FilePathProps : FilePath
 
     var value = path.Value;
 
-    if (value.EndsWith(PROPS_FILE))
+    if (value.EndsWith(PROPS_FILE, StringComparison.OrdinalIgnoreCase))
     {
       return value;
     }
