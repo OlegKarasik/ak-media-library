@@ -10,6 +10,7 @@ public class EnrichCommandSettings : CommandSettings
 {
   private const string DEFAULT_LANGUAGE = "eng";
   private const bool DEFAULT_DISABLE_FUZZY = false;
+  private const bool DEFAULT_DISABLE_MEMORY = false;
   private const int DEFAULT_MAX_FUZZY_CHARACTERS = 10;
   private const int DEFAULT_MAX_REMOTE_RESULTS = 10;
 
@@ -35,6 +36,13 @@ public class EnrichCommandSettings : CommandSettings
   [CommandOption("--no-fuzzy")]
   [DefaultValue(DEFAULT_DISABLE_FUZZY)]
   public required bool DisableFuzzy
+  {
+    get; set;
+  }
+
+  [CommandOption("--no-memory")]
+  [DefaultValue(DEFAULT_DISABLE_MEMORY)]
+  public required bool DisableMemory
   {
     get; set;
   }

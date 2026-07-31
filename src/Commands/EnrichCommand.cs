@@ -273,9 +273,12 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     }
     
     Search? selection = null;
-    if (showPropsItem.MemoryTitle is not null && showPropsItem.MemoryYear is not null)
+    if (!settings.DisableMemory)
     {
-      selection = search.FirstOrDefault(i => i.Title == showPropsItem.MemoryTitle && i.Year == showPropsItem.MemoryYear);
+      if (showPropsItem.MemoryTitle is not null && showPropsItem.MemoryYear is not null)
+      {
+        selection = search.FirstOrDefault(i => i.Title == showPropsItem.MemoryTitle && i.Year == showPropsItem.MemoryYear);
+      }
     }
 
     for (; selection is null;)
@@ -345,11 +348,15 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     {
       return (season, false);
     }
-    if (seasonPropsItem.MemoryPosition is not null)
+
+    if (!settings.DisableMemory)
     {
-      if (series.Seasons.TryGetValue((long)seasonPropsItem.MemoryPosition.GetPosition(), out season))
+      if (seasonPropsItem.MemoryPosition is not null)
       {
-        return (season, false);
+        if (series.Seasons.TryGetValue((long)seasonPropsItem.MemoryPosition.GetPosition(), out season))
+        {
+          return (season, false);
+        }
       }
     }
 
@@ -371,11 +378,15 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     {
       return (episode, false);
     }
-    if (episodePropsItem.MemoryTitle is not null)
+
+    if (!settings.DisableMemory)
     {
-      if (season.Episodes.TryGetValue(episodePropsItem.MemoryTitle, out episode))
+      if (episodePropsItem.MemoryTitle is not null)
       {
-        return (episode, false);
+        if (season.Episodes.TryGetValue(episodePropsItem.MemoryTitle, out episode))
+        {
+          return (episode, false);
+        }
       }
     }
 
