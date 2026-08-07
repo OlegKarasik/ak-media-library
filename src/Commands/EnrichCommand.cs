@@ -499,6 +499,18 @@ public partial class EnrichCommand : MediaCommand<EnrichCommandSettings>
     ArgumentNullException.ThrowIfNull(episodeItem);
 
     episodePropsItem.Title = episodeItem.Title.ToString();
+    
+    if (episodeItem.Position.HasSpan)
+    {
+      var (open, close) = episodeItem.Position.GetSpanPosition();
+
+      episodePropsItem.StartPosition = open;
+      episodePropsItem.EndPosition   = close;
+    }
+    else
+    {
+      episodePropsItem.StartPosition = episodeItem.Position.GetPosition();
+    }
   }
 
   private async Task UpdateEpisodeProps(
