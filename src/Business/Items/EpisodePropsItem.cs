@@ -27,6 +27,16 @@ public class EpisodePropsItem
     get; set;
   }
 
+  public ulong? StartPosition
+  {
+    get; set;
+  }
+
+  public ulong? EndPosition
+  {
+    get; set;
+  }
+
   public EpisodeTitle? MemoryTitle 
   { 
     get; set; 
