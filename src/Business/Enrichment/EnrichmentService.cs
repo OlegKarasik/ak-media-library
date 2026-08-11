@@ -71,16 +71,17 @@ public class EnrichmentService
             .Where(j => j.Kind == Http.Models.EpisodeKind.Episode)
             .Where(j => j.Name != null) // Sometimes, there is an incomplete information, so we skip
             .Where(j => j.SeasonIndex == i.Index || j.SeasonIndex == 0)
+            .GroupBy(j => new EpisodeTitle(j.Name))
             .ToDictionary(
-              j => new EpisodeTitle(j.Name),
+              j => j.Key,
               j => new Episode
               {
-                Title = new EpisodeTitle(j.Name),
-                Overview = (j.Overview ?? string.Empty).Trim(),
+                Title = j.Key,
+                Overview = (j.FirstOrDefault(x => x.Overview is not null)?.Overview ?? string.Empty).Trim(),
                 SeasonIndex = i.Index,
-                Date = j.Date,
-                Directors = [.. j.Characters.Where(x => x.PersonType == "Director").Select(x => new Director { Name = x.PersonName })],
-                Writers = [.. j.Characters.Where(x => x.PersonType == "Writer").Select(x => new Writer { Name = x.PersonName })],
+                Date = j.FirstOrDefault(x => x.Date is not null)?.Date,
+                Directors = [.. j.SelectMany(x => x.Characters.Where(z => z.PersonType == "Director")).DistinctBy(x => x.PersonName).Select(x => new Director { Name = x.PersonName })],
+                Writers = [.. j.SelectMany(x => x.Characters.Where(z => z.PersonType == "Writer")).DistinctBy(x => x.PersonName).Select(x => new Writer { Name = x.PersonName })],
               })
         })
     };
