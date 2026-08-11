@@ -31,7 +31,7 @@ public static class StringExtensions
 
   static StringExtensions()
   {
-    invalidCharacters = SearchValues.Create([.. Path.GetInvalidFileNameChars(), '…']);
+    invalidCharacters = SearchValues.Create([.. Path.GetInvalidFileNameChars(), '…', '`', 'ʼ', '’']);
   }
 
   public static int CalculateLevenshteinDistance(
@@ -95,6 +95,13 @@ public static class StringExtensions
       var xb = new StringBuilder(@this);
 
       xb.Replace("…", "...");
+      xb.Replace('`', '\'');
+
+      // These two aren't duplicates but different unicode characters
+      //
+      xb.Replace('ʼ', '\'');
+      xb.Replace('’', '\'');
+
       foreach (var c in Path.GetInvalidFileNameChars())
       {
         switch (c)

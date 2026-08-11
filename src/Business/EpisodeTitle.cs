@@ -32,26 +32,23 @@ public partial class EpisodeTitle
   {
     ArgumentException.ThrowIfNullOrEmpty(value);
 
+    // This space is important because regexes are greedy and therefore
+    // catch the extra spaces (if there are)
+    //
+
     var intermediate = value.EscapeInvalidCharacters();
     intermediate = standard.Replace(
       intermediate,
       match =>
       {
-        return $"({match.Groups["Index"].Value})";
+        return $" ({match.Groups["Index"].Value})";
       });
     
     intermediate = complex.Replace(
       intermediate,
       match =>
       {
-        return $"({match.Groups["Index"].Value})";
-      });
-    
-    intermediate = complex.Replace(
-      intermediate,
-      match =>
-      {
-        return $"({match.Groups["Index"].Value})";
+        return $" ({match.Groups["Index"].Value})";
       });
     
     intermediate = normalise.Replace(
@@ -98,10 +95,10 @@ public partial class EpisodeTitle
     return this.Value.GetHashCode(StringComparison.OrdinalIgnoreCase);
   }
 
-  [GeneratedRegex(@"\(?(Part|Chapter|Volume)(\s*|-)(?<Index>\d+)\)?")]
+  [GeneratedRegex(@"\s*\(?(Part|Chapter|Volume)(\s*|-)(?<Index>\d+)\)?")]
   private static partial Regex MatchStandardParts();
 
-  [GeneratedRegex(@"\(?(?<Index>\d+)(st|nd|rd|th)\s*(Part|Chapter|Volume)\)?")]
+  [GeneratedRegex(@"\s*\(?(?<Index>\d+)(st|nd|rd|th)\s*(Part|Chapter|Volume)\)?")]
   private static partial Regex MatchComplexParts();
 
   [GeneratedRegex(@"\s*-?\s*\((?<Index>\d+)\)")]
